@@ -10,6 +10,7 @@ use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct AdminAuth {
+    #[allow(dead_code)]
     pub claims: Claims,
 }
 

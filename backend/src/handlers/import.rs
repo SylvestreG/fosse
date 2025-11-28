@@ -17,11 +17,6 @@ pub struct ImportState {
     pub expiration_hours: i64,
 }
 
-#[derive(Deserialize)]
-pub struct ImportQuery {
-    pub session_id: Uuid,
-}
-
 pub async fn import_csv(
     State(state): State<Arc<ImportState>>,
     mut multipart: Multipart,

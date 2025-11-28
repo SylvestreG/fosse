@@ -10,6 +10,7 @@ pub struct CsvImportRow {
 }
 
 impl CsvImportRow {
+    #[allow(dead_code)]
     pub fn validate(&self, _row_number: usize) -> Result<(), String> {
         // Validate first_name
         if self.first_name.trim().is_empty() {

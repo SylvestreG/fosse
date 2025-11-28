@@ -35,9 +35,11 @@ pub enum AppError {
     #[error("Token already consumed")]
     TokenConsumed,
 
+    #[allow(dead_code)]
     #[error("Email sending failed: {0}")]
     EmailError(String),
 
+    #[allow(dead_code)]
     #[error("CSV parsing error: {0}")]
     CsvError(String),
 }

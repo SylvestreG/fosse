@@ -38,12 +38,6 @@ pub struct QuestionnaireResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct QuestionnaireWithPersonResponse {
-    pub questionnaire: QuestionnaireResponse,
-    pub person: super::PersonResponse,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct QuestionnaireTokenData {
     pub token: Uuid,
     pub person: super::PersonResponse,
