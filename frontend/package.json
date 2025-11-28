@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:watch": "vite build --watch",
+    "build:dev": "tsc && vite build --mode development",
+    "build:watch": "vite build --watch --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
     "sync-config": "../scripts/sync-config.sh"

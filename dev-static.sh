@@ -7,9 +7,9 @@ set -e
 
 echo "🏗️  Mode développement avec auto-rebuild"
 echo ""
-echo "📦 Build initial du frontend..."
+echo "📦 Build initial du frontend (mode dev)..."
 cd frontend
-npm run build
+npm run build:dev
 cd ..
 
 echo ""

@@ -6,9 +6,10 @@ import PublicQuestionnaire from './pages/PublicQuestionnaire'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
+  const basename = import.meta.env.MODE === 'production' ? '/fosse' : ''
 
   return (
-    <BrowserRouter basename="/fosse">
+    <BrowserRouter basename={basename}>
       <Routes>
         <Route path="/login" element={<LoginAdmin />} />
         <Route path="/q/:token" element={<PublicQuestionnaire />} />

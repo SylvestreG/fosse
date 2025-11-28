@@ -123,7 +123,19 @@ pub async fn create_person(
     let person = new_person
         .insert(db.as_ref())
         .await
-        .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to create person: {}", e))))?;
+        .map_err(|e| {
+            // Check for unique constraint violation on email
+            if let DbErr::Exec(RuntimeErr::SqlxError(sqlx_error)) = &e {
+                if let Some(db_error) = sqlx_error.as_database_error() {
+                    if db_error.is_unique_violation() {
+                        return AppError::Validation(
+                            "Un utilisateur avec cet email existe déjà".to_string()
+                        );
+                    }
+                }
+            }
+            AppError::Database(sea_orm::DbErr::Custom(format!("Failed to create person: {}", e)))
+        })?;
 
     Ok(Json(PersonResponse {
         id: person.id,
@@ -195,7 +207,19 @@ pub async fn update_person(
     let updated = person
         .update(db.as_ref())
         .await
-        .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to update person: {}", e))))?;
+        .map_err(|e| {
+            // Check for unique constraint violation on email
+            if let DbErr::Exec(RuntimeErr::SqlxError(sqlx_error)) = &e {
+                if let Some(db_error) = sqlx_error.as_database_error() {
+                    if db_error.is_unique_violation() {
+                        return AppError::Validation(
+                            "Un utilisateur avec cet email existe déjà".to_string()
+                        );
+                    }
+                }
+            }
+            AppError::Database(sea_orm::DbErr::Custom(format!("Failed to update person: {}", e)))
+        })?;
 
     Ok(Json(PersonResponse {
         id: updated.id,

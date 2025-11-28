@@ -163,7 +163,19 @@ impl ImportService {
             person_model
                 .insert(db)
                 .await
-                .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to create person".to_string())))?
+                .map_err(|e| {
+                    // Check for unique constraint violation on email
+                    if let DbErr::Exec(RuntimeErr::SqlxError(sqlx_error)) = &e {
+                        if let Some(db_error) = sqlx_error.as_database_error() {
+                            if db_error.is_unique_violation() {
+                                return AppError::Validation(
+                                    format!("Un utilisateur avec l'email {} existe déjà", row.email)
+                                );
+                            }
+                        }
+                    }
+                    AppError::Database(sea_orm::DbErr::Custom("Failed to create person".to_string()))
+                })?
         };
 
         // Create questionnaire record pre-filled with user's default preferences
@@ -191,6 +203,17 @@ impl ImportService {
             .insert(db)
             .await
             .map_err(|e| {
+                // Check for unique constraint violation (person already enrolled)
+                if let DbErr::Exec(RuntimeErr::SqlxError(sqlx_error)) = &e {
+                    if let Some(db_error) = sqlx_error.as_database_error() {
+                        if db_error.is_unique_violation() {
+                            tracing::warn!("Person {} {} is already enrolled in this session", person.first_name, person.last_name);
+                            return AppError::Validation(
+                                format!("{} {} est déjà inscrit à cette session", person.first_name, person.last_name)
+                            );
+                        }
+                    }
+                }
                 tracing::error!("Failed to create questionnaire for person {:?}: {:?}", person.id, e);
                 AppError::Database(sea_orm::DbErr::Custom(format!("Failed to create questionnaire: {}", e)))
             })?;
