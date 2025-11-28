@@ -121,7 +121,6 @@ pub async fn get_session_summary(
     Path(id): Path<Uuid>,
 ) -> Result<Json<SessionSummary>, AppError> {
     use crate::entities::{email_jobs, people};
-    use sea_orm::QuerySelect;
     
     // Verify session exists
     let _session = Sessions::find_by_id(id)

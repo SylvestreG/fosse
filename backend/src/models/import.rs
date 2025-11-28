@@ -10,7 +10,7 @@ pub struct CsvImportRow {
 }
 
 impl CsvImportRow {
-    pub fn validate(&self, row_number: usize) -> Result<(), String> {
+    pub fn validate(&self, _row_number: usize) -> Result<(), String> {
         // Validate first_name
         if self.first_name.trim().is_empty() {
             return Err(format!("Le prénom est obligatoire"));

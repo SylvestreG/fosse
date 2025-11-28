@@ -7,7 +7,7 @@ use axum::{
     middleware,
     routing::{get, post},
     Router,
-    response::{IntoResponse, Response},
+    response::IntoResponse,
     http::StatusCode,
 };
 use sea_orm::DatabaseConnection;
@@ -103,9 +103,6 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
     
     if static_dir.exists() {
         // Serve static files
-        let serve_dir = ServeDir::new(&static_dir)
-            .append_index_html_on_directories(true);
-        
         Router::new()
             .merge(api_routes)
             .nest_service("/assets", ServeDir::new(static_dir.join("assets")))

@@ -8,7 +8,7 @@ use axum::{
 };
 use chrono::Utc;
 use sea_orm::*;
-use sea_orm::sea_query::{Expr, Alias};
+use sea_orm::sea_query::Expr;
 use serde::Deserialize;
 use std::sync::Arc;
 use uuid::Uuid;
