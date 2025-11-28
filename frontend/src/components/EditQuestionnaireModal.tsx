@@ -61,6 +61,7 @@ export default function EditQuestionnaireModal({
         wants_2nd_reg: formData.wants_2nd_reg,
         wants_stab: formData.wants_stab,
         stab_size: formData.wants_stab && formData.stab_size ? formData.stab_size : undefined,
+        comes_from_issoire: formData.comes_from_issoire,
         has_car: formData.has_car,
         car_seats: formData.has_car && formData.car_seats ? parseInt(formData.car_seats) : undefined,
         comments: formData.comments || undefined,

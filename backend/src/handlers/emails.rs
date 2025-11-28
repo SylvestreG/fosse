@@ -32,3 +32,17 @@ pub async fn mark_email_sent(
     Ok(Json(serde_json::json!({ "success": true })))
 }
 
+pub async fn generate_magic_links(
+    State((db, email_service)): State<(Arc<DatabaseConnection>, Arc<EmailService>)>,
+    Path(session_id): Path<Uuid>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    let count = email_service
+        .generate_magic_links_for_session(db.as_ref(), session_id)
+        .await?;
+    Ok(Json(serde_json::json!({
+        "success": true,
+        "generated_count": count,
+        "message": format!("{} magic link(s) générés", count)
+    })))
+}
+

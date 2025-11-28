@@ -1,4 +1,4 @@
-use crate::entities::{email_jobs, prelude::*};
+use crate::entities::{email_jobs, prelude::*, questionnaires};
 use crate::errors::{AppError, AppResult};
 use chrono::{Duration, Utc};
 use sea_orm::*;
@@ -194,6 +194,99 @@ impl EmailService {
             .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to update email job".to_string())))?;
 
         Ok(())
+    }
+
+    /// Generate magic links for all questionnaires in a session that don't have one yet
+    pub async fn generate_magic_links_for_session(
+        &self,
+        db: &DatabaseConnection,
+        session_id: Uuid,
+    ) -> AppResult<usize> {
+        // Get session info
+        let session = Sessions::find_by_id(session_id)
+            .one(db)
+            .await
+            .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query session".to_string())))?
+            .ok_or(AppError::NotFound("Session not found".to_string()))?;
+
+        // Find all questionnaires for this session
+        let questionnaires_with_people = Questionnaires::find()
+            .filter(questionnaires::Column::SessionId.eq(session_id))
+            .find_also_related(People)
+            .all(db)
+            .await
+            .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query questionnaires".to_string())))?;
+
+        let mut count = 0;
+
+        for (questionnaire, person_opt) in questionnaires_with_people {
+            let person = person_opt.ok_or_else(|| AppError::NotFound("Person not found".to_string()))?;
+
+            // Check if email job already exists for this person/session
+            let existing_job = EmailJobs::find()
+                .filter(email_jobs::Column::PersonId.eq(person.id))
+                .filter(email_jobs::Column::SessionId.eq(session_id))
+                .one(db)
+                .await
+                .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query email jobs".to_string())))?;
+
+            // Skip if email job already exists
+            if existing_job.is_some() {
+                continue;
+            }
+
+            // Generate magic link
+            let token = Uuid::new_v4();
+            let session_reference_date = session.end_date.unwrap_or(session.start_date);
+            let expires_at = session_reference_date.and_hms_opt(23, 59, 59).unwrap() + Duration::days(1);
+            let magic_link = format!("{}/q/{}", self.magic_link_base_url, token);
+            let expiration_date = expires_at.format("%d/%m/%Y à %H:%M").to_string();
+
+            let session_location = session.location.as_ref()
+                .map(|l| l.as_str())
+                .unwrap_or("À définir");
+
+            let person_name = format!("{} {}", person.first_name, person.last_name);
+            let (subject, body) = self.generate_email_content(
+                &person_name,
+                &session.name,
+                &session.start_date.format("%d/%m/%Y").to_string(),
+                session_location,
+                &magic_link,
+                &expiration_date,
+            )?;
+
+            // Create email job
+            let now = Utc::now().naive_utc();
+            let email_job = email_jobs::ActiveModel {
+                id: Set(Uuid::new_v4()),
+                session_id: Set(session_id),
+                person_id: Set(person.id),
+                questionnaire_token: Set(token),
+                status: Set("generated".to_string()),
+                retry_count: Set(0),
+                sent_at: Set(None),
+                expires_at: Set(expires_at),
+                consumed: Set(false),
+                error_message: Set(None),
+                email_subject: Set(Some(subject)),
+                email_body: Set(Some(body)),
+                created_at: Set(now),
+                updated_at: Set(now),
+            };
+
+            email_job
+                .insert(db)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Failed to create email job for person {:?}: {:?}", person.id, e);
+                    AppError::Database(sea_orm::DbErr::Custom("Failed to create email job".to_string()))
+                })?;
+
+            count += 1;
+        }
+
+        Ok(count)
     }
 }
 

@@ -90,13 +90,23 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         ))
         .with_state(import_state);
 
+    // Admin-only routes for email service (different state)
+    let email_service_routes = Router::new()
+        .route("/api/v1/sessions/:id/generate-links", post(generate_magic_links))
+        .layer(middleware::from_fn_with_state(
+            auth_service.clone(),
+            admin_auth_middleware,
+        ))
+        .with_state((db.clone(), email_service));
+
     // API routes
     let api_routes = Router::new()
         .merge(auth_routes)
         .merge(questionnaire_public_routes)
         .merge(admin_routes)
         .merge(admin_detail_routes)
-        .merge(import_routes);
+        .merge(import_routes)
+        .merge(email_service_routes);
 
     // Check if static files directory exists
     let static_dir = PathBuf::from("../frontend/dist");

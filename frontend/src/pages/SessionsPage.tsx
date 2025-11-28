@@ -108,6 +108,24 @@ export default function SessionsPage() {
     setToast({ message: 'Lien copié !', type: 'success' })
   }
 
+  const handleGenerateMagicLinks = async () => {
+    if (!selectedSession) return
+    
+    if (!confirm('Générer les magic links pour tous les participants qui n\'en ont pas encore ?')) {
+      return
+    }
+
+    try {
+      const response = await sessionsApi.generateMagicLinks(selectedSession.id)
+      setToast({ message: response.data.message, type: 'success' })
+      // Reload questionnaires to show the new magic links
+      await loadQuestionnaires(selectedSession.id)
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Erreur lors de la génération des magic links'
+      setToast({ message: errorMessage, type: 'error' })
+    }
+  }
+
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -201,9 +219,14 @@ export default function SessionsPage() {
               </Button>
               <h2 className="text-2xl font-semibold text-gray-900">{selectedSession.name}</h2>
             </div>
-            <Button onClick={() => setShowAddParticipantModal(true)}>
-              ➕ Ajouter un participant
-            </Button>
+            <div className="flex space-x-2">
+              <Button variant="secondary" onClick={handleGenerateMagicLinks}>
+                🔗 Générer les liens
+              </Button>
+              <Button onClick={() => setShowAddParticipantModal(true)}>
+                ➕ Ajouter un participant
+              </Button>
+            </div>
           </div>
           {questionnaires.length === 0 ? (
             <div className="text-center py-12">

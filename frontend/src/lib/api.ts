@@ -179,6 +179,7 @@ export const sessionsApi = {
   get: (id: string) => api.get<Session>(`/sessions/${id}`),
   delete: (id: string) => api.delete(`/sessions/${id}`),
   getSummary: (id: string) => api.get<SessionSummary>(`/sessions/${id}/summary`),
+  generateMagicLinks: (id: string) => api.post<{ success: boolean; generated_count: number; message: string }>(`/sessions/${id}/generate-links`),
 }
 
 export const questionnairesApi = {
@@ -208,6 +209,7 @@ export const questionnairesApi = {
     wants_2nd_reg: boolean
     wants_stab: boolean
     stab_size?: string
+    comes_from_issoire: boolean
     has_car: boolean
     car_seats?: number
     comments?: string
