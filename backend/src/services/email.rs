@@ -219,7 +219,7 @@ impl EmailService {
 
         let mut count = 0;
 
-        for (questionnaire, person_opt) in questionnaires_with_people {
+        for (_questionnaire, person_opt) in questionnaires_with_people {
             let person = person_opt.ok_or_else(|| AppError::NotFound("Person not found".to_string()))?;
 
             // Check if email job already exists for this person/session

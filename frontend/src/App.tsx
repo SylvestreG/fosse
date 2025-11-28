@@ -3,6 +3,7 @@ import { useAuthStore } from './lib/auth'
 import LoginAdmin from './pages/LoginAdmin'
 import Dashboard from './pages/Dashboard'
 import PublicQuestionnaire from './pages/PublicQuestionnaire'
+import PublicSummary from './pages/PublicSummary'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -13,6 +14,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginAdmin />} />
         <Route path="/q/:token" element={<PublicQuestionnaire />} />
+        <Route path="/s/:token" element={<PublicSummary />} />
         <Route
           path="/dashboard/*"
           element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />}

@@ -11,6 +11,7 @@ pub struct Model {
     pub end_date: Option<Date>,
     pub location: Option<String>,
     pub description: Option<String>,
+    pub summary_token: Option<Uuid>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

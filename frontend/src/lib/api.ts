@@ -55,6 +55,7 @@ export interface Session {
   end_date?: string
   location?: string
   description?: string
+  summary_token?: string
   created_at: string
   updated_at: string
 }
@@ -183,6 +184,7 @@ export const sessionsApi = {
   get: (id: string) => api.get<Session>(`/sessions/${id}`),
   delete: (id: string) => api.delete(`/sessions/${id}`),
   getSummary: (id: string) => api.get<SessionSummary>(`/sessions/${id}/summary`),
+  getSummaryByToken: (token: string) => api.get<SessionSummary>(`/sessions/summary/${token}`),
   generateMagicLinks: (id: string) => api.post<{ success: boolean; generated_count: number; message: string }>(`/sessions/${id}/generate-links`),
 }
 
@@ -217,6 +219,7 @@ export const questionnairesApi = {
     has_car: boolean
     car_seats?: number
     comments?: string
+    mark_as_submitted?: boolean
   }) => api.put<Questionnaire>(`/questionnaires/${id}`, data),
   delete: (id: string) => api.delete(`/questionnaires/${id}`),
 }

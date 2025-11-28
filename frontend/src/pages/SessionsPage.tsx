@@ -103,9 +103,52 @@ export default function SessionsPage() {
     }
   }
 
+  const handleToggleStatus = async (questionnaire: QuestionnaireDetail) => {
+    const newStatus = !questionnaire.submitted_at
+    const statusText = newStatus ? 'soumis' : 'non soumis'
+    
+    if (!confirm(`Marquer ce questionnaire comme ${statusText} ?`)) {
+      return
+    }
+
+    try {
+      await questionnairesApi.update(questionnaire.id, {
+        is_encadrant: questionnaire.is_encadrant,
+        wants_regulator: questionnaire.wants_regulator,
+        wants_nitrox: questionnaire.wants_nitrox,
+        wants_2nd_reg: questionnaire.wants_2nd_reg,
+        wants_stab: questionnaire.wants_stab,
+        stab_size: questionnaire.stab_size,
+        comes_from_issoire: questionnaire.comes_from_issoire,
+        has_car: questionnaire.has_car,
+        car_seats: questionnaire.car_seats,
+        comments: questionnaire.comments,
+        mark_as_submitted: newStatus,
+      })
+      setToast({ message: `Questionnaire marqué comme ${statusText}`, type: 'success' })
+      if (selectedSession) {
+        await loadQuestionnaires(selectedSession.id)
+      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Erreur lors de la modification du statut'
+      setToast({ message: errorMessage, type: 'error' })
+    }
+  }
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
     setToast({ message: 'Lien copié !', type: 'success' })
+  }
+
+  const copySummaryLink = (session: Session) => {
+    if (!session.summary_token) {
+      setToast({ message: 'Aucun token de récapitulatif disponible', type: 'error' })
+      return
+    }
+    const basePath = import.meta.env.MODE === 'production' ? '/fosse' : ''
+    const summaryUrl = `${window.location.origin}${basePath}/s/${session.summary_token}`
+    navigator.clipboard.writeText(summaryUrl)
+    setToast({ message: 'Lien du récapitulatif copié !', type: 'success' })
   }
 
   const handleGenerateMagicLinks = async () => {
@@ -191,6 +234,9 @@ export default function SessionsPage() {
           <Button size="sm" variant="secondary" onClick={() => navigate(`/dashboard/summary/${row.id}`)}>
             📊 Récap
           </Button>
+          <Button size="sm" variant="secondary" onClick={() => copySummaryLink(row)}>
+            🔗 Copier lien
+          </Button>
           <Button size="sm" variant="secondary" onClick={() => handleDeleteSession(row)}>
             🗑️ Supprimer
           </Button>
@@ -260,7 +306,16 @@ export default function SessionsPage() {
                     <p>2ème détendeur: {q.wants_2nd_reg ? '✅' : '❌'}</p>
                     <p>Stab: {q.wants_stab ? `✅ (${q.stab_size || 'N/A'})` : '❌'}</p>
                     <p>Voiture: {q.has_car ? `✅ (${q.car_seats || 0} places)` : '❌'}</p>
-                    <p className="col-span-2">Statut: {q.submitted_at ? '✅ Soumis' : '⏳ En attente'}</p>
+                    <div className="col-span-2 flex items-center justify-between">
+                      <p>Statut: {q.submitted_at ? '✅ Soumis' : '⏳ En attente'}</p>
+                      <Button 
+                        size="sm" 
+                        variant={q.submitted_at ? 'secondary' : 'primary'}
+                        onClick={() => handleToggleStatus(q)}
+                      >
+                        {q.submitted_at ? '↩️ Marquer non soumis' : '✅ Marquer soumis'}
+                      </Button>
+                    </div>
                   </div>
 
                   {q.comments && (

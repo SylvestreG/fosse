@@ -80,5 +80,6 @@ pub struct UpdateQuestionnaireRequest {
     pub has_car: bool,
     pub car_seats: Option<i32>,
     pub comments: Option<String>,
+    pub mark_as_submitted: Option<bool>, // True to mark as submitted, False to mark as not submitted
 }
 

@@ -27,6 +27,7 @@ pub async fn create_session(
         end_date: Set(payload.end_date),
         location: Set(payload.location),
         description: Set(payload.description),
+        summary_token: Set(Some(Uuid::new_v4())), // Generate unique token for public summary access
         created_at: Set(now),
         updated_at: Set(now),
     };
@@ -43,6 +44,7 @@ pub async fn create_session(
         end_date: session.end_date,
         location: session.location,
         description: session.description,
+        summary_token: session.summary_token,
         created_at: session.created_at.to_string(),
         updated_at: session.updated_at.to_string(),
     }))
@@ -65,6 +67,7 @@ pub async fn list_sessions(
             end_date: s.end_date,
             location: s.location,
             description: s.description,
+            summary_token: s.summary_token,
             created_at: s.created_at.to_string(),
             updated_at: s.updated_at.to_string(),
         })
@@ -90,6 +93,7 @@ pub async fn get_session(
         end_date: session.end_date,
         location: session.location,
         description: session.description,
+        summary_token: session.summary_token,
         created_at: session.created_at.to_string(),
         updated_at: session.updated_at.to_string(),
     }))
@@ -230,4 +234,31 @@ pub async fn get_session_summary(
         total_car_seats,
         participants,
     }))
+}
+
+pub async fn get_session_summary_by_token(
+    State((db, config)): State<(Arc<DatabaseConnection>, Arc<crate::config::Config>)>,
+    Path(token): Path<Uuid>,
+) -> Result<Json<SessionSummary>, AppError> {
+    use chrono::{Duration, Utc};
+    
+    // Find session by summary_token
+    let session = Sessions::find()
+        .filter(sessions::Column::SummaryToken.eq(token))
+        .one(db.as_ref())
+        .await
+        .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query session".to_string())))?
+        .ok_or(AppError::NotFound("Session summary link not found or expired".to_string()))?;
+
+    // Check if link has expired (session end date + 1 day)
+    let session_reference_date = session.end_date.unwrap_or(session.start_date);
+    let expiration_date = session_reference_date.and_hms_opt(23, 59, 59).unwrap() + Duration::days(1);
+    let now = Utc::now().naive_utc();
+    
+    if now > expiration_date {
+        return Err(AppError::NotFound("Ce lien de récapitulatif a expiré".to_string()));
+    }
+
+    // Reuse the existing get_session_summary logic by calling it with session ID
+    get_session_summary(State((db, config)), Path(session.id)).await
 }

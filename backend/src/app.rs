@@ -53,6 +53,11 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .route("/api/v1/questionnaires", post(submit_questionnaire))
         .with_state(db.clone());
 
+    // Public routes - session summary by token
+    let summary_public_routes = Router::new()
+        .route("/api/v1/sessions/summary/:token", get(get_session_summary_by_token))
+        .with_state((db.clone(), config_arc.clone()));
+
     // Admin-only routes for sessions and questionnaires
     let admin_routes = Router::new()
         .route("/api/v1/sessions", post(create_session).get(list_sessions))
@@ -103,6 +108,7 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
     let api_routes = Router::new()
         .merge(auth_routes)
         .merge(questionnaire_public_routes)
+        .merge(summary_public_routes)
         .merge(admin_routes)
         .merge(admin_detail_routes)
         .merge(import_routes)

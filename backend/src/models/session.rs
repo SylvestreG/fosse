@@ -21,6 +21,7 @@ pub struct SessionResponse {
     pub end_date: Option<NaiveDate>,
     pub location: Option<String>,
     pub description: Option<String>,
+    pub summary_token: Option<Uuid>,
     pub created_at: String,
     pub updated_at: String,
 }

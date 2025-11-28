@@ -14,6 +14,7 @@ mod m20240101_000011_remove_session_specific_prefs;
 mod m20240101_000012_recreate_people_clean;
 mod m20240101_000013_ensure_people_structure;
 mod m20240101_000014_add_unique_constraints;
+mod m20240101_000015_add_session_summary_token;
 
 pub struct Migrator;
 
@@ -35,6 +36,7 @@ impl MigratorTrait for Migrator {
         Box::new(m20240101_000012_recreate_people_clean::Migration),
         Box::new(m20240101_000013_ensure_people_structure::Migration),
         Box::new(m20240101_000014_add_unique_constraints::Migration),
+        Box::new(m20240101_000015_add_session_summary_token::Migration),
         ]
     }
 }

@@ -328,6 +328,7 @@ impl QuestionnaireService {
         // Apply same business rules as submit
         Self::apply_business_rules_update(&mut payload);
 
+        let now = Utc::now().naive_utc();
         let mut active: questionnaires::ActiveModel = questionnaire.into();
         active.is_encadrant = Set(payload.is_encadrant);
         active.wants_regulator = Set(payload.wants_regulator);
@@ -339,7 +340,13 @@ impl QuestionnaireService {
         active.has_car = Set(payload.has_car);
         active.car_seats = Set(payload.car_seats);
         active.comments = Set(payload.comments);
-        active.updated_at = Set(Utc::now().naive_utc());
+        
+        // Handle submitted_at based on mark_as_submitted
+        if let Some(mark_submitted) = payload.mark_as_submitted {
+            active.submitted_at = Set(if mark_submitted { Some(now) } else { None });
+        }
+        
+        active.updated_at = Set(now);
 
         let updated = active
             .update(db)
