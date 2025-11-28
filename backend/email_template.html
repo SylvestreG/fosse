@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questionnaire Fosse</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+        .content {
+            background: #f9fafb;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+        }
+        .button {
+            display: inline-block;
+            background: #0ea5e9;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #6b7280;
+            font-size: 12px;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 12px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤿 Fosse USI Plongée</h1>
+    </div>
+    <div class="content">
+        <p>Bonjour <strong>{{PERSON_NAME}}</strong>,</p>
+        
+        <p>Vous êtes inscrit(e) à la session de plongée <strong>{{SESSION_NAME}}</strong> qui se déroulera le {{SESSION_START_DATE}} à <strong>{{SESSION_LOCATION}}</strong>.</p>
+        
+        <p><strong>🚗 Départ d'Issoire :</strong> 19h pour arriver à 20h à la fosse</p>
+        
+        <p>Merci de remplir le questionnaire en cliquant sur le bouton ci-dessous :</p>
+        
+        <div style="text-align: center;">
+            <a href="{{MAGIC_LINK}}" class="button">Remplir le questionnaire</a>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Important :</strong> Ce lien est personnel et expire le {{EXPIRATION_DATE}}. Il ne doit pas être partagé.
+        </div>
+        
+        <p>Dans ce questionnaire, nous vous demanderons :</p>
+        <ul>
+            <li>Si vous êtes encadrant</li>
+            <li>Vos préférences de matériel (nitrox, détendeur, stab)</li>
+            <li>Vos possibilités de covoiturage</li>
+        </ul>
+        
+        <p>À bientôt sous l'eau ! 🌊</p>
+        
+        <p>Cordialement,<br>
+        <strong>L'équipe Fosse USI Plongée</strong></p>
+    </div>
+    <div class="footer">
+        <p>Vous avez reçu cet email car vous êtes inscrit à une session de plongée.<br>
+        Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'organisateur.</p>
+    </div>
+</body>
+</html>
+

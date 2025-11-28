@@ -1,0 +1,28 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8080
+  },
+  "database": {
+    "url": "sqlite::memory:"
+  },
+  "admin": {
+    "emails": [
+      "test@example.com"
+    ]
+  },
+  "google_oauth": {
+    "client_id": "test-client-id.apps.googleusercontent.com",
+    "client_secret": "TEST_CLIENT_SECRET",
+    "redirect_uri": "http://localhost:8080/api/v1/auth/google/callback"
+  },
+  "jwt": {
+    "secret": "TEST_JWT_SECRET_FOR_TESTING_ONLY",
+    "expiration_hours": 24
+  },
+  "magic_link": {
+    "base_url": "http://localhost:8080",
+    "expiration_hours": 72
+  }
+}
+

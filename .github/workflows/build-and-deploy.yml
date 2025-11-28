@@ -1,0 +1,162 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fosse_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Setup Rust
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: stable
+    
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          backend/target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Build frontend
+      working-directory: ./frontend
+      run: npm run build
+    
+    - name: Create config.json for tests
+      working-directory: ./backend
+      run: |
+        cat > config.json << 'EOFCONFIG'
+        {
+          "server": {
+            "host": "127.0.0.1",
+            "port": 8080
+          },
+          "database": {
+            "url": "postgres://postgres:postgres@localhost:5432/fosse_test"
+          },
+          "admin": {
+            "emails": ["test@example.com"]
+          },
+          "google_oauth": {
+            "client_id": "test-client-id.apps.googleusercontent.com",
+            "client_secret": "TEST_CLIENT_SECRET",
+            "redirect_uri": "http://localhost:8080/api/v1/auth/google/callback"
+          },
+          "jwt": {
+            "secret": "TEST_JWT_SECRET_FOR_CI",
+            "expiration_hours": 24
+          },
+          "magic_link": {
+            "base_url": "http://localhost:8080",
+            "expiration_hours": 72
+          }
+        }
+        EOFCONFIG
+    
+    - name: Run backend tests
+      working-directory: ./backend
+      run: cargo test --verbose
+    
+    - name: Build backend (release)
+      working-directory: ./backend
+      run: cargo build --release --verbose
+    
+    - name: Upload backend binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: fosse-backend
+        path: backend/target/release/fosse-backend
+        retention-days: 7
+    
+    - name: Upload frontend dist
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-dist
+        path: frontend/dist/
+        retention-days: 7
+
+  # Job optionnel pour déployer sur votre serveur
+  # Décommentez et configurez les secrets GitHub si vous voulez un déploiement automatique
+  # deploy:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+  #   
+  #   steps:
+  #   - name: Download artifacts
+  #     uses: actions/download-artifact@v4
+  #   
+  #   - name: Deploy to server via SSH
+  #     uses: appleboy/ssh-action@v1.0.0
+  #     with:
+  #       host: ${{ secrets.SERVER_HOST }}
+  #       username: ${{ secrets.SSH_USER }}
+  #       key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #       port: ${{ secrets.SSH_PORT }}
+  #       script: |
+  #         sudo systemctl stop fosse || true
+  #         mkdir -p ~/fosse/frontend
+  #   
+  #   - name: Copy files to server
+  #     uses: appleboy/scp-action@v0.1.4
+  #     with:
+  #       host: ${{ secrets.SERVER_HOST }}
+  #       username: ${{ secrets.SSH_USER }}
+  #       key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #       port: ${{ secrets.SSH_PORT }}
+  #       source: "fosse-backend/fosse-backend,frontend-dist/*"
+  #       target: "~/fosse/"
+  #       strip_components: 1
+  #   
+  #   - name: Restart service
+  #     uses: appleboy/ssh-action@v1.0.0
+  #     with:
+  #       host: ${{ secrets.SERVER_HOST }}
+  #       username: ${{ secrets.SSH_USER }}
+  #       key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #       port: ${{ secrets.SSH_PORT }}
+  #       script: |
+  #         cd ~/fosse
+  #         chmod +x fosse-backend
+  #         sudo systemctl start fosse
+

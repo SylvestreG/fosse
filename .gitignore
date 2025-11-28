@@ -1,0 +1,39 @@
+# Rust
+target/
+**/*.rs.bk
+Cargo.lock
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+backend_debug.log
+backend.log
+
+# Database
+*.db
+*.sqlite
+
+# Configuration files with secrets
+config.json
+!config.example.json
+
+# Documentation files (except README.md)
+*.txt
+*.md
+!README.md
+

@@ -1,0 +1,39 @@
+pub use sea_orm_migration::prelude::*;
+
+mod m20240101_000001_create_sessions;
+mod m20240101_000002_create_people;
+mod m20240101_000003_create_questionnaires;
+mod m20240101_000004_create_email_jobs;
+mod m20240101_000005_create_import_jobs;
+mod m20240101_000006_add_email_content;
+mod m20240101_000007_make_end_date_optional;
+mod m20240101_000008_add_wants_regulator;
+mod m20240101_000009_add_comes_from_issoire;
+mod m20240101_000010_add_user_preferences;
+mod m20240101_000011_remove_session_specific_prefs;
+mod m20240101_000012_recreate_people_clean;
+mod m20240101_000013_ensure_people_structure;
+
+pub struct Migrator;
+
+#[async_trait::async_trait]
+impl MigratorTrait for Migrator {
+    fn migrations() -> Vec<Box<dyn MigrationTrait>> {
+        vec![
+        Box::new(m20240101_000001_create_sessions::Migration),
+        Box::new(m20240101_000002_create_people::Migration),
+        Box::new(m20240101_000003_create_questionnaires::Migration),
+        Box::new(m20240101_000004_create_email_jobs::Migration),
+        Box::new(m20240101_000005_create_import_jobs::Migration),
+        Box::new(m20240101_000006_add_email_content::Migration),
+        Box::new(m20240101_000007_make_end_date_optional::Migration),
+        Box::new(m20240101_000008_add_wants_regulator::Migration),
+        Box::new(m20240101_000009_add_comes_from_issoire::Migration),
+        Box::new(m20240101_000010_add_user_preferences::Migration),
+        Box::new(m20240101_000011_remove_session_specific_prefs::Migration),
+        Box::new(m20240101_000012_recreate_people_clean::Migration),
+        Box::new(m20240101_000013_ensure_people_structure::Migration),
+        ]
+    }
+}
+
