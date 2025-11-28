@@ -5,6 +5,8 @@ pub struct SessionSummary {
     pub total_questionnaires: i64,
     pub submitted_count: i64,
     pub encadrants_count: i64,
+    pub students_count: i64,
+    pub from_issoire_count: i64,
     pub total_bottles: i64,
     pub nitrox_bottles: i64,
     pub air_bottles: i64,
@@ -31,5 +33,7 @@ pub struct ParticipantInfo {
     pub email: String,
     pub magic_link: String,
     pub submitted: bool,
+    pub is_encadrant: bool,
+    pub comes_from_issoire: bool,
 }
 

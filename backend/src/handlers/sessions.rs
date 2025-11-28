@@ -153,6 +153,8 @@ pub async fn get_session_summary(
     let total_questionnaires = questionnaires_list.len() as i64;
     let submitted_count = questionnaires_list.iter().filter(|q| q.submitted_at.is_some()).count() as i64;
     let encadrants_count = questionnaires_list.iter().filter(|q| q.is_encadrant).count() as i64;
+    let students_count = total_questionnaires - encadrants_count;
+    let from_issoire_count = questionnaires_list.iter().filter(|q| q.comes_from_issoire).count() as i64;
     let nitrox_count = questionnaires_list.iter().filter(|q| q.wants_nitrox).count() as i64;
     let second_reg_count = questionnaires_list.iter().filter(|q| q.wants_2nd_reg).count() as i64;
     let stab_count = questionnaires_list.iter().filter(|q| q.wants_stab).count() as i64;
@@ -204,6 +206,8 @@ pub async fn get_session_summary(
                 email: person.email.clone(),
                 magic_link,
                 submitted: q.submitted_at.is_some(),
+                is_encadrant: q.is_encadrant,
+                comes_from_issoire: q.comes_from_issoire,
             });
         }
     }
@@ -212,6 +216,8 @@ pub async fn get_session_summary(
         total_questionnaires,
         submitted_count,
         encadrants_count,
+        students_count,
+        from_issoire_count,
         total_bottles, // Inclut +1 pour le bloc de secours
         nitrox_bottles,
         air_bottles, // Inclut +1 pour le bloc de secours (Air)

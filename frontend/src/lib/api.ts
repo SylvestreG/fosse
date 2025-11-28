@@ -148,12 +148,16 @@ export interface ParticipantInfo {
   email: string
   magic_link: string
   submitted: boolean
+  is_encadrant: boolean
+  comes_from_issoire: boolean
 }
 
 export interface SessionSummary {
   total_questionnaires: number
   submitted_count: number
   encadrants_count: number
+  students_count: number
+  from_issoire_count: number
   total_bottles: number
   nitrox_bottles: number
   air_bottles: number

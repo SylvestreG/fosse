@@ -129,7 +129,7 @@ export default function SummaryPage() {
         <Button onClick={exportCSV}>📥 Exporter CSV</Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatCard
           title="Total Plongeurs"
           value={summary.total_questionnaires}
@@ -137,17 +137,29 @@ export default function SummaryPage() {
           color="blue"
         />
         <StatCard
+          title="Encadrants"
+          value={summary.encadrants_count}
+          icon="🏊"
+          color="purple"
+        />
+        <StatCard
+          title="Élèves"
+          value={summary.students_count}
+          icon="🤿"
+          color="cyan"
+        />
+        <StatCard
+          title="Venant d'Issoire"
+          value={summary.from_issoire_count}
+          icon="🚗"
+          color="green"
+        />
+        <StatCard
           title="Questionnaires Soumis"
           value={`${summary.submitted_count} / ${summary.total_questionnaires}`}
           icon="✅"
           color="green"
           subtitle={summary.total_questionnaires > 0 ? `${Math.round((summary.submitted_count / summary.total_questionnaires) * 100)}%` : '0%'}
-        />
-        <StatCard
-          title="Encadrants"
-          value={summary.encadrants_count}
-          icon="🏊"
-          color="purple"
         />
       </div>
 
@@ -289,13 +301,15 @@ export default function SummaryPage() {
         </div>
       </div>
 
-      {/* Section Participants avec Magic Links */}
-      {summary && summary.participants && summary.participants.length > 0 && (
+      {/* Section Encadrants */}
+      {summary && summary.participants && summary.participants.filter(p => p.is_encadrant).length > 0 && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">🔗 Participants & Magic Links</h2>
+          <h2 className="text-xl font-semibold mb-4">
+            🏊 Encadrants ({summary.participants.filter(p => p.is_encadrant).length})
+          </h2>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-purple-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Nom
@@ -306,13 +320,10 @@ export default function SummaryPage() {
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Statut
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Magic Link
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {summary.participants.map((participant, idx) => (
+                {summary.participants.filter(p => p.is_encadrant).map((participant, idx) => (
                   <tr key={idx} className={participant.submitted ? 'bg-green-50' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
@@ -333,24 +344,56 @@ export default function SummaryPage() {
                         </span>
                       )}
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Section Élèves */}
+      {summary && summary.participants && summary.participants.filter(p => !p.is_encadrant).length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">
+            🤿 Élèves ({summary.participants.filter(p => !p.is_encadrant).length})
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-cyan-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nom
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Statut
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {summary.participants.filter(p => !p.is_encadrant).map((participant, idx) => (
+                  <tr key={idx} className={participant.submitted ? 'bg-green-50' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="text"
-                          value={participant.magic_link}
-                          readOnly
-                          className="flex-1 text-sm text-gray-600 bg-gray-50 border border-gray-300 rounded px-2 py-1 font-mono text-xs"
-                        />
-                        <Button
-                          variant="secondary"
-                          onClick={() => {
-                            navigator.clipboard.writeText(participant.magic_link)
-                            setToast({ message: 'Lien copié !', type: 'success' })
-                          }}
-                        >
-                          📋
-                        </Button>
+                      <div className="text-sm font-medium text-gray-900">
+                        {participant.first_name} {participant.last_name}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">{participant.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      {participant.submitted ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          ✅ Soumis
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          ⏳ En attente
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
