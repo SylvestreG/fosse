@@ -124,15 +124,31 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
     
-    - name: Copy files to server
+    - name: List downloaded artifacts (debug)
+      run: |
+        echo "=== Downloaded artifacts structure ==="
+        ls -laR
+    
+    - name: Copy backend to server
       uses: appleboy/scp-action@v0.1.4
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.SSH_PORT }}
-        source: "fosse-backend/fosse-backend,frontend-dist/*"
+        source: "fosse-backend/fosse-backend"
         target: "/tmp/fosse-deploy/"
+        strip_components: 1
+    
+    - name: Copy frontend to server
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        source: "frontend-dist/*"
+        target: "/tmp/fosse-deploy/frontend/"
         strip_components: 1
     
     - name: Deploy and restart service
@@ -143,18 +159,33 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.SSH_PORT }}
         script: |
+          echo "=== Checking files on server ==="
+          ls -laR /tmp/fosse-deploy/
+          
           # Stop service
           sudo systemctl stop fosse || true
           
           # Deploy backend binary
-          sudo cp /tmp/fosse-deploy/fosse-backend /opt/fosse/bin/fosse-backend
-          sudo chmod +x /opt/fosse/bin/fosse-backend
-          sudo chown fosse:fosse /opt/fosse/bin/fosse-backend
+          if [ -f /tmp/fosse-deploy/fosse-backend ]; then
+            sudo cp /tmp/fosse-deploy/fosse-backend /opt/fosse/bin/fosse-backend
+            sudo chmod +x /opt/fosse/bin/fosse-backend
+            sudo chown fosse:fosse /opt/fosse/bin/fosse-backend
+            echo "✅ Backend deployed"
+          else
+            echo "❌ Backend binary not found"
+            exit 1
+          fi
           
           # Deploy frontend
-          sudo rm -rf /opt/fosse/frontend/*
-          sudo cp -r /tmp/fosse-deploy/frontend-dist/* /opt/fosse/frontend/
-          sudo chown -R fosse:fosse /opt/fosse/frontend
+          if [ -d /tmp/fosse-deploy/frontend ]; then
+            sudo rm -rf /opt/fosse/frontend/*
+            sudo cp -r /tmp/fosse-deploy/frontend/* /opt/fosse/frontend/
+            sudo chown -R fosse:fosse /opt/fosse/frontend
+            echo "✅ Frontend deployed"
+          else
+            echo "❌ Frontend files not found"
+            exit 1
+          fi
           
           # Clean tmp
           rm -rf /tmp/fosse-deploy
