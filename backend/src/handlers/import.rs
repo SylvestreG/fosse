@@ -6,7 +6,6 @@ use axum::{
     Json,
 };
 use sea_orm::DatabaseConnection;
-use serde::Deserialize;
 use std::sync::Arc;
 use uuid::Uuid;
 
