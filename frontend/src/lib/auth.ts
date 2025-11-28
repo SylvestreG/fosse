@@ -41,9 +41,12 @@ export async function initiateGoogleLogin() {
     const response = await authApi.getConfig()
     const clientId = response.data.client_id
     
-    // Utiliser window.location.origin dynamiquement
-    // Fonctionne en dev (localhost:5173 avec Vite HMR) ET en prod (localhost:8080 en mode statique)
-    const redirectUri = `${window.location.origin}/login`
+    // Construire le redirect URI en incluant le base path
+    // En dev: http://localhost:5173/login
+    // En prod: https://www.dive-manager.com/fosse/login
+    const basePath = import.meta.env.BASE_URL || '/'
+    const cleanBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+    const redirectUri = `${window.location.origin}${cleanBasePath}/login`
     const scope = 'email profile'
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
       redirectUri

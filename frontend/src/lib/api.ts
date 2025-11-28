@@ -3,8 +3,17 @@ import axios from 'axios'
 // Utilise toujours un chemin relatif pour l'API
 // En dev avec Vite : proxy vers localhost:8080
 // En prod : backend sert le frontend sur le même port
+// Le base path est automatiquement ajouté selon l'environnement
+const getBaseURL = () => {
+  // En production avec Vite, import.meta.env.BASE_URL contient '/fosse/'
+  // En dev, c'est '/'
+  const basePath = import.meta.env.BASE_URL || '/'
+  const cleanBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+  return `${cleanBasePath}/api/v1`
+}
+
 const api = axios.create({
-  baseURL: '/api/v1',
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -27,9 +36,12 @@ api.interceptors.response.use(
       // Clear all auth data
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth-storage')
-      // Redirect to login
-      if (!window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login'
+      // Redirect to login with base path
+      const basePath = import.meta.env.BASE_URL || '/'
+      const cleanBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+      const loginPath = `${cleanBasePath}/login`
+      if (!window.location.pathname.startsWith(loginPath)) {
+        window.location.href = loginPath
       }
     }
     return Promise.reject(error)
