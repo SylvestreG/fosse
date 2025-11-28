@@ -8,7 +8,7 @@ function App() {
   const { isAuthenticated } = useAuthStore()
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/fosse">
       <Routes>
         <Route path="/login" element={<LoginAdmin />} />
         <Route path="/q/:token" element={<PublicQuestionnaire />} />

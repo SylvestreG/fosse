@@ -115,48 +115,54 @@ jobs:
         path: frontend/dist/
         retention-days: 7
 
-  # Job optionnel pour déployer sur votre serveur
-  # Décommentez et configurez les secrets GitHub si vous voulez un déploiement automatique
-  # deploy:
-  #   needs: build
-  #   runs-on: ubuntu-latest
-  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  #   
-  #   steps:
-  #   - name: Download artifacts
-  #     uses: actions/download-artifact@v4
-  #   
-  #   - name: Deploy to server via SSH
-  #     uses: appleboy/ssh-action@v1.0.0
-  #     with:
-  #       host: ${{ secrets.SERVER_HOST }}
-  #       username: ${{ secrets.SSH_USER }}
-  #       key: ${{ secrets.SSH_PRIVATE_KEY }}
-  #       port: ${{ secrets.SSH_PORT }}
-  #       script: |
-  #         sudo systemctl stop fosse || true
-  #         mkdir -p ~/fosse/frontend
-  #   
-  #   - name: Copy files to server
-  #     uses: appleboy/scp-action@v0.1.4
-  #     with:
-  #       host: ${{ secrets.SERVER_HOST }}
-  #       username: ${{ secrets.SSH_USER }}
-  #       key: ${{ secrets.SSH_PRIVATE_KEY }}
-  #       port: ${{ secrets.SSH_PORT }}
-  #       source: "fosse-backend/fosse-backend,frontend-dist/*"
-  #       target: "~/fosse/"
-  #       strip_components: 1
-  #   
-  #   - name: Restart service
-  #     uses: appleboy/ssh-action@v1.0.0
-  #     with:
-  #       host: ${{ secrets.SERVER_HOST }}
-  #       username: ${{ secrets.SSH_USER }}
-  #       key: ${{ secrets.SSH_PRIVATE_KEY }}
-  #       port: ${{ secrets.SSH_PORT }}
-  #       script: |
-  #         cd ~/fosse
-  #         chmod +x fosse-backend
-  #         sudo systemctl start fosse
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+    
+    - name: Copy files to server
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        source: "fosse-backend/fosse-backend,frontend-dist/*"
+        target: "/tmp/fosse-deploy/"
+        strip_components: 1
+    
+    - name: Deploy and restart service
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          # Stop service
+          sudo systemctl stop fosse || true
+          
+          # Deploy backend binary
+          sudo cp /tmp/fosse-deploy/fosse-backend /opt/fosse/bin/fosse-backend
+          sudo chmod +x /opt/fosse/bin/fosse-backend
+          sudo chown fosse:fosse /opt/fosse/bin/fosse-backend
+          
+          # Deploy frontend
+          sudo rm -rf /opt/fosse/frontend/*
+          sudo cp -r /tmp/fosse-deploy/frontend-dist/* /opt/fosse/frontend/
+          sudo chown -R fosse:fosse /opt/fosse/frontend
+          
+          # Clean tmp
+          rm -rf /tmp/fosse-deploy
+          
+          # Start service
+          sudo systemctl start fosse
+          
+          # Wait and check status
+          sleep 3
+          sudo systemctl status fosse --no-pager
 
