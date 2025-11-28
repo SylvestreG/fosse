@@ -151,6 +151,37 @@ export default function SessionsPage() {
     setToast({ message: 'Lien du récapitulatif copié !', type: 'success' })
   }
 
+  const copyMaterialRequestEmail = () => {
+    if (!selectedSession) return
+    
+    if (!selectedSession.summary_token) {
+      setToast({ message: 'Aucun token de récapitulatif disponible', type: 'error' })
+      return
+    }
+    
+    const basePath = import.meta.env.MODE === 'production' ? '/fosse' : ''
+    const summaryUrl = `${window.location.origin}${basePath}/s/${selectedSession.summary_token}`
+    
+    const date = new Date(selectedSession.start_date)
+    const formattedDate = date.toLocaleDateString('fr-FR', { 
+      weekday: 'long',
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    })
+    
+    const emailContent = `Bonjour,
+
+Je vous contacte pour une demande de matériel pour la session de fosse prévue le ${formattedDate} à ${selectedSession.location}.
+
+Le matériel demandé peut se suivre ici : ${summaryUrl}
+
+Cordialement,`
+    
+    navigator.clipboard.writeText(emailContent)
+    setToast({ message: 'Email de demande de matériel copié !', type: 'success' })
+  }
+
   const handleGenerateMagicLinks = async () => {
     if (!selectedSession) return
     
@@ -268,6 +299,9 @@ export default function SessionsPage() {
             <div className="flex space-x-2">
               <Button variant="secondary" onClick={handleGenerateMagicLinks}>
                 🔗 Générer les liens
+              </Button>
+              <Button variant="secondary" onClick={copyMaterialRequestEmail}>
+                📧 Email matériel
               </Button>
               <Button onClick={() => setShowAddParticipantModal(true)}>
                 ➕ Ajouter un participant
