@@ -98,7 +98,7 @@ export default function PublicSummary() {
         {/* Matériel */}
         <div className="bg-white rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">🛠️ Matériel</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <StatCard title="Détendeurs" value={summary.regulators_count} icon="🫧" color="cyan" subtitle="Inclut secours" />
             <StatCard title="2ème Détendeurs" value={summary.second_reg_count} icon="🔧" color="cyan" />
             <StatCard title="Stabs" value={summary.stab_count} icon="🦺" color="orange" subtitle="Inclut secours" />
@@ -109,6 +109,31 @@ export default function PublicSummary() {
               color="green"
             />
           </div>
+          
+          {/* Stabs par taille */}
+          {summary.stab_sizes.length > 0 && (
+            <div className="border-t pt-4">
+              <h3 className="text-lg font-semibold mb-3 text-gray-700">📏 Stabs par taille</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                {summary.stab_sizes
+                  .sort((a, b) => {
+                    // Met "Secours" en dernier
+                    if (a.size === 'Secours') return 1
+                    if (b.size === 'Secours') return -1
+                    return a.size.localeCompare(b.size)
+                  })
+                  .map((stabSize, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-orange-50 rounded-lg p-3 text-center border border-orange-200"
+                    >
+                      <p className="text-sm font-medium text-gray-700">{stabSize.size}</p>
+                      <p className="text-2xl font-bold text-orange-600 mt-1">{stabSize.count}</p>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Encadrants */}
