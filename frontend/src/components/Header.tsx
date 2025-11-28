@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/lib/auth'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 export default function Header() {
   const { email, name, logout } = useAuthStore()
@@ -17,18 +17,18 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-bold text-primary-600">Fosse</h1>
             <nav className="hidden md:flex space-x-4">
-              <a href="/dashboard" className="text-gray-700 hover:text-primary-600 transition-colors">
+              <Link to="/dashboard" className="text-gray-700 hover:text-primary-600 transition-colors">
                 Tableau de bord
-              </a>
-              <a href="/dashboard/sessions" className="text-gray-700 hover:text-primary-600 transition-colors">
+              </Link>
+              <Link to="/dashboard/sessions" className="text-gray-700 hover:text-primary-600 transition-colors">
                 Sessions
-              </a>
-              <a href="/dashboard/users" className="text-gray-700 hover:text-primary-600 transition-colors">
+              </Link>
+              <Link to="/dashboard/users" className="text-gray-700 hover:text-primary-600 transition-colors">
                 Utilisateurs
-              </a>
-              <a href="/dashboard/emails" className="text-gray-700 hover:text-primary-600 transition-colors">
+              </Link>
+              <Link to="/dashboard/emails" className="text-gray-700 hover:text-primary-600 transition-colors">
                 Emails
-              </a>
+              </Link>
             </nav>
           </div>
           <div className="flex items-center space-x-4">
