@@ -65,12 +65,32 @@ export default function UsersPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {people.map((person) => (
           <div key={person.id} className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-lg font-semibold">{person.first_name} {person.last_name}</h3>
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="text-lg font-semibold">{person.first_name} {person.last_name}</h3>
+              {person.is_instructor && (
+                <span className="text-xs px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full font-semibold">
+                  👨‍🏫 Encadrant
+                </span>
+              )}
+            </div>
             <p className="text-sm text-gray-600">{person.email}</p>
             {person.phone && <p className="text-sm text-gray-600">📞 {person.phone}</p>}
             
+            {person.diving_level_display && (
+              <div className="mt-2">
+                <span className="text-sm font-medium text-blue-700">
+                  🤿 Niveau: {person.diving_level_display}
+                </span>
+                {person.preparing_level && (
+                  <span className="ml-2 text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded">
+                    Prépare {person.preparing_level}
+                  </span>
+                )}
+              </div>
+            )}
+            
             <div className="mt-3 flex flex-wrap gap-1">
-              {person.default_is_encadrant && <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded">Encadrant</span>}
+              {person.default_is_encadrant && <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded">Encadrant (défaut)</span>}
               {person.default_wants_nitrox && <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Nitrox</span>}
               {person.default_wants_stab && person.default_stab_size && <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">Stab {person.default_stab_size}</span>}
             </div>
@@ -125,6 +145,7 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
     last_name: person?.last_name || '',
     email: person?.email || '',
     phone: person?.phone || '',
+    diving_level: person?.diving_level || '',
     default_is_encadrant: person?.default_is_encadrant || false,
     default_wants_regulator: person?.default_wants_regulator !== undefined ? person.default_wants_regulator : true,
     default_wants_nitrox: person?.default_wants_nitrox || false,
@@ -184,6 +205,20 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
           <div>
             <label className="block text-sm font-medium mb-1">Téléphone</label>
             <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border rounded" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Niveau de plongée</label>
+            <input 
+              type="text" 
+              value={formData.diving_level} 
+              onChange={(e) => setFormData({ ...formData, diving_level: e.target.value })} 
+              placeholder="Ex: N2, PA40,PE60, E2, MF1..."
+              className="w-full px-3 py-2 border rounded" 
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Format: Niveaux complets (N1, N2, N3, N4, N5, E2, MF1, MF2) ou compétences séparées par virgule (PA40,PE60)
+            </p>
           </div>
 
           <div className="border-t pt-4">

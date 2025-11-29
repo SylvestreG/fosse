@@ -91,6 +91,17 @@ impl QuestionnaireService {
         // Get session_id from email_job
         let session_id = email_job.session_id;
 
+        let diving_level_display = person.diving_level.as_ref().and_then(|level_str| {
+            crate::models::DiverLevel::from_string(level_str).map(|diver_level| diver_level.display())
+        });
+        let is_instructor = person.diving_level.as_ref()
+            .and_then(|level_str| crate::models::DiverLevel::from_string(level_str))
+            .map(|diver_level| diver_level.is_instructor())
+            .unwrap_or(false);
+        let preparing_level = person.diving_level.as_ref()
+            .and_then(|level_str| crate::models::DiverLevel::from_string(level_str))
+            .and_then(|diver_level| diver_level.preparing_level());
+
         Ok(QuestionnaireTokenData {
             token,
             person: crate::models::PersonResponse {
@@ -105,6 +116,10 @@ impl QuestionnaireService {
                 default_wants_2nd_reg: person.default_wants_2nd_reg,
                 default_wants_stab: person.default_wants_stab,
                 default_stab_size: person.default_stab_size.clone(),
+                diving_level: person.diving_level,
+                diving_level_display,
+                is_instructor,
+                preparing_level,
                 created_at: person.created_at.to_string(),
                 updated_at: person.updated_at.to_string(),
             },

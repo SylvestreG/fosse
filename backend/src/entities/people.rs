@@ -17,6 +17,7 @@ pub struct Model {
     pub default_wants_2nd_reg: bool,
     pub default_wants_stab: bool,
     pub default_stab_size: Option<String>,
+    pub diving_level: Option<String>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

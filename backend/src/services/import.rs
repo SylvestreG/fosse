@@ -156,6 +156,7 @@ impl ImportService {
                 default_wants_2nd_reg: Set(false),
                 default_wants_stab: Set(false),
                 default_stab_size: Set(None),
+                diving_level: Set(None),
                 created_at: Set(now),
                 updated_at: Set(now),
             };

@@ -113,6 +113,10 @@ export interface Person {
   default_wants_2nd_reg: boolean
   default_wants_stab: boolean
   default_stab_size?: string
+  diving_level?: string
+  diving_level_display?: string
+  is_instructor: boolean
+  preparing_level?: string
   created_at: string
   updated_at: string
 }

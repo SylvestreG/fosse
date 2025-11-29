@@ -1,7 +1,7 @@
 use crate::entities::prelude::*;
 use crate::entities::people;
 use crate::errors::AppError;
-use crate::models::{CreatePersonRequest, UpdatePersonRequest, PersonResponse};
+use crate::models::{CreatePersonRequest, UpdatePersonRequest, PersonResponse, DiverLevel};
 use axum::{
     extract::{Path, Query, State},
     Json,
@@ -13,6 +13,28 @@ use serde::Deserialize;
 use std::sync::Arc;
 use uuid::Uuid;
 use validator::Validate;
+
+/// Helper function pour calculer le display du niveau de plongée
+fn compute_diving_level_display(diving_level: &Option<String>) -> Option<String> {
+    diving_level.as_ref().and_then(|level_str| {
+        DiverLevel::from_string(level_str).map(|diver_level| diver_level.display())
+    })
+}
+
+/// Helper function pour vérifier si un plongeur est encadrant
+fn compute_is_instructor(diving_level: &Option<String>) -> bool {
+    diving_level.as_ref()
+        .and_then(|level_str| DiverLevel::from_string(level_str))
+        .map(|diver_level| diver_level.is_instructor())
+        .unwrap_or(false)
+}
+
+/// Helper function pour calculer le niveau préparé
+fn compute_preparing_level(diving_level: &Option<String>) -> Option<String> {
+    diving_level.as_ref()
+        .and_then(|level_str| DiverLevel::from_string(level_str))
+        .and_then(|diver_level| diver_level.preparing_level())
+}
 
 #[derive(Deserialize)]
 pub struct ListPeopleQuery {
@@ -48,20 +70,29 @@ pub async fn list_people(
 
     let response: Vec<PersonResponse> = people_list
         .into_iter()
-        .map(|p| PersonResponse {
-            id: p.id,
-            first_name: p.first_name,
-            last_name: p.last_name,
-            email: p.email,
-            phone: p.phone,
-            default_is_encadrant: p.default_is_encadrant,
-            default_wants_regulator: p.default_wants_regulator,
-            default_wants_nitrox: p.default_wants_nitrox,
-            default_wants_2nd_reg: p.default_wants_2nd_reg,
-            default_wants_stab: p.default_wants_stab,
-            default_stab_size: p.default_stab_size,
-            created_at: p.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
-            updated_at: p.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+        .map(|p| {
+            let diving_level_display = compute_diving_level_display(&p.diving_level);
+            let is_instructor = compute_is_instructor(&p.diving_level);
+            let preparing_level = compute_preparing_level(&p.diving_level);
+            PersonResponse {
+                id: p.id,
+                first_name: p.first_name.clone(),
+                last_name: p.last_name.clone(),
+                email: p.email.clone(),
+                phone: p.phone.clone(),
+                default_is_encadrant: p.default_is_encadrant,
+                default_wants_regulator: p.default_wants_regulator,
+                default_wants_nitrox: p.default_wants_nitrox,
+                default_wants_2nd_reg: p.default_wants_2nd_reg,
+                default_wants_stab: p.default_wants_stab,
+                default_stab_size: p.default_stab_size.clone(),
+                diving_level: p.diving_level,
+                diving_level_display,
+                is_instructor,
+                preparing_level,
+                created_at: p.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+                updated_at: p.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
+            }
         })
         .collect();
 
@@ -78,6 +109,10 @@ pub async fn get_person(
         .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query person".to_string())))?
         .ok_or(AppError::NotFound("Person not found".to_string()))?;
 
+    let diving_level_display = compute_diving_level_display(&person.diving_level);
+    let is_instructor = compute_is_instructor(&person.diving_level);
+    let preparing_level = compute_preparing_level(&person.diving_level);
+
     Ok(Json(PersonResponse {
         id: person.id,
         first_name: person.first_name,
@@ -90,6 +125,10 @@ pub async fn get_person(
         default_wants_2nd_reg: person.default_wants_2nd_reg,
         default_wants_stab: person.default_wants_stab,
         default_stab_size: person.default_stab_size,
+        diving_level: person.diving_level,
+        diving_level_display,
+        is_instructor,
+        preparing_level,
         created_at: person.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         updated_at: person.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
     }))
@@ -116,6 +155,7 @@ pub async fn create_person(
         default_wants_2nd_reg: Set(payload.default_wants_2nd_reg.unwrap_or(false)),
         default_wants_stab: Set(payload.default_wants_stab.unwrap_or(true)),
         default_stab_size: Set(payload.default_stab_size),
+        diving_level: Set(payload.diving_level),
         created_at: Set(now),
         updated_at: Set(now),
     };
@@ -137,6 +177,10 @@ pub async fn create_person(
             AppError::Database(sea_orm::DbErr::Custom(format!("Failed to create person: {}", e)))
         })?;
 
+    let diving_level_display = compute_diving_level_display(&person.diving_level);
+    let is_instructor = compute_is_instructor(&person.diving_level);
+    let preparing_level = compute_preparing_level(&person.diving_level);
+
     Ok(Json(PersonResponse {
         id: person.id,
         first_name: person.first_name,
@@ -149,6 +193,10 @@ pub async fn create_person(
         default_wants_2nd_reg: person.default_wants_2nd_reg,
         default_wants_stab: person.default_wants_stab,
         default_stab_size: person.default_stab_size,
+        diving_level: person.diving_level,
+        diving_level_display,
+        is_instructor,
+        preparing_level,
         created_at: person.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         updated_at: person.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
     }))
@@ -201,6 +249,9 @@ pub async fn update_person(
     if let Some(val) = payload.default_stab_size {
         person.default_stab_size = Set(Some(val));
     }
+    if let Some(val) = payload.diving_level {
+        person.diving_level = Set(Some(val));
+    }
     
     person.updated_at = Set(Utc::now().naive_utc());
 
@@ -221,6 +272,10 @@ pub async fn update_person(
             AppError::Database(sea_orm::DbErr::Custom(format!("Failed to update person: {}", e)))
         })?;
 
+    let diving_level_display = compute_diving_level_display(&updated.diving_level);
+    let is_instructor = compute_is_instructor(&updated.diving_level);
+    let preparing_level = compute_preparing_level(&updated.diving_level);
+
     Ok(Json(PersonResponse {
         id: updated.id,
         first_name: updated.first_name,
@@ -233,6 +288,10 @@ pub async fn update_person(
         default_wants_2nd_reg: updated.default_wants_2nd_reg,
         default_wants_stab: updated.default_wants_stab,
         default_stab_size: updated.default_stab_size,
+        diving_level: updated.diving_level,
+        diving_level_display,
+        is_instructor,
+        preparing_level,
         created_at: updated.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         updated_at: updated.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
     }))

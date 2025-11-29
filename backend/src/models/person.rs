@@ -15,6 +15,10 @@ pub struct PersonResponse {
     pub default_wants_2nd_reg: bool,
     pub default_wants_stab: bool,
     pub default_stab_size: Option<String>,
+    pub diving_level: Option<String>,
+    pub diving_level_display: Option<String>,
+    pub is_instructor: bool,
+    pub preparing_level: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -39,6 +43,7 @@ pub struct CreatePersonRequest {
     pub default_wants_2nd_reg: Option<bool>,
     pub default_wants_stab: Option<bool>,
     pub default_stab_size: Option<String>,
+    pub diving_level: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Validate)]
@@ -61,4 +66,5 @@ pub struct UpdatePersonRequest {
     pub default_wants_2nd_reg: Option<bool>,
     pub default_wants_stab: Option<bool>,
     pub default_stab_size: Option<String>,
+    pub diving_level: Option<String>,
 }
