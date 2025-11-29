@@ -162,7 +162,6 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
     last_name: person?.last_name || '',
     email: person?.email || '',
     phone: person?.phone || '',
-    diving_level: person?.diving_level || '',
     default_is_encadrant: person?.default_is_encadrant || false,
     default_wants_regulator: person?.default_wants_regulator !== undefined ? person.default_wants_regulator : true,
     default_wants_nitrox: person?.default_wants_nitrox || false,
@@ -222,20 +221,6 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
           <div>
             <label className="block text-sm font-medium mb-1">Téléphone</label>
             <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border rounded" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Niveau de plongée</label>
-            <input 
-              type="text" 
-              value={formData.diving_level} 
-              onChange={(e) => setFormData({ ...formData, diving_level: e.target.value })} 
-              placeholder="Ex: N2, PA40,PE60, E2, MF1..."
-              className="w-full px-3 py-2 border rounded" 
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Format: Niveaux complets (N1, N2, N3, N4, N5, E2, MF1, MF2) ou compétences séparées par virgule (PA40,PE60)
-            </p>
           </div>
 
           <div className="border-t pt-4">
@@ -384,6 +369,7 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
   // Handler pour gérer la cascade de niveaux
   const handleLevelChange = (level: string, checked: boolean) => {
     const newLevels = { ...completeLevels }
+    const newCompetencies = { ...competencies }
     
     if (checked) {
       // Si on coche un niveau, cocher tous les niveaux précédents
@@ -391,6 +377,17 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
       for (let i = 0; i <= currentIndex; i++) {
         const prevLevel = levelHierarchy[i] as keyof typeof completeLevels
         newLevels[prevLevel] = true
+      }
+      
+      // Décocher les compétences devenues obsolètes
+      if (level === 'N2' || currentIndex >= levelHierarchy.indexOf('N2')) {
+        newCompetencies.PE40 = false
+        newCompetencies.PA20 = false
+      }
+      if (level === 'N3' || currentIndex >= levelHierarchy.indexOf('N3')) {
+        newCompetencies.PA40 = false
+        newCompetencies.PE60 = false
+        newCompetencies.PA60 = false
       }
     } else {
       // Si on décoche un niveau, décocher tous les niveaux suivants
@@ -402,6 +399,7 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
     }
     
     setCompleteLevels(newLevels)
+    setCompetencies(newCompetencies)
   }
 
   // Handler pour gérer la cascade des compétences N2
@@ -461,10 +459,24 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
         if (checked) levels.push(level)
       })
       
-      // Ajouter les compétences validées
-      Object.entries(competencies).forEach(([comp, checked]) => {
-        if (checked) levels.push(comp)
-      })
+      // Ajouter les compétences validées UNIQUEMENT si le niveau n'est pas déjà validé
+      const hasN2OrHigher = completeLevels.N2 || completeLevels.N3 || completeLevels.N4 || 
+                            completeLevels.N5 || completeLevels.E2 || completeLevels.MF1 || completeLevels.MF2
+      const hasN3OrHigher = completeLevels.N3 || completeLevels.N4 || completeLevels.N5 || 
+                            completeLevels.E2 || completeLevels.MF1 || completeLevels.MF2
+      
+      // Compétences N2 uniquement si N2 pas encore validé
+      if (!hasN2OrHigher) {
+        if (competencies.PE40) levels.push('PE40')
+        if (competencies.PA20) levels.push('PA20')
+      }
+      
+      // Compétences N3 uniquement si N3 pas encore validé
+      if (!hasN3OrHigher) {
+        if (competencies.PA40) levels.push('PA40')
+        if (competencies.PE60) levels.push('PE60')
+        if (competencies.PA60) levels.push('PA60')
+      }
       
       const diving_level = levels.length > 0 ? levels.join(',') : undefined
       
@@ -532,70 +544,74 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
           )}
         </div>
 
-        {/* Compétences N2 */}
-        <div>
-          <h3 className="font-semibold text-lg mb-3 text-gray-900">📚 Compétences N2</h3>
-          <p className="text-sm text-gray-600 mb-3">
-            💡 Cocher PA20 coche automatiquement PE40
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={competencies.PE40} 
-                onChange={(e) => handleN2CompetencyChange('PE40', e.target.checked)}
-                className="w-4 h-4"
-              />
-              <span className="font-medium">PE40</span>
-            </label>
-            <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={competencies.PA20} 
-                onChange={(e) => handleN2CompetencyChange('PA20', e.target.checked)}
-                className="w-4 h-4"
-              />
-              <span className="font-medium">PA20</span>
-            </label>
+        {/* Compétences N2 - Masquer si N2 ou supérieur est validé */}
+        {!completeLevels.N2 && !completeLevels.N3 && !completeLevels.N4 && !completeLevels.N5 && !completeLevels.E2 && !completeLevels.MF1 && !completeLevels.MF2 && (
+          <div>
+            <h3 className="font-semibold text-lg mb-3 text-gray-900">📚 Compétences N2</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              💡 Cocher PA20 coche automatiquement PE40
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={competencies.PE40} 
+                  onChange={(e) => handleN2CompetencyChange('PE40', e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="font-medium">PE40</span>
+              </label>
+              <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={competencies.PA20} 
+                  onChange={(e) => handleN2CompetencyChange('PA20', e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="font-medium">PA20</span>
+              </label>
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Compétences N3 */}
-        <div>
-          <h3 className="font-semibold text-lg mb-3 text-gray-900">📚 Compétences N3</h3>
-          <p className="text-sm text-gray-600 mb-3">
-            💡 Cocher PA60 coche automatiquement PA40 et PE60
-          </p>
-          <div className="grid grid-cols-3 gap-3">
-            <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={competencies.PA40} 
-                onChange={(e) => handleN3CompetencyChange('PA40', e.target.checked)}
-                className="w-4 h-4"
-              />
-              <span className="font-medium">PA40</span>
-            </label>
-            <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={competencies.PE60} 
-                onChange={(e) => handleN3CompetencyChange('PE60', e.target.checked)}
-                className="w-4 h-4"
-              />
-              <span className="font-medium">PE60</span>
-            </label>
-            <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={competencies.PA60} 
-                onChange={(e) => handleN3CompetencyChange('PA60', e.target.checked)}
-                className="w-4 h-4"
-              />
-              <span className="font-medium">PA60</span>
-            </label>
+        {/* Compétences N3 - Masquer si N3 ou supérieur est validé */}
+        {!completeLevels.N3 && !completeLevels.N4 && !completeLevels.N5 && !completeLevels.E2 && !completeLevels.MF1 && !completeLevels.MF2 && (
+          <div>
+            <h3 className="font-semibold text-lg mb-3 text-gray-900">📚 Compétences N3</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              💡 Cocher PA60 coche automatiquement PA40 et PE60
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={competencies.PA40} 
+                  onChange={(e) => handleN3CompetencyChange('PA40', e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="font-medium">PA40</span>
+              </label>
+              <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={competencies.PE60} 
+                  onChange={(e) => handleN3CompetencyChange('PE60', e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="font-medium">PE60</span>
+              </label>
+              <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={competencies.PA60} 
+                  onChange={(e) => handleN3CompetencyChange('PA60', e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="font-medium">PA60</span>
+              </label>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Info calculée en temps réel */}
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
