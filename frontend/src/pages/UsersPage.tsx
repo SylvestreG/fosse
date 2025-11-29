@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { peopleApi, Person } from '@/lib/api'
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
+import Modal from '@/components/Modal'
 
 export default function UsersPage() {
   const [people, setPeople] = useState<Person[]>([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showDivingLevelModal, setShowDivingLevelModal] = useState(false)
   const [editingPerson, setEditingPerson] = useState<Person | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
@@ -99,6 +101,9 @@ export default function UsersPage() {
               <Button size="sm" variant="secondary" onClick={() => { setEditingPerson(person); setShowModal(true) }}>
                 ✏️ Modifier
               </Button>
+              <Button size="sm" variant="secondary" onClick={() => { setEditingPerson(person); setShowDivingLevelModal(true) }}>
+                🤿 Niveau
+              </Button>
               <Button size="sm" variant="secondary" onClick={() => handleDelete(person.id)}>
                 🗑️
               </Button>
@@ -121,6 +126,18 @@ export default function UsersPage() {
             setShowModal(false)
             loadPeople()
             setToast({ message: editingPerson ? 'Utilisateur modifié' : 'Utilisateur créé', type: 'success' })
+          }}
+        />
+      )}
+
+      {showDivingLevelModal && editingPerson && (
+        <DivingLevelModal
+          person={editingPerson}
+          onClose={() => setShowDivingLevelModal(false)}
+          onSuccess={() => {
+            setShowDivingLevelModal(false)
+            loadPeople()
+            setToast({ message: 'Niveau de plongée mis à jour', type: 'success' })
           }}
         />
       )}
@@ -270,6 +287,245 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
         </form>
       </div>
     </div>
+  )
+}
+
+// Modal pour gérer les niveaux de plongée
+interface DivingLevelModalProps {
+  person: Person
+  onClose: () => void
+  onSuccess: () => void
+}
+
+function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  
+  // Parse le niveau actuel
+  const currentLevels = person.diving_level ? person.diving_level.split(',').map(l => l.trim()) : []
+  
+  const [completeLevels, setCompleteLevels] = useState({
+    N1: currentLevels.includes('N1'),
+    N2: currentLevels.includes('N2'),
+    N3: currentLevels.includes('N3'),
+    N4: currentLevels.includes('N4'),
+    N5: currentLevels.includes('N5'),
+    E2: currentLevels.includes('E2'),
+    MF1: currentLevels.includes('MF1'),
+    MF2: currentLevels.includes('MF2'),
+  })
+  
+  const [competencies, setCompetencies] = useState({
+    PE40: currentLevels.includes('PE40'),
+    PA20: currentLevels.includes('PA20'),
+    PA40: currentLevels.includes('PA40'),
+    PE60: currentLevels.includes('PE60'),
+    PA60: currentLevels.includes('PA60'),
+  })
+
+  // Hiérarchie des niveaux
+  const levelHierarchy = ['N1', 'N2', 'N3', 'N4', 'N5', 'E2', 'MF1', 'MF2']
+
+  // Handler pour gérer la cascade de niveaux
+  const handleLevelChange = (level: string, checked: boolean) => {
+    const newLevels = { ...completeLevels }
+    
+    if (checked) {
+      // Si on coche un niveau, cocher tous les niveaux précédents
+      const currentIndex = levelHierarchy.indexOf(level)
+      for (let i = 0; i <= currentIndex; i++) {
+        const prevLevel = levelHierarchy[i] as keyof typeof completeLevels
+        newLevels[prevLevel] = true
+      }
+    } else {
+      // Si on décoche un niveau, décocher tous les niveaux suivants
+      const currentIndex = levelHierarchy.indexOf(level)
+      for (let i = currentIndex; i < levelHierarchy.length; i++) {
+        const nextLevel = levelHierarchy[i] as keyof typeof completeLevels
+        newLevels[nextLevel] = false
+      }
+    }
+    
+    setCompleteLevels(newLevels)
+  }
+
+  // Handler pour gérer la cascade des compétences N2
+  const handleN2CompetencyChange = (comp: 'PE40' | 'PA20', checked: boolean) => {
+    const newCompetencies = { ...competencies }
+    
+    if (checked && comp === 'PA20') {
+      // Si on coche PA20, cocher PE40
+      newCompetencies.PE40 = true
+    }
+    
+    newCompetencies[comp] = checked
+    setCompetencies(newCompetencies)
+  }
+
+  // Handler pour gérer la cascade des compétences N3
+  const handleN3CompetencyChange = (comp: 'PA40' | 'PE60' | 'PA60', checked: boolean) => {
+    const newCompetencies = { ...competencies }
+    
+    if (checked) {
+      if (comp === 'PA60') {
+        // Si on coche PA60, cocher PA40 et PE60
+        newCompetencies.PA40 = true
+        newCompetencies.PE60 = true
+      }
+    }
+    
+    newCompetencies[comp] = checked
+    setCompetencies(newCompetencies)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      // Construire la chaîne diving_level
+      const levels: string[] = []
+      
+      // Ajouter les niveaux complets validés
+      Object.entries(completeLevels).forEach(([level, checked]) => {
+        if (checked) levels.push(level)
+      })
+      
+      // Ajouter les compétences validées
+      Object.entries(competencies).forEach(([comp, checked]) => {
+        if (checked) levels.push(comp)
+      })
+      
+      const diving_level = levels.length > 0 ? levels.join(',') : undefined
+      
+      await peopleApi.update(person.id, { diving_level })
+      onSuccess()
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Erreur')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title={`Niveau de plongée - ${person.first_name} ${person.last_name}`}>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && <div className="bg-red-50 text-red-600 p-3 rounded">{error}</div>}
+        
+        {/* Niveaux complets */}
+        <div>
+          <h3 className="font-semibold text-lg mb-3 text-gray-900">🎓 Niveaux validés</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            💡 Cocher un niveau coche automatiquement tous les niveaux précédents
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {levelHierarchy.map((level) => (
+              <label key={level} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={completeLevels[level as keyof typeof completeLevels]} 
+                  onChange={(e) => handleLevelChange(level, e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="font-medium">{level}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Compétences N2 */}
+        <div>
+          <h3 className="font-semibold text-lg mb-3 text-gray-900">📚 Compétences N2</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            💡 Cocher PA20 coche automatiquement PE40
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={competencies.PE40} 
+                onChange={(e) => handleN2CompetencyChange('PE40', e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="font-medium">PE40</span>
+            </label>
+            <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={competencies.PA20} 
+                onChange={(e) => handleN2CompetencyChange('PA20', e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="font-medium">PA20</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Compétences N3 */}
+        <div>
+          <h3 className="font-semibold text-lg mb-3 text-gray-900">📚 Compétences N3</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            💡 Cocher PA60 coche automatiquement PA40 et PE60
+          </p>
+          <div className="grid grid-cols-3 gap-3">
+            <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={competencies.PA40} 
+                onChange={(e) => handleN3CompetencyChange('PA40', e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="font-medium">PA40</span>
+            </label>
+            <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={competencies.PE60} 
+                onChange={(e) => handleN3CompetencyChange('PE60', e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="font-medium">PE60</span>
+            </label>
+            <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={competencies.PA60} 
+                onChange={(e) => handleN3CompetencyChange('PA60', e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span className="font-medium">PA60</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Info calculée */}
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-800">
+            <strong>Niveau calculé :</strong> {person.diving_level_display || 'Aucun niveau'}
+          </p>
+          {person.preparing_level && (
+            <p className="text-sm text-blue-800 mt-1">
+              <strong>Prépare :</strong> {person.preparing_level}
+            </p>
+          )}
+          {person.is_instructor && (
+            <p className="text-sm text-blue-800 mt-1">
+              ✅ <strong>Encadrant</strong> (E2 ou supérieur)
+            </p>
+          )}
+        </div>
+
+        <div className="flex justify-end space-x-3 pt-4 border-t">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? 'En cours...' : 'Enregistrer'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 
