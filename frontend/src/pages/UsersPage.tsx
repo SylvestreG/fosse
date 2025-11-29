@@ -79,14 +79,18 @@ export default function UsersPage() {
             {person.phone && <p className="text-sm text-gray-600">📞 {person.phone}</p>}
             
             {person.diving_level_display && (
-              <div className="mt-2">
-                <span className="text-sm font-medium text-blue-700">
-                  🤿 Niveau: {person.diving_level_display}
-                </span>
-                {person.preparing_level && (
-                  <span className="ml-2 text-xs px-2 py-1 bg-amber-100 text-amber-800 rounded">
-                    Prépare {person.preparing_level}
+              <div className="mt-2 space-y-1">
+                <div>
+                  <span className="text-sm font-medium text-blue-700">
+                    🤿 Niveau: {person.diving_level_display}
                   </span>
+                </div>
+                {person.preparing_level && (
+                  <div>
+                    <span className="text-xs text-amber-700">
+                      🎯 Prépare: <span className="font-medium">{person.preparing_level}</span>
+                    </span>
+                  </div>
                 )}
               </div>
             )}
