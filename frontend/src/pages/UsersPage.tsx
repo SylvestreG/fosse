@@ -303,16 +303,8 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
     MF1: currentLevels.includes('MF1'),
     MF2: currentLevels.includes('MF2'),
   })
-  
-  const [competencies, setCompetencies] = useState({
-    PE40: currentLevels.includes('PE40'),
-    PA20: currentLevels.includes('PA20'),
-    PA40: currentLevels.includes('PA40'),
-    PE60: currentLevels.includes('PE60'),
-    PA60: currentLevels.includes('PA60'),
-  })
 
-  const [isPreparingLevel, setIsPreparingLevel] = useState(!!person.preparing_level)
+  const [preparingLevel, setPreparingLevel] = useState(person.preparing_level || '')
 
   // Hiérarchie des niveaux
   const levelHierarchy = ['N1', 'N2', 'N3', 'N4', 'N5', 'E2', 'MF1', 'MF2']
@@ -330,7 +322,6 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
   // Handler pour gérer la cascade de niveaux
   const handleLevelChange = (level: string, checked: boolean) => {
     const newLevels = { ...completeLevels }
-    const newCompetencies = { ...competencies }
     
     if (checked) {
       // Si on coche un niveau, cocher tous les niveaux précédents
@@ -338,19 +329,6 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
       for (let i = 0; i <= currentIndex; i++) {
         const prevLevel = levelHierarchy[i] as keyof typeof completeLevels
         newLevels[prevLevel] = true
-      }
-      
-      // Décocher les compétences devenues obsolètes (uniquement si on prépare un niveau)
-      if (isPreparingLevel) {
-        if (level === 'N2' || currentIndex >= levelHierarchy.indexOf('N2')) {
-          newCompetencies.PE40 = false
-          newCompetencies.PA20 = false
-        }
-        if (level === 'N3' || currentIndex >= levelHierarchy.indexOf('N3')) {
-          newCompetencies.PA40 = false
-          newCompetencies.PE60 = false
-          newCompetencies.PA60 = false
-        }
       }
     } else {
       // Si on décoche un niveau, décocher tous les niveaux suivants
@@ -362,36 +340,29 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
     }
     
     setCompleteLevels(newLevels)
-    setCompetencies(newCompetencies)
   }
 
-  // Handler pour gérer la cascade des compétences N2
-  const handleN2CompetencyChange = (comp: 'PE40' | 'PA20', checked: boolean) => {
-    const newCompetencies = { ...competencies }
+  // Obtenir les options de niveau préparé selon le niveau actuel
+  const getPreparingOptions = () => {
+    const highest = getHighestLevel()
+    const options = [{ value: '', label: 'Aucun' }]
     
-    if (checked && comp === 'PA20') {
-      // Si on coche PA20, cocher PE40
-      newCompetencies.PE40 = true
+    if (!highest) {
+      // Pas de niveau → peut préparer N1 ou N2
+      options.push({ value: 'N1', label: 'N1' })
+      options.push({ value: 'N2', label: 'N2' })
+      return options
     }
-    
-    newCompetencies[comp] = checked
-    setCompetencies(newCompetencies)
-  }
 
-  // Handler pour gérer la cascade des compétences N3
-  const handleN3CompetencyChange = (comp: 'PA40' | 'PE60' | 'PA60', checked: boolean) => {
-    const newCompetencies = { ...competencies }
+    const currentIndex = levelHierarchy.indexOf(highest)
     
-    if (checked) {
-      if (comp === 'PA60') {
-        // Si on coche PA60, cocher PA40 et PE60
-        newCompetencies.PA40 = true
-        newCompetencies.PE60 = true
-      }
+    // Ajouter le niveau suivant s'il existe
+    if (currentIndex < levelHierarchy.length - 1) {
+      const nextLevel = levelHierarchy[currentIndex + 1]
+      options.push({ value: nextLevel, label: nextLevel })
     }
     
-    newCompetencies[comp] = checked
-    setCompetencies(newCompetencies)
+    return options
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -400,35 +371,15 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
     setError('')
 
     try {
-      // Construire la chaîne diving_level
+      // Construire la chaîne diving_level avec les niveaux validés
       const levels: string[] = []
-      
-      // Ajouter les niveaux complets validés
       Object.entries(completeLevels).forEach(([level, checked]) => {
         if (checked) levels.push(level)
       })
       
-      // Ajouter les compétences validées UNIQUEMENT si :
-      // 1. La personne prépare un niveau (isPreparingLevel = true)
-      // 2. Le niveau correspondant n'est pas déjà validé
-      if (isPreparingLevel) {
-        const hasN2OrHigher = completeLevels.N2 || completeLevels.N3 || completeLevels.N4 || 
-                              completeLevels.N5 || completeLevels.E2 || completeLevels.MF1 || completeLevels.MF2
-        const hasN3OrHigher = completeLevels.N3 || completeLevels.N4 || completeLevels.N5 || 
-                              completeLevels.E2 || completeLevels.MF1 || completeLevels.MF2
-        
-        // Compétences N2 uniquement si N2 pas encore validé
-        if (!hasN2OrHigher) {
-          if (competencies.PE40) levels.push('PE40')
-          if (competencies.PA20) levels.push('PA20')
-        }
-        
-        // Compétences N3 uniquement si N3 pas encore validé
-        if (!hasN3OrHigher) {
-          if (competencies.PA40) levels.push('PA40')
-          if (competencies.PE60) levels.push('PE60')
-          if (competencies.PA60) levels.push('PA60')
-        }
+      // Ajouter le niveau préparé s'il y en a un
+      if (preparingLevel) {
+        levels.push(`preparing_${preparingLevel}`)
       }
       
       const diving_level = levels.length > 0 ? levels.join(',') : undefined
@@ -470,177 +421,34 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
 
         {/* Niveau en préparation */}
         <div className="border-t pt-4">
-          <div className="mb-4">
-            <label className="flex items-center space-x-3 p-4 border-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={isPreparingLevel} 
-                onChange={(e) => {
-                  const newValue = e.target.checked
-                  setIsPreparingLevel(newValue)
-                  // Si on décoche, nettoyer les compétences
-                  if (!newValue) {
-                    setCompetencies({
-                      PE40: false,
-                      PA20: false,
-                      PA40: false,
-                      PE60: false,
-                      PA60: false,
-                    })
-                  }
-                }}
-                className="w-5 h-5"
-              />
-              <div>
-                <span className="font-medium text-gray-900">🎯 Prépare actuellement un niveau</span>
-                <p className="text-sm text-gray-600 mt-1">
-                  Cochez si cette personne est en cours de formation pour un niveau supérieur
-                </p>
-              </div>
-            </label>
-          </div>
-          
-          {isPreparingLevel && (
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h4 className="font-semibold text-blue-900 mb-2">💡 Le niveau préparé sera détecté automatiquement</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• <strong>Pour préparer N2 :</strong> Cochez les compétences PE40, PA20 ci-dessous</li>
-                <li>• <strong>Pour préparer N3 :</strong> Cochez les compétences PA40, PE60, PA60 ci-dessous</li>
-                <li>• Le niveau affiché sera calculé automatiquement selon les compétences cochées</li>
-              </ul>
-            </div>
-          )}
+          <h3 className="font-semibold text-lg mb-3 text-gray-900">🎯 Niveau en préparation (optionnel)</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            Sélectionnez le niveau que cette personne prépare actuellement
+          </p>
+          <select
+            value={preparingLevel}
+            onChange={(e) => setPreparingLevel(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {getPreparingOptions().map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Compétences N2 - Afficher seulement si on prépare un niveau ET N2 pas validé */}
-        {isPreparingLevel && !completeLevels.N2 && !completeLevels.N3 && !completeLevels.N4 && !completeLevels.N5 && !completeLevels.E2 && !completeLevels.MF1 && !completeLevels.MF2 && (
-          <div>
-            <h3 className="font-semibold text-lg mb-3 text-gray-900">📚 Compétences N2</h3>
-            <p className="text-sm text-gray-600 mb-3">
-              💡 Cocher PA20 coche automatiquement PE40
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={competencies.PE40} 
-                  onChange={(e) => handleN2CompetencyChange('PE40', e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span className="font-medium">PE40</span>
-              </label>
-              <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={competencies.PA20} 
-                  onChange={(e) => handleN2CompetencyChange('PA20', e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span className="font-medium">PA20</span>
-              </label>
-            </div>
-          </div>
-        )}
-
-        {/* Compétences N3 - Afficher seulement si on prépare un niveau ET N3 pas validé */}
-        {isPreparingLevel && !completeLevels.N3 && !completeLevels.N4 && !completeLevels.N5 && !completeLevels.E2 && !completeLevels.MF1 && !completeLevels.MF2 && (
-          <div>
-            <h3 className="font-semibold text-lg mb-3 text-gray-900">📚 Compétences N3</h3>
-            <p className="text-sm text-gray-600 mb-3">
-              💡 Cocher PA60 coche automatiquement PA40 et PE60
-            </p>
-            <div className="grid grid-cols-3 gap-3">
-              <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={competencies.PA40} 
-                  onChange={(e) => handleN3CompetencyChange('PA40', e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span className="font-medium">PA40</span>
-              </label>
-              <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={competencies.PE60} 
-                  onChange={(e) => handleN3CompetencyChange('PE60', e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span className="font-medium">PE60</span>
-              </label>
-              <label className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={competencies.PA60} 
-                  onChange={(e) => handleN3CompetencyChange('PA60', e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span className="font-medium">PA60</span>
-              </label>
-            </div>
-          </div>
-        )}
-
-        {/* Info calculée en temps réel */}
+        {/* Aperçu du résultat */}
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <h4 className="font-semibold text-blue-900 mb-2">📊 Aperçu du résultat</h4>
           <p className="text-sm text-blue-800">
-            <strong>Niveau affiché :</strong> 
-            {(() => {
-              const validatedLevels = Object.entries(completeLevels)
-                .filter(([_, checked]) => checked)
-                .map(([level, _]) => level)
-              const validatedComps = Object.entries(competencies)
-                .filter(([_, checked]) => checked)
-                .map(([comp, _]) => comp)
-              
-              if (validatedLevels.length === 0 && validatedComps.length === 0) {
-                return ' Aucun niveau'
-              }
-              
-              // Si toutes les compétences N2 sont validées
-              if (validatedComps.includes('PE40') && validatedComps.includes('PA20')) {
-                return ' N2'
-              }
-              // Si toutes les compétences N3 sont validées
-              if (validatedComps.includes('PA40') && validatedComps.includes('PE60') && validatedComps.includes('PA60')) {
-                return ' N3'
-              }
-              // Sinon afficher les compétences en cours
-              if (validatedComps.length > 0) {
-                return ' ' + validatedComps.join(', ')
-              }
-              
-              // Sinon le niveau le plus haut
-              const highest = getHighestLevel()
-              return highest ? ' ' + highest : ' Aucun niveau'
-            })()}
+            <strong>Niveau validé :</strong> {getHighestLevel() || 'Aucun'}
           </p>
-          {(() => {
-            const validatedComps = Object.entries(competencies)
-              .filter(([_, checked]) => checked)
-              .map(([comp, _]) => comp)
-            const hasN2Comps = validatedComps.some(c => ['PE40', 'PA20'].includes(c))
-            const hasN3Comps = validatedComps.some(c => ['PA40', 'PE60', 'PA60'].includes(c))
-            const isN2Complete = validatedComps.includes('PE40') && validatedComps.includes('PA20')
-            const isN3Complete = validatedComps.includes('PA40') && validatedComps.includes('PE60') && validatedComps.includes('PA60')
-            
-            if (hasN2Comps && !isN2Complete) {
-              return (
-                <p className="text-sm text-amber-700 mt-1">
-                  <strong>Prépare :</strong> N2
-                </p>
-              )
-            }
-            if (hasN3Comps && !isN3Complete) {
-              return (
-                <p className="text-sm text-amber-700 mt-1">
-                  <strong>Prépare :</strong> N3
-                </p>
-              )
-            }
-            return null
-          })()}
+          {preparingLevel && (
+            <p className="text-sm text-amber-700 mt-1">
+              <strong>🎯 Prépare :</strong> {preparingLevel}
+            </p>
+          )}
           {(() => {
             const highest = getHighestLevel()
             const isInstructor = highest && levelHierarchy.indexOf(highest) >= levelHierarchy.indexOf('E2')

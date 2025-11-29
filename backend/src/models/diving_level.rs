@@ -61,16 +61,8 @@ impl DivingLevel {
         }
     }
     
-    /// Retourne toutes les compétences requises pour valider ce niveau
-    pub fn required_competencies(&self) -> Vec<DivingLevel> {
-        match self {
-            DivingLevel::N2 => vec![DivingLevel::PE40, DivingLevel::PA20],
-            DivingLevel::N3 => vec![DivingLevel::PA40, DivingLevel::PE60, DivingLevel::PA60],
-            _ => vec![],
-        }
-    }
-    
-    /// Vérifie si c'est une compétence intermédiaire
+    /// Vérifie si c'est une compétence intermédiaire (gardé pour compatibilité)
+    #[allow(dead_code)]
     pub fn is_competency(&self) -> bool {
         matches!(
             self,
@@ -135,22 +127,39 @@ impl DiverLevel {
         }
     }
     
-    /// Crée un DiverLevel depuis une chaîne formatée (ex: "N2", "PA40,PE60", "N3")
+    /// Crée un DiverLevel depuis une chaîne formatée (ex: "N2", "N2,preparing_N3", "N3")
     pub fn from_string(s: &str) -> Option<Self> {
         if s.is_empty() {
             return Some(DiverLevel::new());
         }
         
-        let levels: Vec<DivingLevel> = s
-            .split(',')
-            .filter_map(|part| DivingLevel::from_str(part.trim()))
-            .collect();
+        let mut diver_level = DiverLevel::new();
         
-        if levels.is_empty() {
-            None
-        } else {
-            Some(DiverLevel { validated: levels })
+        for part in s.split(',') {
+            let trimmed = part.trim();
+            
+            // Ignorer les préfixes "preparing_" - on les parse séparément
+            if trimmed.starts_with("preparing_") {
+                continue;
+            }
+            
+            if let Some(level) = DivingLevel::from_str(trimmed) {
+                diver_level.validated.push(level);
+            }
         }
+        
+        Some(diver_level)
+    }
+    
+    /// Extrait le niveau préparé depuis une chaîne (cherche "preparing_N2", "preparing_N3", etc.)
+    pub fn extract_preparing_level(s: &str) -> Option<String> {
+        for part in s.split(',') {
+            let trimmed = part.trim();
+            if let Some(level) = trimmed.strip_prefix("preparing_") {
+                return Some(level.to_string());
+            }
+        }
+        None
     }
     
     /// Ajoute un niveau ou une compétence validée
@@ -189,98 +198,17 @@ impl DiverLevel {
     }
     
     /// Retourne le niveau que le plongeur prépare (s'il en prépare un)
+    #[allow(dead_code)]
     pub fn preparing_level(&self) -> Option<String> {
-        // Vérifier si on a des compétences N3 en cours
-        let n3_competencies: Vec<&DivingLevel> = self.validated
-            .iter()
-            .filter(|l| matches!(l, DivingLevel::PA40 | DivingLevel::PE60 | DivingLevel::PA60))
-            .collect();
-        
-        if !n3_competencies.is_empty() && !self.is_level_complete(&DivingLevel::N3) {
-            return Some("N3".to_string());
-        }
-        
-        // Vérifier si on a des compétences N2 en cours
-        let n2_competencies: Vec<&DivingLevel> = self.validated
-            .iter()
-            .filter(|l| matches!(l, DivingLevel::PE40 | DivingLevel::PA20))
-            .collect();
-        
-        if !n2_competencies.is_empty() && !self.is_level_complete(&DivingLevel::N2) {
-            return Some("N2".to_string());
-        }
-        
+        // Cette méthode n'est plus utilisée - on utilise extract_preparing_level() à la place
         None
     }
     
-    /// Vérifie si un niveau est complètement validé (toutes les compétences)
-    fn is_level_complete(&self, level: &DivingLevel) -> bool {
-        let required = level.required_competencies();
-        if required.is_empty() {
-            return self.validated.contains(level);
-        }
-        
-        required.iter().all(|comp| self.validated.contains(comp))
-    }
     
-    /// Calcule la représentation affichée du niveau actuel selon la logique métier
+    /// Calcule la représentation affichée du niveau actuel
     /// 
-    /// Règles:
-    /// - Si toutes les compétences d'un niveau sont validées, on affiche le niveau complet
-    /// - Sinon, on affiche les compétences en cours
-    /// - On garde toujours le niveau le plus haut
+    /// Retourne simplement le niveau le plus haut validé
     pub fn display(&self) -> String {
-        // Vérifier si on a des niveaux N2 ou N3 en cours de validation
-        let n3_competencies: Vec<&DivingLevel> = self.validated
-            .iter()
-            .filter(|l| matches!(l, DivingLevel::PA40 | DivingLevel::PE60 | DivingLevel::PA60))
-            .collect();
-        
-        let n2_competencies: Vec<&DivingLevel> = self.validated
-            .iter()
-            .filter(|l| matches!(l, DivingLevel::PE40 | DivingLevel::PA20))
-            .collect();
-        
-        // Vérifier si N3 est complet
-        if self.is_level_complete(&DivingLevel::N3) {
-            return "N3".to_string();
-        }
-        
-        // Vérifier si N2 est complet
-        if self.is_level_complete(&DivingLevel::N2) {
-            // Si on a des compétences N3, on les affiche
-            if !n3_competencies.is_empty() {
-                let mut comps: Vec<String> = n3_competencies
-                    .iter()
-                    .map(|c| c.to_string())
-                    .collect();
-                comps.sort();
-                return comps.join(", ");
-            }
-            return "N2".to_string();
-        }
-        
-        // Si on a des compétences N3, les afficher
-        if !n3_competencies.is_empty() {
-            let mut comps: Vec<String> = n3_competencies
-                .iter()
-                .map(|c| c.to_string())
-                .collect();
-            comps.sort();
-            return comps.join(", ");
-        }
-        
-        // Si on a des compétences N2, les afficher
-        if !n2_competencies.is_empty() {
-            let mut comps: Vec<String> = n2_competencies
-                .iter()
-                .map(|c| c.to_string())
-                .collect();
-            comps.sort();
-            return comps.join(", ");
-        }
-        
-        // Sinon, afficher le niveau complet le plus haut
         if let Some(highest) = self.highest_complete_level() {
             return highest.to_string();
         }
@@ -314,68 +242,19 @@ mod tests {
     use super::*;
     
     #[test]
-    fn test_n2_with_all_competencies_becomes_n2() {
-        let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::N1);
-        level.add_validated(DivingLevel::PE40);
-        level.add_validated(DivingLevel::PA20);
-        
-        assert_eq!(level.display(), "N2");
-    }
-    
-    #[test]
-    fn test_n2_with_partial_competencies_shows_competencies() {
-        let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::N1);
-        level.add_validated(DivingLevel::PE40);
-        
-        assert_eq!(level.display(), "PE40");
-    }
-    
-    #[test]
-    fn test_n2_preparing_n3_with_partial_shows_competencies() {
-        let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::N1);
-        level.add_validated(DivingLevel::PE40);
-        level.add_validated(DivingLevel::PA20);
-        level.add_validated(DivingLevel::PA40);
-        level.add_validated(DivingLevel::PE60);
-        
-        let display = level.display();
-        assert!(display.contains("PA40"));
-        assert!(display.contains("PE60"));
-    }
-    
-    #[test]
-    fn test_n2_preparing_n3_complete_becomes_n3() {
-        let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::N1);
-        level.add_validated(DivingLevel::PE40);
-        level.add_validated(DivingLevel::PA20);
-        level.add_validated(DivingLevel::PA40);
-        level.add_validated(DivingLevel::PE60);
-        level.add_validated(DivingLevel::PA60);
-        
-        assert_eq!(level.display(), "N3");
-    }
-    
-    #[test]
     fn test_hierarchy_ordering() {
         assert!(DivingLevel::N2.hierarchy() > DivingLevel::N1.hierarchy());
         assert!(DivingLevel::N3.hierarchy() > DivingLevel::N2.hierarchy());
+        assert!(DivingLevel::E2.hierarchy() > DivingLevel::N5.hierarchy());
         assert!(DivingLevel::MF2.hierarchy() > DivingLevel::MF1.hierarchy());
-        assert!(DivingLevel::PE40.hierarchy() > DivingLevel::N1.hierarchy());
-        assert!(DivingLevel::PE40.hierarchy() < DivingLevel::N2.hierarchy());
     }
     
     #[test]
     fn test_from_string() {
         assert_eq!(DivingLevel::from_str("N1"), Some(DivingLevel::N1));
         assert_eq!(DivingLevel::from_str("n2"), Some(DivingLevel::N2));
-        assert_eq!(DivingLevel::from_str("PE40"), Some(DivingLevel::PE40));
         assert_eq!(DivingLevel::from_str("E2"), Some(DivingLevel::E2));
         assert_eq!(DivingLevel::from_str("MF1"), Some(DivingLevel::MF1));
-        assert_eq!(DivingLevel::from_str("pa60"), Some(DivingLevel::PA60));
         assert_eq!(DivingLevel::from_str("invalid"), None);
     }
     
@@ -403,26 +282,6 @@ mod tests {
     }
     
     #[test]
-    fn test_preparing_level() {
-        // N2 avec compétences en cours
-        let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::N1);
-        level.add_validated(DivingLevel::PE40);
-        assert_eq!(level.preparing_level(), Some("N2".to_string()));
-        
-        // N2 complet préparant N3
-        let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::N2);
-        level.add_validated(DivingLevel::PA40);
-        assert_eq!(level.preparing_level(), Some("N3".to_string()));
-        
-        // N3 complet, ne prépare rien
-        let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::N3);
-        assert_eq!(level.preparing_level(), None);
-    }
-    
-    #[test]
     fn test_e2_level() {
         let mut level = DiverLevel::new();
         level.add_validated(DivingLevel::E2);
@@ -435,35 +294,19 @@ mod tests {
         let level = DiverLevel::from_string("N2").unwrap();
         assert_eq!(level.display(), "N2");
         
-        let level = DiverLevel::from_string("PA40,PE60").unwrap();
-        let display = level.display();
-        assert!(display.contains("PA40"));
-        assert!(display.contains("PE60"));
+        let level = DiverLevel::from_string("N1,N2,N3").unwrap();
+        assert_eq!(level.display(), "N3");
         
         let level = DiverLevel::from_string("").unwrap();
         assert_eq!(level.display(), "Aucun niveau");
     }
     
     #[test]
-    fn test_complete_n3_scenario() {
-        // Scénario: N2 qui prépare N3
-        let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::N2);
-        assert_eq!(level.display(), "N2");
-        
-        // Valide PA40
-        level.add_validated(DivingLevel::PA40);
-        assert_eq!(level.display(), "PA40");
-        
-        // Valide PE60
-        level.add_validated(DivingLevel::PE60);
-        let display = level.display();
-        assert!(display.contains("PA40"));
-        assert!(display.contains("PE60"));
-        
-        // Valide PA60 -> devient N3
-        level.add_validated(DivingLevel::PA60);
-        assert_eq!(level.display(), "N3");
+    fn test_extract_preparing_level() {
+        assert_eq!(DiverLevel::extract_preparing_level("N2,preparing_N3"), Some("N3".to_string()));
+        assert_eq!(DiverLevel::extract_preparing_level("N1,preparing_N2"), Some("N2".to_string()));
+        assert_eq!(DiverLevel::extract_preparing_level("N2"), None);
+        assert_eq!(DiverLevel::extract_preparing_level(""), None);
     }
     
     #[test]
@@ -485,19 +328,6 @@ mod tests {
         let mut level = DiverLevel::new();
         level.add_validated(DivingLevel::MF1);
         assert_eq!(level.display(), "MF1");
-    }
-    
-    #[test]
-    fn test_to_string_conversion() {
-        let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::N2);
-        level.add_validated(DivingLevel::PA40);
-        level.add_validated(DivingLevel::PE60);
-        
-        let str_repr = level.to_string();
-        assert!(str_repr.contains("N2"));
-        assert!(str_repr.contains("PA40"));
-        assert!(str_repr.contains("PE60"));
     }
 }
 

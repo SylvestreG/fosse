@@ -99,8 +99,7 @@ impl QuestionnaireService {
             .map(|diver_level| diver_level.is_instructor())
             .unwrap_or(false);
         let preparing_level = person.diving_level.as_ref()
-            .and_then(|level_str| crate::models::DiverLevel::from_string(level_str))
-            .and_then(|diver_level| diver_level.preparing_level());
+            .and_then(|level_str| crate::models::DiverLevel::extract_preparing_level(level_str));
 
         Ok(QuestionnaireTokenData {
             token,

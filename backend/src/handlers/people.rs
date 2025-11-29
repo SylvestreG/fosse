@@ -32,8 +32,7 @@ fn compute_is_instructor(diving_level: &Option<String>) -> bool {
 /// Helper function pour calculer le niveau préparé
 fn compute_preparing_level(diving_level: &Option<String>) -> Option<String> {
     diving_level.as_ref()
-        .and_then(|level_str| DiverLevel::from_string(level_str))
-        .and_then(|diver_level| diver_level.preparing_level())
+        .and_then(|level_str| DiverLevel::extract_preparing_level(level_str))
 }
 
 #[derive(Deserialize)]
