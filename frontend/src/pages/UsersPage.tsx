@@ -312,7 +312,7 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
     PA60: currentLevels.includes('PA60'),
   })
 
-  const [preparingLevel, setPreparingLevel] = useState('')
+  const [isPreparingLevel, setIsPreparingLevel] = useState(!!person.preparing_level)
 
   // Hiérarchie des niveaux
   const levelHierarchy = ['N1', 'N2', 'N3', 'N4', 'N5', 'E2', 'MF1', 'MF2']
@@ -325,49 +325,6 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
       }
     }
     return null
-  }
-
-  // Obtenir les options de niveau préparé selon le niveau actuel
-  const getPreparingOptions = () => {
-    const highest = getHighestLevel()
-    const options = [{ value: '', label: 'Aucun' }]
-    
-    if (!highest) {
-      // Pas de niveau → peut préparer N1 ou N2
-      options.push({ value: 'N1', label: 'N1' })
-      options.push({ value: 'N2', label: 'N2 (avec compétences)' })
-      return options
-    }
-
-    const currentIndex = levelHierarchy.indexOf(highest)
-    
-    // Ajouter le niveau suivant
-    if (currentIndex < levelHierarchy.length - 1) {
-      const nextLevel = levelHierarchy[currentIndex + 1]
-      
-      // Si le niveau suivant est N2, proposer les compétences N2
-      if (nextLevel === 'N2') {
-        options.push({ value: 'N2', label: 'N2 (PE40, PA20)' })
-      }
-      // Si le niveau suivant est N3, proposer les compétences N3
-      else if (nextLevel === 'N3') {
-        options.push({ value: 'N3', label: 'N3 (PA40, PE60, PA60)' })
-      }
-      else {
-        options.push({ value: nextLevel, label: nextLevel })
-      }
-    }
-
-    // Si on a N1, on peut préparer N2 avec compétences
-    if (highest === 'N1') {
-      // Déjà ajouté ci-dessus
-    }
-    // Si on a N2, on peut préparer N3 avec compétences
-    else if (highest === 'N2') {
-      // Déjà ajouté ci-dessus
-    }
-    
-    return options
   }
 
   // Handler pour gérer la cascade de niveaux
@@ -383,15 +340,17 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
         newLevels[prevLevel] = true
       }
       
-      // Décocher les compétences devenues obsolètes
-      if (level === 'N2' || currentIndex >= levelHierarchy.indexOf('N2')) {
-        newCompetencies.PE40 = false
-        newCompetencies.PA20 = false
-      }
-      if (level === 'N3' || currentIndex >= levelHierarchy.indexOf('N3')) {
-        newCompetencies.PA40 = false
-        newCompetencies.PE60 = false
-        newCompetencies.PA60 = false
+      // Décocher les compétences devenues obsolètes (uniquement si on prépare un niveau)
+      if (isPreparingLevel) {
+        if (level === 'N2' || currentIndex >= levelHierarchy.indexOf('N2')) {
+          newCompetencies.PE40 = false
+          newCompetencies.PA20 = false
+        }
+        if (level === 'N3' || currentIndex >= levelHierarchy.indexOf('N3')) {
+          newCompetencies.PA40 = false
+          newCompetencies.PE60 = false
+          newCompetencies.PA60 = false
+        }
       }
     } else {
       // Si on décoche un niveau, décocher tous les niveaux suivants
@@ -435,20 +394,6 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
     setCompetencies(newCompetencies)
   }
 
-  // Handler pour le changement de niveau préparé
-  const handlePreparingLevelChange = (value: string) => {
-    setPreparingLevel(value)
-    
-    // Si on sélectionne N2, suggérer de cocher les compétences N2
-    if (value === 'N2') {
-      // On ne force pas, on laisse l'utilisateur choisir
-    }
-    // Si on sélectionne N3, suggérer de cocher les compétences N3
-    else if (value === 'N3') {
-      // On ne force pas, on laisse l'utilisateur choisir
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -463,23 +408,27 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
         if (checked) levels.push(level)
       })
       
-      // Ajouter les compétences validées UNIQUEMENT si le niveau n'est pas déjà validé
-      const hasN2OrHigher = completeLevels.N2 || completeLevels.N3 || completeLevels.N4 || 
-                            completeLevels.N5 || completeLevels.E2 || completeLevels.MF1 || completeLevels.MF2
-      const hasN3OrHigher = completeLevels.N3 || completeLevels.N4 || completeLevels.N5 || 
-                            completeLevels.E2 || completeLevels.MF1 || completeLevels.MF2
-      
-      // Compétences N2 uniquement si N2 pas encore validé
-      if (!hasN2OrHigher) {
-        if (competencies.PE40) levels.push('PE40')
-        if (competencies.PA20) levels.push('PA20')
-      }
-      
-      // Compétences N3 uniquement si N3 pas encore validé
-      if (!hasN3OrHigher) {
-        if (competencies.PA40) levels.push('PA40')
-        if (competencies.PE60) levels.push('PE60')
-        if (competencies.PA60) levels.push('PA60')
+      // Ajouter les compétences validées UNIQUEMENT si :
+      // 1. La personne prépare un niveau (isPreparingLevel = true)
+      // 2. Le niveau correspondant n'est pas déjà validé
+      if (isPreparingLevel) {
+        const hasN2OrHigher = completeLevels.N2 || completeLevels.N3 || completeLevels.N4 || 
+                              completeLevels.N5 || completeLevels.E2 || completeLevels.MF1 || completeLevels.MF2
+        const hasN3OrHigher = completeLevels.N3 || completeLevels.N4 || completeLevels.N5 || 
+                              completeLevels.E2 || completeLevels.MF1 || completeLevels.MF2
+        
+        // Compétences N2 uniquement si N2 pas encore validé
+        if (!hasN2OrHigher) {
+          if (competencies.PE40) levels.push('PE40')
+          if (competencies.PA20) levels.push('PA20')
+        }
+        
+        // Compétences N3 uniquement si N3 pas encore validé
+        if (!hasN3OrHigher) {
+          if (competencies.PA40) levels.push('PA40')
+          if (competencies.PE60) levels.push('PE60')
+          if (competencies.PA60) levels.push('PA60')
+        }
       }
       
       const diving_level = levels.length > 0 ? levels.join(',') : undefined
@@ -519,37 +468,52 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
           </div>
         </div>
 
-        {/* Niveau préparé */}
+        {/* Niveau en préparation */}
         <div className="border-t pt-4">
-          <h3 className="font-semibold text-lg mb-3 text-gray-900">🎯 Niveau en préparation</h3>
-          <p className="text-sm text-gray-600 mb-3">
-            Sélectionnez le niveau que cette personne prépare actuellement
-          </p>
-          <select
-            value={preparingLevel}
-            onChange={(e) => handlePreparingLevelChange(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {getPreparingOptions().map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          {preparingLevel === 'N2' && (
-            <p className="text-sm text-amber-600 mt-2">
-              💡 Cochez les compétences N2 ci-dessous (PE40, PA20)
-            </p>
-          )}
-          {preparingLevel === 'N3' && (
-            <p className="text-sm text-amber-600 mt-2">
-              💡 Cochez les compétences N3 ci-dessous (PA40, PE60, PA60)
-            </p>
+          <div className="mb-4">
+            <label className="flex items-center space-x-3 p-4 border-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={isPreparingLevel} 
+                onChange={(e) => {
+                  const newValue = e.target.checked
+                  setIsPreparingLevel(newValue)
+                  // Si on décoche, nettoyer les compétences
+                  if (!newValue) {
+                    setCompetencies({
+                      PE40: false,
+                      PA20: false,
+                      PA40: false,
+                      PE60: false,
+                      PA60: false,
+                    })
+                  }
+                }}
+                className="w-5 h-5"
+              />
+              <div>
+                <span className="font-medium text-gray-900">🎯 Prépare actuellement un niveau</span>
+                <p className="text-sm text-gray-600 mt-1">
+                  Cochez si cette personne est en cours de formation pour un niveau supérieur
+                </p>
+              </div>
+            </label>
+          </div>
+          
+          {isPreparingLevel && (
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-900 mb-2">💡 Le niveau préparé sera détecté automatiquement</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• <strong>Pour préparer N2 :</strong> Cochez les compétences PE40, PA20 ci-dessous</li>
+                <li>• <strong>Pour préparer N3 :</strong> Cochez les compétences PA40, PE60, PA60 ci-dessous</li>
+                <li>• Le niveau affiché sera calculé automatiquement selon les compétences cochées</li>
+              </ul>
+            </div>
           )}
         </div>
 
-        {/* Compétences N2 - Masquer si N2 ou supérieur est validé */}
-        {!completeLevels.N2 && !completeLevels.N3 && !completeLevels.N4 && !completeLevels.N5 && !completeLevels.E2 && !completeLevels.MF1 && !completeLevels.MF2 && (
+        {/* Compétences N2 - Afficher seulement si on prépare un niveau ET N2 pas validé */}
+        {isPreparingLevel && !completeLevels.N2 && !completeLevels.N3 && !completeLevels.N4 && !completeLevels.N5 && !completeLevels.E2 && !completeLevels.MF1 && !completeLevels.MF2 && (
           <div>
             <h3 className="font-semibold text-lg mb-3 text-gray-900">📚 Compétences N2</h3>
             <p className="text-sm text-gray-600 mb-3">
@@ -578,8 +542,8 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
           </div>
         )}
 
-        {/* Compétences N3 - Masquer si N3 ou supérieur est validé */}
-        {!completeLevels.N3 && !completeLevels.N4 && !completeLevels.N5 && !completeLevels.E2 && !completeLevels.MF1 && !completeLevels.MF2 && (
+        {/* Compétences N3 - Afficher seulement si on prépare un niveau ET N3 pas validé */}
+        {isPreparingLevel && !completeLevels.N3 && !completeLevels.N4 && !completeLevels.N5 && !completeLevels.E2 && !completeLevels.MF1 && !completeLevels.MF2 && (
           <div>
             <h3 className="font-semibold text-lg mb-3 text-gray-900">📚 Compétences N3</h3>
             <p className="text-sm text-gray-600 mb-3">
