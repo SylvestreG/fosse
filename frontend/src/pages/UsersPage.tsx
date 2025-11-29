@@ -323,8 +323,63 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
     PA60: currentLevels.includes('PA60'),
   })
 
+  const [preparingLevel, setPreparingLevel] = useState('')
+
   // Hiérarchie des niveaux
   const levelHierarchy = ['N1', 'N2', 'N3', 'N4', 'N5', 'E2', 'MF1', 'MF2']
+
+  // Calculer le niveau le plus haut validé
+  const getHighestLevel = () => {
+    for (let i = levelHierarchy.length - 1; i >= 0; i--) {
+      if (completeLevels[levelHierarchy[i] as keyof typeof completeLevels]) {
+        return levelHierarchy[i]
+      }
+    }
+    return null
+  }
+
+  // Obtenir les options de niveau préparé selon le niveau actuel
+  const getPreparingOptions = () => {
+    const highest = getHighestLevel()
+    const options = [{ value: '', label: 'Aucun' }]
+    
+    if (!highest) {
+      // Pas de niveau → peut préparer N1 ou N2
+      options.push({ value: 'N1', label: 'N1' })
+      options.push({ value: 'N2', label: 'N2 (avec compétences)' })
+      return options
+    }
+
+    const currentIndex = levelHierarchy.indexOf(highest)
+    
+    // Ajouter le niveau suivant
+    if (currentIndex < levelHierarchy.length - 1) {
+      const nextLevel = levelHierarchy[currentIndex + 1]
+      
+      // Si le niveau suivant est N2, proposer les compétences N2
+      if (nextLevel === 'N2') {
+        options.push({ value: 'N2', label: 'N2 (PE40, PA20)' })
+      }
+      // Si le niveau suivant est N3, proposer les compétences N3
+      else if (nextLevel === 'N3') {
+        options.push({ value: 'N3', label: 'N3 (PA40, PE60, PA60)' })
+      }
+      else {
+        options.push({ value: nextLevel, label: nextLevel })
+      }
+    }
+
+    // Si on a N1, on peut préparer N2 avec compétences
+    if (highest === 'N1') {
+      // Déjà ajouté ci-dessus
+    }
+    // Si on a N2, on peut préparer N3 avec compétences
+    else if (highest === 'N2') {
+      // Déjà ajouté ci-dessus
+    }
+    
+    return options
+  }
 
   // Handler pour gérer la cascade de niveaux
   const handleLevelChange = (level: string, checked: boolean) => {
@@ -376,6 +431,20 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
     
     newCompetencies[comp] = checked
     setCompetencies(newCompetencies)
+  }
+
+  // Handler pour le changement de niveau préparé
+  const handlePreparingLevelChange = (value: string) => {
+    setPreparingLevel(value)
+    
+    // Si on sélectionne N2, suggérer de cocher les compétences N2
+    if (value === 'N2') {
+      // On ne force pas, on laisse l'utilisateur choisir
+    }
+    // Si on sélectionne N3, suggérer de cocher les compétences N3
+    else if (value === 'N3') {
+      // On ne force pas, on laisse l'utilisateur choisir
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -432,6 +501,35 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
               </label>
             ))}
           </div>
+        </div>
+
+        {/* Niveau préparé */}
+        <div className="border-t pt-4">
+          <h3 className="font-semibold text-lg mb-3 text-gray-900">🎯 Niveau en préparation</h3>
+          <p className="text-sm text-gray-600 mb-3">
+            Sélectionnez le niveau que cette personne prépare actuellement
+          </p>
+          <select
+            value={preparingLevel}
+            onChange={(e) => handlePreparingLevelChange(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {getPreparingOptions().map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          {preparingLevel === 'N2' && (
+            <p className="text-sm text-amber-600 mt-2">
+              💡 Cochez les compétences N2 ci-dessous (PE40, PA20)
+            </p>
+          )}
+          {preparingLevel === 'N3' && (
+            <p className="text-sm text-amber-600 mt-2">
+              💡 Cochez les compétences N3 ci-dessous (PA40, PE60, PA60)
+            </p>
+          )}
         </div>
 
         {/* Compétences N2 */}
@@ -499,21 +597,78 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
           </div>
         </div>
 
-        {/* Info calculée */}
+        {/* Info calculée en temps réel */}
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h4 className="font-semibold text-blue-900 mb-2">📊 Aperçu du résultat</h4>
           <p className="text-sm text-blue-800">
-            <strong>Niveau calculé :</strong> {person.diving_level_display || 'Aucun niveau'}
+            <strong>Niveau affiché :</strong> 
+            {(() => {
+              const validatedLevels = Object.entries(completeLevels)
+                .filter(([_, checked]) => checked)
+                .map(([level, _]) => level)
+              const validatedComps = Object.entries(competencies)
+                .filter(([_, checked]) => checked)
+                .map(([comp, _]) => comp)
+              
+              if (validatedLevels.length === 0 && validatedComps.length === 0) {
+                return ' Aucun niveau'
+              }
+              
+              // Si toutes les compétences N2 sont validées
+              if (validatedComps.includes('PE40') && validatedComps.includes('PA20')) {
+                return ' N2'
+              }
+              // Si toutes les compétences N3 sont validées
+              if (validatedComps.includes('PA40') && validatedComps.includes('PE60') && validatedComps.includes('PA60')) {
+                return ' N3'
+              }
+              // Sinon afficher les compétences en cours
+              if (validatedComps.length > 0) {
+                return ' ' + validatedComps.join(', ')
+              }
+              
+              // Sinon le niveau le plus haut
+              const highest = getHighestLevel()
+              return highest ? ' ' + highest : ' Aucun niveau'
+            })()}
           </p>
-          {person.preparing_level && (
-            <p className="text-sm text-blue-800 mt-1">
-              <strong>Prépare :</strong> {person.preparing_level}
-            </p>
-          )}
-          {person.is_instructor && (
-            <p className="text-sm text-blue-800 mt-1">
-              ✅ <strong>Encadrant</strong> (E2 ou supérieur)
-            </p>
-          )}
+          {(() => {
+            const validatedComps = Object.entries(competencies)
+              .filter(([_, checked]) => checked)
+              .map(([comp, _]) => comp)
+            const hasN2Comps = validatedComps.some(c => ['PE40', 'PA20'].includes(c))
+            const hasN3Comps = validatedComps.some(c => ['PA40', 'PE60', 'PA60'].includes(c))
+            const isN2Complete = validatedComps.includes('PE40') && validatedComps.includes('PA20')
+            const isN3Complete = validatedComps.includes('PA40') && validatedComps.includes('PE60') && validatedComps.includes('PA60')
+            
+            if (hasN2Comps && !isN2Complete) {
+              return (
+                <p className="text-sm text-amber-700 mt-1">
+                  <strong>Prépare :</strong> N2
+                </p>
+              )
+            }
+            if (hasN3Comps && !isN3Complete) {
+              return (
+                <p className="text-sm text-amber-700 mt-1">
+                  <strong>Prépare :</strong> N3
+                </p>
+              )
+            }
+            return null
+          })()}
+          {(() => {
+            const highest = getHighestLevel()
+            const isInstructor = highest && levelHierarchy.indexOf(highest) >= levelHierarchy.indexOf('E2')
+            if (isInstructor) {
+              return (
+                <p className="text-sm text-green-700 mt-1">
+                  ✅ <strong>Encadrant</strong> (E2 ou supérieur)
+                </p>
+              )
+            }
+            return null
+          })()}
         </div>
 
         <div className="flex justify-end space-x-3 pt-4 border-t">
