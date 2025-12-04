@@ -22,6 +22,8 @@ export default function Dashboard() {
   const { impersonating, isAdmin: storeIsAdmin, canValidateCompetencies } = useAuthStore()
   // Admin view = admin ET pas en train d'impersonnifier
   const isAdmin = storeIsAdmin && !impersonating
+  
+  console.log('Dashboard render:', { storeIsAdmin, impersonating: !!impersonating, canValidateCompetencies, isAdmin })
 
   return (
     <div className={`min-h-screen bg-gray-50 ${impersonating ? 'ring-4 ring-red-500 ring-inset' : ''}`}>

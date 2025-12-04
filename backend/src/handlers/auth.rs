@@ -31,7 +31,19 @@ pub async fn get_oauth_config(
 }
 
 /// Niveaux qui permettent de valider des compétences (encadrants)
-const VALIDATOR_LEVELS: &[&str] = &["E2", "MF1", "MF2", "N4", "N5"];
+const VALIDATOR_LEVELS: &[&str] = &["E2", "E3", "E4", "MF1", "MF2"];
+
+/// Vérifie si un utilisateur peut valider des compétences basé sur son niveau de plongée
+/// Le diving_level peut être une liste séparée par des virgules (ex: "N1,N2,N3,N4,N5,E2")
+fn can_validate_from_diving_level(diving_level: Option<&String>) -> bool {
+    diving_level
+        .map(|levels| {
+            levels.split(',')
+                .map(|l| l.trim())
+                .any(|level| VALIDATOR_LEVELS.contains(&level))
+        })
+        .unwrap_or(false)
+}
 
 pub async fn google_callback(
     State(state): State<AuthState>,
@@ -61,10 +73,9 @@ pub async fn google_callback(
     }
     
     // Vérifier si l'utilisateur peut valider des compétences (basé sur son niveau de plongée)
-    let can_validate_competencies = is_admin || person.as_ref()
-        .and_then(|p| p.diving_level.as_ref())
-        .map(|level| VALIDATOR_LEVELS.contains(&level.as_str()))
-        .unwrap_or(false);
+    let can_validate_competencies = is_admin || can_validate_from_diving_level(
+        person.as_ref().and_then(|p| p.diving_level.as_ref())
+    );
     
     // Générer la réponse d'authentification
     let response = state.auth_service.generate_auth_response(
@@ -104,10 +115,14 @@ pub async fn impersonate_user(
         .ok_or(AppError::NotFound("Utilisateur non trouvé".to_string()))?;
     
     // Vérifier si l'utilisateur impersonnifié peut valider des compétences
-    let can_validate_competencies = target_user.diving_level
-        .as_ref()
-        .map(|level| VALIDATOR_LEVELS.contains(&level.as_str()))
-        .unwrap_or(false);
+    let can_validate_competencies = can_validate_from_diving_level(target_user.diving_level.as_ref());
+    
+    tracing::info!(
+        "Impersonating {} - diving_level: {:?}, can_validate: {}",
+        target_user.email,
+        target_user.diving_level,
+        can_validate_competencies
+    );
     
     // Générer le token d'impersonification
     let response = state.auth_service.generate_impersonation_token(

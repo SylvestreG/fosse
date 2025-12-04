@@ -773,9 +773,14 @@ pub async fn create_skill_validation(
         .map_err(|_| AppError::Database(DbErr::Custom("Query failed".to_string())))?
         .ok_or(AppError::NotFound("Acquis non trouvé".to_string()))?;
 
-    // Get the validator (current user)
+    // Get the validator - use impersonated user if impersonating
+    let validator_email = auth.claims.impersonating
+        .as_ref()
+        .map(|imp| imp.user_email.as_str())
+        .unwrap_or(&auth.claims.email);
+    
     let validator = People::find()
-        .filter(people::Column::Email.eq(&auth.claims.email))
+        .filter(people::Column::Email.eq(validator_email))
         .one(db.as_ref())
         .await
         .map_err(|_| AppError::Database(DbErr::Custom("Query failed".to_string())))?
@@ -845,6 +850,27 @@ pub async fn create_skill_validation(
         .one(db.as_ref())
         .await
         .map_err(|e| AppError::Database(DbErr::Custom(format!("Query failed: {}", e))))?;
+
+    // Check if trying to go backwards - only admins (not impersonating) can do this
+    if let Some(ref existing_validation) = existing {
+        let current_stage = ValidationStages::find_by_id(existing_validation.stage_id)
+            .one(db.as_ref())
+            .await
+            .map_err(|_| AppError::Database(DbErr::Custom("Query failed".to_string())))?;
+        
+        if let Some(current_stage) = current_stage {
+            // Check if new stage is lower than current
+            if stage.sort_order < current_stage.sort_order {
+                // Only allow if admin AND not impersonating
+                let is_real_admin = auth.claims.is_admin && auth.claims.impersonating.is_none();
+                if !is_real_admin {
+                    return Err(AppError::Forbidden(
+                        "Vous ne pouvez pas revenir en arrière sur une étape de validation. Seuls les administrateurs peuvent le faire.".to_string()
+                    ));
+                }
+            }
+        }
+    }
 
     let validation = if let Some(existing) = existing {
         // Update existing

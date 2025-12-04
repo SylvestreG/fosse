@@ -8,12 +8,18 @@ import {
   ValidationStage,
   CompetencyHierarchy,
 } from '@/lib/api'
+import { useAuthStore } from '@/lib/auth'
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
+import Modal from '@/components/Modal'
 
 export default function StudentCompetencesPage() {
   const { studentId } = useParams<{ studentId: string }>()
   const navigate = useNavigate()
+  
+  // Auth state - only real admins (not impersonating) can go backwards
+  const { isAdmin, impersonating } = useAuthStore()
+  const isRealAdmin = isAdmin && !impersonating
   
   const [student, setStudent] = useState<Person | null>(null)
   const [stages, setStages] = useState<ValidationStage[]>([])
@@ -28,6 +34,14 @@ export default function StudentCompetencesPage() {
   // Domaines/modules dépliés
   const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set())
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
+  
+  // Confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    skillId: string
+    skillName: string
+    stageId: string
+    stageName: string
+  } | null>(null)
 
   useEffect(() => {
     if (studentId) {
@@ -132,21 +146,79 @@ export default function StudentCompetencesPage() {
     }
   }
 
-  const handleQuickValidate = async (skillId: string, stageId: string) => {
-    if (!student) return
+  // Get current stage sort order for a skill
+  const getCurrentStageSortOrder = (skillId: string): number => {
+    if (!progress) return -1
+    for (const domain of progress.domains) {
+      for (const module of domain.modules) {
+        const skill = module.skills.find(s => s.id === skillId)
+        if (skill?.validation) {
+          const currentStage = stages.find(s => s.id === skill.validation!.stage_id)
+          return currentStage?.sort_order ?? -1
+        }
+      }
+    }
+    return -1
+  }
+
+  // Check if we can move to a specific stage (only forward, unless real admin)
+  const canMoveToStage = (skillId: string, targetStage: ValidationStage): boolean => {
+    if (isRealAdmin) return true // Real admins can do anything
+    const currentSortOrder = getCurrentStageSortOrder(skillId)
+    return targetStage.sort_order >= currentSortOrder
+  }
+
+  // Show confirmation before validation
+  const requestValidation = (skillId: string, skillName: string, stageId: string) => {
+    const stage = stages.find(s => s.id === stageId)
+    if (!stage) return
+    
+    setConfirmDialog({
+      skillId,
+      skillName,
+      stageId,
+      stageName: stage.name
+    })
+  }
+
+  // Execute the validation after confirmation
+  const confirmValidation = async () => {
+    if (!confirmDialog || !student) return
     
     try {
       await skillValidationsApi.create({
         person_id: student.id,
-        skill_id: skillId,
-        stage_id: stageId,
+        skill_id: confirmDialog.skillId,
+        stage_id: confirmDialog.stageId,
       })
       setToast({ message: 'Compétence mise à jour', type: 'success' })
+      setConfirmDialog(null)
       await loadData()
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error:', error)
-      setToast({ message: 'Erreur', type: 'error' })
+      const message = error instanceof Error ? error.message : 'Erreur lors de la validation'
+      setToast({ message, type: 'error' })
+      setConfirmDialog(null)
     }
+  }
+
+  const handleQuickValidate = async (skillId: string, skillName: string, stageId: string) => {
+    if (!student) return
+    
+    // Check if we can move to this stage
+    const targetStage = stages.find(s => s.id === stageId)
+    if (!targetStage) return
+    
+    if (!canMoveToStage(skillId, targetStage)) {
+      setToast({ 
+        message: 'Vous ne pouvez pas revenir en arrière sur une étape de validation', 
+        type: 'error' 
+      })
+      return
+    }
+    
+    // Show confirmation dialog
+    requestValidation(skillId, skillName, stageId)
   }
 
   if (loading) {
@@ -371,11 +443,14 @@ export default function StudentCompetencesPage() {
                                     {stages.map(stage => {
                                       const isCurrentStage = currentStage?.stage_id === stage.id
                                       const isPending = pending?.stageId === stage.id
+                                      const canSelect = canMoveToStage(skill.id, stage)
                                       
                                       return (
                                         <button
                                           key={stage.id}
+                                          disabled={!canSelect}
                                           onClick={() => {
+                                            if (!canSelect) return
                                             if (pending) {
                                               // Annuler si on clique sur la même
                                               if (isPending) {
@@ -384,18 +459,22 @@ export default function StudentCompetencesPage() {
                                                 handleStageChange(skill.id, stage.id)
                                               }
                                             } else {
-                                              // Validation directe
-                                              handleQuickValidate(skill.id, stage.id)
+                                              // Validation directe avec confirmation
+                                              handleQuickValidate(skill.id, skill.name, stage.id)
                                             }
                                           }}
                                           className={`
                                             w-8 h-8 rounded-full flex items-center justify-center text-sm
-                                            transition-all transform hover:scale-110
+                                            transition-all transform
+                                            ${!canSelect 
+                                              ? 'opacity-20 cursor-not-allowed' 
+                                              : 'hover:scale-110'
+                                            }
                                             ${isCurrentStage 
                                               ? 'ring-2 ring-offset-2' 
                                               : isPending
                                                 ? 'ring-2 ring-offset-1 ring-blue-500 scale-110'
-                                                : 'opacity-40 hover:opacity-100'
+                                                : canSelect ? 'opacity-40 hover:opacity-100' : ''
                                             }
                                           `}
                                           style={{ 
@@ -403,7 +482,7 @@ export default function StudentCompetencesPage() {
                                             color: stage.color,
                                             borderColor: stage.color
                                           }}
-                                          title={`${stage.name}${isCurrentStage ? ' (actuel)' : ''}`}
+                                          title={`${stage.name}${isCurrentStage ? ' (actuel)' : ''}${!canSelect ? ' - Non accessible' : ''}`}
                                         >
                                           {stage.icon}
                                         </button>
@@ -427,6 +506,57 @@ export default function StudentCompetencesPage() {
 
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
+
+      {/* Confirmation Dialog */}
+      {confirmDialog && (
+        <Modal
+          isOpen={true}
+          onClose={() => setConfirmDialog(null)}
+          title="⚠️ Confirmation de validation"
+        >
+          <div className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="text-amber-800 font-medium">
+                ⚠️ Attention : cette action est irréversible !
+              </p>
+              <p className="text-amber-700 text-sm mt-1">
+                {isRealAdmin 
+                  ? "En tant qu'administrateur, vous pouvez modifier ce choix plus tard."
+                  : "Une fois validée, vous ne pourrez plus revenir en arrière sur cette étape."}
+              </p>
+            </div>
+            
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-gray-600">
+                Vous êtes sur le point de valider :
+              </p>
+              <p className="font-semibold text-gray-900 mt-2">
+                📋 {confirmDialog.skillName}
+              </p>
+              <p className="text-gray-600 mt-2">
+                Vers l'étape :
+              </p>
+              <p className="font-semibold text-blue-600 mt-1">
+                ✓ {confirmDialog.stageName}
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                variant="secondary"
+                onClick={() => setConfirmDialog(null)}
+              >
+                Annuler
+              </Button>
+              <Button
+                onClick={confirmValidation}
+              >
+                Oui, valider
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   )
