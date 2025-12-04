@@ -19,9 +19,9 @@ import GroupsPage from './GroupsPage'
 import { useAuthStore } from '@/lib/auth'
 
 export default function Dashboard() {
-  const { impersonating, isAdminView, canValidate } = useAuthStore()
-  const isAdmin = isAdminView()
-  const canValidateCompetencies = canValidate()
+  const { impersonating, isAdmin: storeIsAdmin, canValidateCompetencies } = useAuthStore()
+  // Admin view = admin ET pas en train d'impersonnifier
+  const isAdmin = storeIsAdmin && !impersonating
 
   return (
     <div className={`min-h-screen bg-gray-50 ${impersonating ? 'ring-4 ring-red-500 ring-inset' : ''}`}>
