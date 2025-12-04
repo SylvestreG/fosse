@@ -4,14 +4,24 @@ import {
   peopleApi,
   validationStagesApi, 
   skillValidationsApi,
+  sessionsApi,
+  questionnairesApi,
   Person, 
   ValidationStage,
   CompetencyHierarchy,
+  Session,
 } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth'
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
 import Modal from '@/components/Modal'
+
+interface StudentStats {
+  totalSessions: number
+  attendedSessions: number
+  lastSessionDate: string | null
+  lastSessionName: string | null
+}
 
 export default function StudentCompetencesPage() {
   const { studentId } = useParams<{ studentId: string }>()
@@ -24,6 +34,7 @@ export default function StudentCompetencesPage() {
   const [student, setStudent] = useState<Person | null>(null)
   const [stages, setStages] = useState<ValidationStage[]>([])
   const [progress, setProgress] = useState<CompetencyHierarchy | null>(null)
+  const [studentStats, setStudentStats] = useState<StudentStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   
@@ -54,9 +65,10 @@ export default function StudentCompetencesPage() {
     
     try {
       setLoading(true)
-      const [peopleRes, stagesRes] = await Promise.all([
+      const [peopleRes, stagesRes, sessionsRes] = await Promise.all([
         peopleApi.list(),
         validationStagesApi.list(),
+        sessionsApi.list(),
       ])
       
       const foundStudent = peopleRes.data.find(p => p.id === studentId)
@@ -67,6 +79,36 @@ export default function StudentCompetencesPage() {
       
       setStudent(foundStudent)
       setStages(stagesRes.data)
+      
+      // Charger les stats de participation aux fosses
+      const sessions = sessionsRes.data.sort((a, b) => 
+        new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+      )
+      
+      let attendedCount = 0
+      let lastAttendedSession: Session | null = null
+      
+      for (const session of sessions) {
+        try {
+          const questRes = await questionnairesApi.list(session.id)
+          const hasAttended = questRes.data.some(q => q.person_id === studentId)
+          if (hasAttended) {
+            attendedCount++
+            if (!lastAttendedSession) {
+              lastAttendedSession = session
+            }
+          }
+        } catch {
+          // Ignorer les erreurs
+        }
+      }
+      
+      setStudentStats({
+        totalSessions: sessions.length,
+        attendedSessions: attendedCount,
+        lastSessionDate: lastAttendedSession?.start_date || null,
+        lastSessionName: lastAttendedSession?.name || null,
+      })
       
       // Charger la progression
       const level = foundStudent.preparing_level || foundStudent.diving_level_display
@@ -275,6 +317,69 @@ export default function StudentCompetencesPage() {
           </Button>
         )}
       </div>
+
+      {/* Statistiques de l'élève */}
+      {studentStats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white rounded-xl shadow p-4 border-l-4 border-blue-500">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <span className="text-2xl">🏊</span>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-gray-900">{studentStats.attendedSessions}</div>
+                <div className="text-sm text-gray-500">Fosses effectuées</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow p-4 border-l-4 border-green-500">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <span className="text-2xl">✅</span>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {progress?.domains.reduce((sum, d) => sum + d.progress.validated, 0) || 0}
+                </div>
+                <div className="text-sm text-gray-500">Compétences validées</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow p-4 border-l-4 border-amber-500">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <span className="text-2xl">🔄</span>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {progress?.domains.reduce((sum, d) => sum + d.progress.in_progress, 0) || 0}
+                </div>
+                <div className="text-sm text-gray-500">En cours</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow p-4 border-l-4 border-purple-500">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <span className="text-2xl">📅</span>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-900 truncate" title={studentStats.lastSessionName || undefined}>
+                  {studentStats.lastSessionName || 'Aucune'}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {studentStats.lastSessionDate 
+                    ? new Date(studentStats.lastSessionDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+                    : 'Dernière fosse'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Progression globale */}
       <div className="bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl p-6 text-white">
