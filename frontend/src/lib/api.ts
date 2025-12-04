@@ -163,7 +163,7 @@ export const authApi = {
   googleCallback: (code: string) =>
     api.post<AuthResponseData>('/auth/google/callback', { code }),
   impersonate: (userId: string) =>
-    api.post<{ token: string; impersonating: ImpersonationInfo }>('/auth/impersonate', { user_id: userId }),
+    api.post<{ token: string; impersonating: ImpersonationInfo; can_validate_competencies: boolean }>('/auth/impersonate', { user_id: userId }),
   stopImpersonation: () =>
     api.post<AuthResponseData>('/auth/stop-impersonation'),
 }

@@ -49,7 +49,7 @@ export default function UsersPage() {
     
     try {
       const response = await authApi.impersonate(person.id)
-      setImpersonation(response.data.token, response.data.impersonating)
+      setImpersonation(response.data.token, response.data.impersonating, response.data.can_validate_competencies)
       setToast({ message: `Vous êtes maintenant ${person.first_name} ${person.last_name}`, type: 'success' })
     } catch (error) {
       setToast({ message: 'Erreur lors de l\'impersonification', type: 'error' })

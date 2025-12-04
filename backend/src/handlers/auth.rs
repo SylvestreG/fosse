@@ -103,6 +103,12 @@ pub async fn impersonate_user(
         })?
         .ok_or(AppError::NotFound("Utilisateur non trouvé".to_string()))?;
     
+    // Vérifier si l'utilisateur impersonnifié peut valider des compétences
+    let can_validate_competencies = target_user.diving_level
+        .as_ref()
+        .map(|level| VALIDATOR_LEVELS.contains(&level.as_str()))
+        .unwrap_or(false);
+    
     // Générer le token d'impersonification
     let response = state.auth_service.generate_impersonation_token(
         &auth.claims.email,
@@ -110,6 +116,7 @@ pub async fn impersonate_user(
         &target_user.id.to_string(),
         &target_user.email,
         &format!("{} {}", target_user.first_name, target_user.last_name),
+        can_validate_competencies,
     )?;
     
     tracing::info!(

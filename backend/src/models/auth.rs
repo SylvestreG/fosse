@@ -58,5 +58,6 @@ pub struct ImpersonateRequest {
 pub struct ImpersonateResponse {
     pub token: String,
     pub impersonating: ImpersonationInfo,
+    pub can_validate_competencies: bool,
 }
 

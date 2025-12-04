@@ -20,7 +20,7 @@ interface AuthState {
   // Getter: retourne true si peut valider des compétences (encadrant ou admin)
   canValidate: () => boolean
   setAuth: (token: string, email: string, name: string, isAdmin: boolean, canValidateCompetencies: boolean, impersonating?: ImpersonationInfo | null) => void
-  setImpersonation: (token: string, impersonating: ImpersonationInfo) => void
+  setImpersonation: (token: string, impersonating: ImpersonationInfo, canValidateCompetencies: boolean) => void
   stopImpersonation: (token: string, canValidateCompetencies: boolean) => void
   logout: () => void
 }
@@ -40,18 +40,19 @@ export const useAuthStore = create<AuthState>()(
         const state = get()
         return state.isAdmin && !state.impersonating
       },
-      // Peut valider des compétences si encadrant ou admin (et pas en impersonation)
+      // Peut valider des compétences si encadrant ou admin
+      // Quand on impersonnifie, canValidateCompetencies reflète les droits de l'utilisateur impersonnifié
       canValidate: () => {
         const state = get()
-        return state.canValidateCompetencies && !state.impersonating
+        return state.canValidateCompetencies
       },
       setAuth: (token, email, name, isAdmin, canValidateCompetencies, impersonating = null) => {
         localStorage.setItem('auth_token', token)
         set({ token, email, name, isAuthenticated: true, isAdmin, canValidateCompetencies, impersonating })
       },
-      setImpersonation: (token, impersonating) => {
+      setImpersonation: (token, impersonating, canValidateCompetencies) => {
         localStorage.setItem('auth_token', token)
-        set({ token, impersonating })
+        set({ token, impersonating, canValidateCompetencies })
       },
       stopImpersonation: (token, canValidateCompetencies) => {
         localStorage.setItem('auth_token', token)

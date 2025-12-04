@@ -115,7 +115,8 @@ impl AuthService {
         admin_name: &str,
         target_id: &str,
         target_email: &str, 
-        target_name: &str
+        target_name: &str,
+        can_validate_competencies: bool,
     ) -> AppResult<ImpersonateResponse> {
         let impersonation = ImpersonationInfo {
             user_id: target_id.to_string(),
@@ -128,6 +129,7 @@ impl AuthService {
         Ok(ImpersonateResponse {
             token,
             impersonating: impersonation,
+            can_validate_competencies,
         })
     }
 
