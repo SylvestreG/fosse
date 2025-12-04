@@ -30,6 +30,9 @@ pub async fn get_oauth_config(
     })
 }
 
+/// Niveaux qui permettent de valider des compétences (encadrants)
+const VALIDATOR_LEVELS: &[&str] = &["E2", "MF1", "MF2", "N4", "N5"];
+
 pub async fn google_callback(
     State(state): State<AuthState>,
     Json(payload): Json<GoogleCallbackRequest>,
@@ -41,7 +44,7 @@ pub async fn google_callback(
     let is_admin = state.auth_service.is_admin(&user_info.email);
     
     // Vérifier si l'utilisateur existe dans la base de données
-    let person_exists = People::find()
+    let person = People::find()
         .filter(people::Column::Email.eq(&user_info.email))
         .one(state.db.as_ref())
         .await
@@ -51,17 +54,24 @@ pub async fn google_callback(
         })?;
     
     // Si ni admin ni utilisateur existant → refuser
-    if !is_admin && person_exists.is_none() {
+    if !is_admin && person.is_none() {
         return Err(AppError::Forbidden(
             "Accès refusé. Vous devez être administrateur ou avoir un compte utilisateur.".to_string()
         ));
     }
+    
+    // Vérifier si l'utilisateur peut valider des compétences (basé sur son niveau de plongée)
+    let can_validate_competencies = is_admin || person.as_ref()
+        .and_then(|p| p.diving_level.as_ref())
+        .map(|level| VALIDATOR_LEVELS.contains(&level.as_str()))
+        .unwrap_or(false);
     
     // Générer la réponse d'authentification
     let response = state.auth_service.generate_auth_response(
         &user_info.email,
         &user_info.name,
         is_admin,
+        can_validate_competencies,
     )?;
     
     Ok(Json(response))
@@ -131,10 +141,12 @@ pub async fn stop_impersonation(
     }
     
     // Générer un nouveau token sans impersonification
+    // Admin peut toujours valider des compétences
     let response = state.auth_service.generate_auth_response(
         &auth.claims.email,
         &auth.claims.name,
         true,
+        true, // Admin can validate
     )?;
     
     tracing::info!(

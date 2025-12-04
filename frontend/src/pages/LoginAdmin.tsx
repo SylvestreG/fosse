@@ -34,8 +34,8 @@ export default function LoginAdmin() {
     setLoading(true)
     try {
       const response = await authApi.googleCallback(code)
-      const { token, email, name, is_admin, impersonating } = response.data
-      setAuth(token, email, name, is_admin, impersonating)
+      const { token, email, name, is_admin, can_validate_competencies, impersonating } = response.data
+      setAuth(token, email, name, is_admin, can_validate_competencies, impersonating)
       // Clear the URL parameters and navigate
       window.history.replaceState({}, '', '/login')
       navigate('/dashboard', { replace: true })

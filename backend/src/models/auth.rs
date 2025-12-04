@@ -26,6 +26,7 @@ pub struct AuthResponse {
     pub email: String,
     pub name: String,
     pub is_admin: bool,
+    pub can_validate_competencies: bool,
     pub impersonating: Option<ImpersonationInfo>,
 }
 

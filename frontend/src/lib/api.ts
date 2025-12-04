@@ -154,6 +154,7 @@ export interface AuthResponseData {
   email: string
   name: string
   is_admin: boolean
+  can_validate_competencies: boolean
   impersonating?: ImpersonationInfo
 }
 

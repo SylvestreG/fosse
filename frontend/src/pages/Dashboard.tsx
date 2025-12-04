@@ -12,13 +12,15 @@ import UsersPage from './UsersPage'
 import MyProfilePage from './MyProfilePage'
 import CompetencesPage from './CompetencesPage'
 import CompetencesAdminPage from './CompetencesAdminPage'
+import CompetencesInstructorPage from './CompetencesInstructorPage'
 import MyCompetencesPage from './MyCompetencesPage'
 import GroupsPage from './GroupsPage'
 import { useAuthStore } from '@/lib/auth'
 
 export default function Dashboard() {
-  const { impersonating, isAdminView } = useAuthStore()
+  const { impersonating, isAdminView, canValidate } = useAuthStore()
   const isAdmin = isAdminView()
+  const canValidateCompetencies = canValidate()
 
   return (
     <div className={`min-h-screen bg-gray-50 ${impersonating ? 'ring-4 ring-red-500 ring-inset' : ''}`}>
@@ -48,8 +50,12 @@ export default function Dashboard() {
             {/* Mon profil - pour les non-admins */}
             <Route path="/profile" element={<MyProfilePage />} />
             
-            {/* Compétences - différent selon admin ou non */}
-            <Route path="/competences" element={isAdmin ? <CompetencesAdminPage /> : <MyCompetencesPage />} />
+            {/* Compétences - différent selon admin, encadrant ou élève */}
+            <Route path="/competences" element={
+              isAdmin ? <CompetencesAdminPage /> : 
+              canValidateCompetencies ? <CompetencesInstructorPage /> : 
+              <MyCompetencesPage />
+            } />
             
             {/* Legacy competences page - redirect to new one */}
             {isAdmin && <Route path="/competences-legacy" element={<CompetencesPage />} />}

@@ -12,7 +12,7 @@ export default function ImpersonationBanner() {
     setLoading(true)
     try {
       const response = await authApi.stopImpersonation()
-      stopImpersonation(response.data.token)
+      stopImpersonation(response.data.token, response.data.can_validate_competencies)
     } catch (error) {
       console.error('Failed to stop impersonation:', error)
     } finally {

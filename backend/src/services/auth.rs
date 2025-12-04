@@ -95,7 +95,7 @@ impl AuthService {
     }
 
     /// Génère une réponse d'authentification complète
-    pub fn generate_auth_response(&self, email: &str, name: &str, is_admin: bool) -> AppResult<AuthResponse> {
+    pub fn generate_auth_response(&self, email: &str, name: &str, is_admin: bool, can_validate_competencies: bool) -> AppResult<AuthResponse> {
         let token = self.generate_token(email, name, is_admin, None)?;
 
         Ok(AuthResponse {
@@ -103,6 +103,7 @@ impl AuthService {
             email: email.to_string(),
             name: name.to_string(),
             is_admin,
+            can_validate_competencies,
             impersonating: None,
         })
     }

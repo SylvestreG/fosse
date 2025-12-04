@@ -13,12 +13,15 @@ interface AuthState {
   name: string | null
   isAuthenticated: boolean
   isAdmin: boolean
+  canValidateCompetencies: boolean
   impersonating: ImpersonationInfo | null
   // Getter: retourne true si admin ET pas en train d'impersonnifier
   isAdminView: () => boolean
-  setAuth: (token: string, email: string, name: string, isAdmin: boolean, impersonating?: ImpersonationInfo | null) => void
+  // Getter: retourne true si peut valider des compétences (encadrant ou admin)
+  canValidate: () => boolean
+  setAuth: (token: string, email: string, name: string, isAdmin: boolean, canValidateCompetencies: boolean, impersonating?: ImpersonationInfo | null) => void
   setImpersonation: (token: string, impersonating: ImpersonationInfo) => void
-  stopImpersonation: (token: string) => void
+  stopImpersonation: (token: string, canValidateCompetencies: boolean) => void
   logout: () => void
 }
 
@@ -30,27 +33,33 @@ export const useAuthStore = create<AuthState>()(
       name: null,
       isAuthenticated: false,
       isAdmin: false,
+      canValidateCompetencies: false,
       impersonating: null,
       // Quand on impersonnifie, on voit l'interface comme l'utilisateur (pas admin)
       isAdminView: () => {
         const state = get()
         return state.isAdmin && !state.impersonating
       },
-      setAuth: (token, email, name, isAdmin, impersonating = null) => {
+      // Peut valider des compétences si encadrant ou admin (et pas en impersonation)
+      canValidate: () => {
+        const state = get()
+        return state.canValidateCompetencies && !state.impersonating
+      },
+      setAuth: (token, email, name, isAdmin, canValidateCompetencies, impersonating = null) => {
         localStorage.setItem('auth_token', token)
-        set({ token, email, name, isAuthenticated: true, isAdmin, impersonating })
+        set({ token, email, name, isAuthenticated: true, isAdmin, canValidateCompetencies, impersonating })
       },
       setImpersonation: (token, impersonating) => {
         localStorage.setItem('auth_token', token)
         set({ token, impersonating })
       },
-      stopImpersonation: (token) => {
+      stopImpersonation: (token, canValidateCompetencies) => {
         localStorage.setItem('auth_token', token)
-        set({ token, impersonating: null })
+        set({ token, impersonating: null, canValidateCompetencies })
       },
       logout: () => {
         localStorage.removeItem('auth_token')
-        set({ token: null, email: null, name: null, isAuthenticated: false, isAdmin: false, impersonating: null })
+        set({ token: null, email: null, name: null, isAuthenticated: false, isAdmin: false, canValidateCompetencies: false, impersonating: null })
       },
     }),
     {
