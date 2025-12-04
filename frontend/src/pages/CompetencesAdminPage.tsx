@@ -940,11 +940,22 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={10} />
                 <YAxis allowDecimals={false} />
                 <Tooltip 
-                  formatter={(value: number, name: string) => [
-                    value, 
-                    name === 'eleves' ? '👨‍🎓 Élèves' : '👨‍🏫 Encadrants'
-                  ]}
-                  labelFormatter={(label) => `📅 ${label}`}
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      const eleves = payload.find(p => p.dataKey === 'eleves')?.value || 0
+                      const encadrants = payload.find(p => p.dataKey === 'encadrants')?.value || 0
+                      const total = Number(eleves) + Number(encadrants)
+                      return (
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                          <p className="font-semibold text-gray-900 mb-2">📅 {label}</p>
+                          <p className="text-green-600">👨‍🎓 Élèves : {eleves}</p>
+                          <p className="text-blue-600">👨‍🏫 Encadrants : {encadrants}</p>
+                          <p className="text-gray-700 font-medium border-t mt-2 pt-2">Total : {total}</p>
+                        </div>
+                      )
+                    }
+                    return null
+                  }}
                 />
                 <Legend 
                   formatter={(value) => value === 'eleves' ? '👨‍🎓 Élèves' : '👨‍🏫 Encadrants'}
