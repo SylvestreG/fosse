@@ -744,7 +744,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
       )
       setSessions(sortedSessions)
       
-      // Charger les participations par session - différencier élèves et encadrants
+      // Charger les participations par session - différencier élèves et encadrants (10 plus récentes)
       const participationPromises = sortedSessions.slice(-10).map(async (session) => {
         try {
           const res = await questionnairesApi.list(session.id)

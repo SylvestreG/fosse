@@ -50,7 +50,11 @@ export default function SessionsPage() {
   const loadSessions = async () => {
     try {
       const response = await sessionsApi.list()
-      setSessions(response.data)
+      // Trier par date décroissante (plus récentes en premier)
+      const sortedSessions = response.data.sort((a, b) => 
+        new Date(b.start_date).getTime() - new Date(a.start_date).getTime()
+      )
+      setSessions(sortedSessions)
     } catch (error) {
       setToast({ message: 'Erreur lors du chargement des sessions', type: 'error' })
     } finally {
