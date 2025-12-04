@@ -41,8 +41,12 @@ export default function CompetencesAdminPage() {
   const [people, setPeople] = useState<Person[]>([])
   const [stages, setStages] = useState<ValidationStage[]>([])
   const [domains, setDomains] = useState<CompetencyDomain[]>([])
-  const [loading, setLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  
+  // État des branches ouvertes (remonté ici pour persister lors des refresh)
+  const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set())
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
   
   // Modals
   const [showStageModal, setShowStageModal] = useState(false)
@@ -60,12 +64,12 @@ export default function CompetencesAdminPage() {
   const [studentProgress, setStudentProgress] = useState<CompetencyHierarchy | null>(null)
 
   useEffect(() => {
-    loadData()
+    loadData(true)
   }, [activeTab])
 
-  const loadData = async () => {
+  const loadData = async (isInitial = false) => {
     try {
-      setLoading(true)
+      if (isInitial) setInitialLoading(true)
       const [peopleRes, stagesRes, domainsRes] = await Promise.all([
         peopleApi.list(),
         validationStagesApi.list(),
@@ -86,7 +90,7 @@ export default function CompetencesAdminPage() {
       console.error('Error loading data:', error)
       setToast({ message: 'Erreur lors du chargement des données', type: 'error' })
     } finally {
-      setLoading(false)
+      if (isInitial) setInitialLoading(false)
     }
   }
 
@@ -161,7 +165,7 @@ export default function CompetencesAdminPage() {
     }
   }
 
-  if (loading) {
+  if (initialLoading) {
     return <div className="text-center py-12">Chargement...</div>
   }
 
@@ -247,13 +251,30 @@ export default function CompetencesAdminPage() {
         <HierarchySection
           level={activeTab}
           domains={domains}
+          expandedDomains={expandedDomains}
+          setExpandedDomains={setExpandedDomains}
+          expandedModules={expandedModules}
+          setExpandedModules={setExpandedModules}
           onAddDomain={() => { setEditingDomain(null); setShowDomainModal(true) }}
           onEditDomain={(domain) => { setEditingDomain(domain); setShowDomainModal(true) }}
           onDeleteDomain={handleDeleteDomain}
-          onAddModule={(domainId) => { setSelectedDomainId(domainId); setEditingModule(null); setShowModuleModal(true) }}
+          onAddModule={(domainId) => { 
+            setSelectedDomainId(domainId); 
+            setEditingModule(null); 
+            setShowModuleModal(true);
+            // Auto-expand le domaine parent
+            setExpandedDomains(prev => new Set([...prev, domainId]));
+          }}
           onEditModule={(module) => { setSelectedDomainId(module.domain_id); setEditingModule(module); setShowModuleModal(true) }}
           onDeleteModule={handleDeleteModule}
-          onAddSkill={(moduleId) => { setSelectedModuleId(moduleId); setEditingSkill(null); setShowSkillModal(true) }}
+          onAddSkill={(moduleId, domainId) => { 
+            setSelectedModuleId(moduleId); 
+            setEditingSkill(null); 
+            setShowSkillModal(true);
+            // Auto-expand le module et domaine parents
+            setExpandedDomains(prev => new Set([...prev, domainId]));
+            setExpandedModules(prev => new Set([...prev, moduleId]));
+          }}
           onEditSkill={(skill) => { setSelectedModuleId(skill.module_id); setEditingSkill(skill); setShowSkillModal(true) }}
           onDeleteSkill={handleDeleteSkill}
         />
@@ -281,7 +302,13 @@ export default function CompetencesAdminPage() {
           domain={editingDomain}
           defaultLevel={activeTab}
           onClose={() => setShowDomainModal(false)}
-          onSuccess={() => { setShowDomainModal(false); loadData(); setToast({ message: 'Domaine enregistré', type: 'success' }) }}
+          onSuccess={(newDomainId) => { 
+            setShowDomainModal(false); 
+            // Auto-expand le nouveau domaine
+            if (newDomainId) setExpandedDomains(prev => new Set([...prev, newDomainId]));
+            loadData(); 
+            setToast({ message: 'Domaine enregistré', type: 'success' }); 
+          }}
         />
       )}
 
@@ -290,7 +317,13 @@ export default function CompetencesAdminPage() {
           module={editingModule}
           domainId={selectedDomainId}
           onClose={() => setShowModuleModal(false)}
-          onSuccess={() => { setShowModuleModal(false); loadData(); setToast({ message: 'Module enregistré', type: 'success' }) }}
+          onSuccess={(newModuleId) => { 
+            setShowModuleModal(false); 
+            // Auto-expand le nouveau module
+            if (newModuleId) setExpandedModules(prev => new Set([...prev, newModuleId]));
+            loadData(); 
+            setToast({ message: 'Module enregistré', type: 'success' }); 
+          }}
         />
       )}
 
@@ -299,7 +332,11 @@ export default function CompetencesAdminPage() {
           skill={editingSkill}
           moduleId={selectedModuleId}
           onClose={() => setShowSkillModal(false)}
-          onSuccess={() => { setShowSkillModal(false); loadData(); setToast({ message: 'Acquis enregistré', type: 'success' }) }}
+          onSuccess={() => { 
+            setShowSkillModal(false); 
+            loadData(); 
+            setToast({ message: 'Acquis enregistré', type: 'success' }); 
+          }}
         />
       )}
 
@@ -405,13 +442,17 @@ function ValidationStagesSection({ stages, onAdd, onEdit, onDelete }: Validation
 interface HierarchySectionProps {
   level: string
   domains: CompetencyDomain[]
+  expandedDomains: Set<string>
+  setExpandedDomains: React.Dispatch<React.SetStateAction<Set<string>>>
+  expandedModules: Set<string>
+  setExpandedModules: React.Dispatch<React.SetStateAction<Set<string>>>
   onAddDomain: () => void
   onEditDomain: (domain: CompetencyDomain) => void
   onDeleteDomain: (id: string) => void
   onAddModule: (domainId: string) => void
   onEditModule: (module: CompetencyModule) => void
   onDeleteModule: (id: string) => void
-  onAddSkill: (moduleId: string) => void
+  onAddSkill: (moduleId: string, domainId: string) => void
   onEditSkill: (skill: CompetencySkill) => void
   onDeleteSkill: (id: string) => void
 }
@@ -419,6 +460,10 @@ interface HierarchySectionProps {
 function HierarchySection({
   level,
   domains,
+  expandedDomains,
+  setExpandedDomains,
+  expandedModules,
+  setExpandedModules,
   onAddDomain,
   onEditDomain,
   onDeleteDomain,
@@ -429,27 +474,28 @@ function HierarchySection({
   onEditSkill,
   onDeleteSkill,
 }: HierarchySectionProps) {
-  const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set())
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
-
   const toggleDomain = (id: string) => {
-    const newExpanded = new Set(expandedDomains)
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id)
-    } else {
-      newExpanded.add(id)
-    }
-    setExpandedDomains(newExpanded)
+    setExpandedDomains(prev => {
+      const newExpanded = new Set(prev)
+      if (newExpanded.has(id)) {
+        newExpanded.delete(id)
+      } else {
+        newExpanded.add(id)
+      }
+      return newExpanded
+    })
   }
 
   const toggleModule = (id: string) => {
-    const newExpanded = new Set(expandedModules)
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id)
-    } else {
-      newExpanded.add(id)
-    }
-    setExpandedModules(newExpanded)
+    setExpandedModules(prev => {
+      const newExpanded = new Set(prev)
+      if (newExpanded.has(id)) {
+        newExpanded.delete(id)
+      } else {
+        newExpanded.add(id)
+      }
+      return newExpanded
+    })
   }
 
   const levelDomains = domains.filter(d => d.diving_level === level)
@@ -539,7 +585,7 @@ function HierarchySection({
                               {module.skills?.length || 0} acquis
                             </span>
                             <button
-                              onClick={() => onAddSkill(module.id)}
+                              onClick={() => onAddSkill(module.id, module.domain_id)}
                               className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
                             >
                               + Acquis
@@ -813,7 +859,7 @@ interface DomainModalProps {
   domain: CompetencyDomain | null
   defaultLevel: string
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (newDomainId?: string) => void
 }
 
 function DomainModal({ domain, defaultLevel, onClose, onSuccess }: DomainModalProps) {
@@ -833,10 +879,11 @@ function DomainModal({ domain, defaultLevel, onClose, onSuccess }: DomainModalPr
     try {
       if (domain) {
         await competencyDomainsApi.update(domain.id, formData)
+        onSuccess()
       } else {
-        await competencyDomainsApi.create(formData)
+        const res = await competencyDomainsApi.create(formData)
+        onSuccess(res.data.id)
       }
-      onSuccess()
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erreur')
     } finally {
@@ -890,7 +937,7 @@ interface ModuleModalProps {
   module: CompetencyModule | null
   domainId: string
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (newModuleId?: string) => void
 }
 
 function ModuleModal({ module, domainId, onClose, onSuccess }: ModuleModalProps) {
@@ -910,10 +957,11 @@ function ModuleModal({ module, domainId, onClose, onSuccess }: ModuleModalProps)
     try {
       if (module) {
         await competencyModulesApi.update(module.id, formData)
+        onSuccess()
       } else {
-        await competencyModulesApi.create(formData)
+        const res = await competencyModulesApi.create(formData)
+        onSuccess(res.data.id)
       }
-      onSuccess()
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erreur')
     } finally {
