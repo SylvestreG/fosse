@@ -1,7 +1,7 @@
 use crate::entities::prelude::*;
 use crate::entities::people;
 use crate::errors::AppError;
-use crate::models::auth::{AuthResponse, GoogleCallbackRequest, ImpersonateRequest, ImpersonateResponse};
+use crate::models::auth::{AuthResponse, GoogleCallbackRequest, GoogleIdTokenRequest, ImpersonateRequest, ImpersonateResponse};
 use crate::services::AuthService;
 use crate::middleware::acl::AuthUser;
 use axum::{extract::State, Extension, Json};
@@ -51,6 +51,53 @@ pub async fn google_callback(
 ) -> Result<Json<AuthResponse>, AppError> {
     // Récupérer les infos Google
     let user_info = state.auth_service.get_google_user_info(payload.code).await?;
+    
+    // Vérifier si c'est un admin
+    let is_admin = state.auth_service.is_admin(&user_info.email);
+    
+    // Vérifier si l'utilisateur existe dans la base de données
+    let person = People::find()
+        .filter(people::Column::Email.eq(&user_info.email))
+        .one(state.db.as_ref())
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to query person: {:?}", e);
+            AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query person: {}", e)))
+        })?;
+    
+    // Si ni admin ni utilisateur existant → refuser
+    if !is_admin && person.is_none() {
+        return Err(AppError::Forbidden(
+            "Accès refusé. Vous devez être administrateur ou avoir un compte utilisateur.".to_string()
+        ));
+    }
+    
+    // Vérifier si l'utilisateur peut valider des compétences (basé sur son niveau de plongée)
+    let can_validate_competencies = is_admin || can_validate_from_diving_level(
+        person.as_ref().and_then(|p| p.diving_level.as_ref())
+    );
+    
+    // Générer la réponse d'authentification
+    let response = state.auth_service.generate_auth_response(
+        &user_info.email,
+        &user_info.name,
+        is_admin,
+        can_validate_competencies,
+    )?;
+    
+    Ok(Json(response))
+}
+
+/// Authentification via Google One Tap / ID token
+/// Permet de se connecter directement avec un compte Google connecté sur l'appareil
+pub async fn google_id_token_callback(
+    State(state): State<AuthState>,
+    Json(payload): Json<GoogleIdTokenRequest>,
+) -> Result<Json<AuthResponse>, AppError> {
+    // Vérifier l'ID token et récupérer les infos utilisateur
+    let user_info = state.auth_service.verify_google_id_token(&payload.id_token).await?;
+    
+    tracing::info!("Google One Tap login for: {}", user_info.email);
     
     // Vérifier si c'est un admin
     let is_admin = state.auth_service.is_admin(&user_info.email);

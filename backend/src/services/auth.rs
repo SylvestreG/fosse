@@ -72,6 +72,65 @@ impl AuthService {
         Ok(user_info)
     }
 
+    /// Vérifie un ID token Google (One Tap / Identity Services)
+    /// Retourne les infos utilisateur si le token est valide
+    pub async fn verify_google_id_token(&self, id_token: &str) -> AppResult<GoogleUserInfo> {
+        let client = reqwest::Client::new();
+        
+        // Vérifier le token via l'endpoint tokeninfo de Google
+        let response = client
+            .get("https://oauth2.googleapis.com/tokeninfo")
+            .query(&[("id_token", id_token)])
+            .send()
+            .await
+            .map_err(|e| AppError::ExternalService(format!("Failed to verify ID token: {}", e)))?;
+
+        if !response.status().is_success() {
+            let error_text = response.text().await.unwrap_or_default();
+            return Err(AppError::Unauthorized(format!(
+                "Invalid Google ID token: {}",
+                error_text
+            )));
+        }
+
+        #[derive(serde::Deserialize)]
+        struct TokenInfo {
+            email: String,
+            name: Option<String>,
+            given_name: Option<String>,
+            family_name: Option<String>,
+            picture: Option<String>,
+            aud: String,
+        }
+
+        let token_info: TokenInfo = response.json().await.map_err(|e| {
+            AppError::ExternalService(format!("Failed to parse token info: {}", e))
+        })?;
+
+        // Vérifier que le token est pour notre application
+        if token_info.aud != self.google_config.client_id {
+            return Err(AppError::Unauthorized(
+                "ID token was not issued for this application".to_string()
+            ));
+        }
+
+        // Construire le nom à partir des champs disponibles
+        let name = token_info.name.unwrap_or_else(|| {
+            match (&token_info.given_name, &token_info.family_name) {
+                (Some(first), Some(last)) => format!("{} {}", first, last),
+                (Some(first), None) => first.clone(),
+                (None, Some(last)) => last.clone(),
+                (None, None) => token_info.email.split('@').next().unwrap_or("User").to_string(),
+            }
+        });
+
+        Ok(GoogleUserInfo {
+            email: token_info.email,
+            name,
+            picture: token_info.picture,
+        })
+    }
+
     /// Génère un JWT pour un utilisateur authentifié
     pub fn generate_token(&self, email: &str, name: &str, is_admin: bool, impersonating: Option<ImpersonationInfo>) -> AppResult<String> {
         let exp = Utc::now() + Duration::hours(self.jwt_config.expiration_hours);

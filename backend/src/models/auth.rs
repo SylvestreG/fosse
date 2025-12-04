@@ -5,6 +5,12 @@ pub struct GoogleCallbackRequest {
     pub code: String,
 }
 
+/// Requête pour l'authentification via Google One Tap / ID token
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GoogleIdTokenRequest {
+    pub id_token: String,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GoogleTokenResponse {
     pub access_token: String,

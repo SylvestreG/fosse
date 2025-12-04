@@ -162,6 +162,9 @@ export const authApi = {
   getConfig: () => api.get<{ client_id: string }>('/auth/config'),
   googleCallback: (code: string) =>
     api.post<AuthResponseData>('/auth/google/callback', { code }),
+  // Google One Tap / ID token authentication (connexion rapide sur mobile)
+  googleIdToken: (idToken: string) =>
+    api.post<AuthResponseData>('/auth/google/id-token', { id_token: idToken }),
   impersonate: (userId: string) =>
     api.post<{ token: string; impersonating: ImpersonationInfo; can_validate_competencies: boolean }>('/auth/impersonate', { user_id: userId }),
   stopImpersonation: () =>

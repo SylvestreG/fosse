@@ -57,8 +57,12 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .with_state(auth_service.clone());
 
     // Auth callback (needs DB to check if user exists)
+    // Supporte 2 méthodes:
+    // - /callback : OAuth redirect flow classique (échange code contre token)
+    // - /id-token : Google One Tap / Identity Services (ID token direct)
     let auth_callback_route = Router::new()
         .route("/api/v1/auth/google/callback", post(google_callback))
+        .route("/api/v1/auth/google/id-token", post(google_id_token_callback))
         .with_state(auth_state.clone());
 
     // Impersonation routes (admin only, need auth + DB)

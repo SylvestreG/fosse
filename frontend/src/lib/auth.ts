@@ -69,7 +69,7 @@ export const useAuthStore = create<AuthState>()(
   )
 )
 
-// Fonction pour initier la connexion Google
+// Fonction pour initier la connexion Google (redirect flow - fallback)
 // Le client_id est récupéré depuis le backend pour éviter de le hardcoder
 export async function initiateGoogleLogin() {
   try {
@@ -95,4 +95,135 @@ export async function initiateGoogleLogin() {
     console.error('Failed to get OAuth config:', error)
     alert('Erreur lors de la récupération de la configuration OAuth')
   }
+}
+
+// Types pour Google Identity Services
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: GoogleIdConfig) => void
+          prompt: (callback?: (notification: PromptMomentNotification) => void) => void
+          renderButton: (parent: HTMLElement, options: GsiButtonConfig) => void
+          cancel: () => void
+        }
+      }
+    }
+  }
+}
+
+interface GoogleIdConfig {
+  client_id: string
+  callback: (response: GoogleCredentialResponse) => void
+  auto_select?: boolean
+  cancel_on_tap_outside?: boolean
+  context?: 'signin' | 'signup' | 'use'
+  itp_support?: boolean
+}
+
+interface GoogleCredentialResponse {
+  credential: string // JWT ID token
+  select_by: string
+}
+
+interface PromptMomentNotification {
+  isDisplayed: () => boolean
+  isNotDisplayed: () => boolean
+  isSkippedMoment: () => boolean
+  isDismissedMoment: () => boolean
+  getNotDisplayedReason: () => string
+  getSkippedReason: () => string
+  getDismissedReason: () => string
+}
+
+interface GsiButtonConfig {
+  type?: 'standard' | 'icon'
+  theme?: 'outline' | 'filled_blue' | 'filled_black'
+  size?: 'large' | 'medium' | 'small'
+  text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin'
+  shape?: 'rectangular' | 'pill' | 'circle' | 'square'
+  logo_alignment?: 'left' | 'center'
+  width?: number
+  locale?: string
+}
+
+// Charger le script Google Identity Services
+export function loadGoogleScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.google?.accounts) {
+      resolve()
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Failed to load Google Identity Services'))
+    document.head.appendChild(script)
+  })
+}
+
+// Initialiser Google One Tap
+export async function initializeGoogleOneTap(
+  clientId: string,
+  onSuccess: (idToken: string) => void,
+  onError?: (error: string) => void
+): Promise<void> {
+  try {
+    await loadGoogleScript()
+    
+    if (!window.google?.accounts) {
+      throw new Error('Google Identity Services not loaded')
+    }
+
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: (response) => {
+        if (response.credential) {
+          onSuccess(response.credential)
+        }
+      },
+      auto_select: true, // Auto-select si un seul compte
+      cancel_on_tap_outside: true,
+      itp_support: true, // Support Intelligent Tracking Prevention (Safari)
+    })
+  } catch (error) {
+    console.error('Failed to initialize Google One Tap:', error)
+    onError?.('Impossible d\'initialiser Google One Tap')
+  }
+}
+
+// Afficher le prompt One Tap
+export function showGoogleOneTap(onNotDisplayed?: () => void): void {
+  if (!window.google?.accounts) {
+    onNotDisplayed?.()
+    return
+  }
+
+  window.google.accounts.id.prompt((notification) => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      console.log('One Tap not displayed:', notification.getNotDisplayedReason?.() || notification.getSkippedReason?.())
+      onNotDisplayed?.()
+    }
+  })
+}
+
+// Rendre le bouton Google Sign-In
+export function renderGoogleButton(elementId: string): void {
+  if (!window.google?.accounts) return
+  
+  const element = document.getElementById(elementId)
+  if (!element) return
+
+  window.google.accounts.id.renderButton(element, {
+    type: 'standard',
+    theme: 'outline',
+    size: 'large',
+    text: 'signin_with',
+    shape: 'rectangular',
+    width: 300,
+  })
 }
