@@ -12,7 +12,7 @@ import Button from '@/components/Button'
 import Toast from '@/components/Toast'
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-  PieChart, Pie, Cell, LineChart, Line
+  PieChart, Pie, Cell
 } from 'recharts'
 
 // Ordre des niveaux - limité à N1, N2, N3 pour l'instant
@@ -194,9 +194,12 @@ interface StatisticsSectionProps {
 
 function StatisticsSection({ people }: StatisticsSectionProps) {
   const [sessions, setSessions] = useState<Session[]>([])
-  const [participationData, setParticipationData] = useState<{ name: string; participants: number }[]>([])
+  const [participationData, setParticipationData] = useState<{ name: string; eleves: number; encadrants: number; total: number }[]>([])
   const [progressData, setProgressData] = useState<Record<string, { validated: number; inProgress: number; notStarted: number }>>({})
   const [loading, setLoading] = useState(true)
+
+  // Créer un map des encadrants pour lookup rapide
+  const encadrantIds = new Set(people.filter(p => p.default_is_encadrant).map(p => p.id))
 
   useEffect(() => {
     loadStatistics()
@@ -213,16 +216,20 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
       )
       setSessions(sortedSessions)
       
-      // Charger les participations par session (questionnaires)
+      // Charger les participations par session (questionnaires) - différencier élèves et encadrants
       const participationPromises = sortedSessions.slice(-10).map(async (session) => {
         try {
           const res = await questionnairesApi.list(session.id)
+          const encadrantsCount = res.data.filter(q => encadrantIds.has(q.person_id)).length
+          const elevesCount = res.data.length - encadrantsCount
           return {
-            name: session.name.length > 15 ? session.name.substring(0, 15) + '...' : session.name,
-            participants: res.data.length
+            name: session.name.length > 12 ? session.name.substring(0, 12) + '...' : session.name,
+            eleves: elevesCount,
+            encadrants: encadrantsCount,
+            total: res.data.length
           }
         } catch {
-          return { name: session.name, participants: 0 }
+          return { name: session.name, eleves: 0, encadrants: 0, total: 0 }
         }
       })
       const participations = await Promise.all(participationPromises)
@@ -395,24 +402,27 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
           </ResponsiveContainer>
         </div>
 
-        {/* Participations aux fosses */}
+        {/* Participations aux fosses - élèves vs encadrants */}
         <div className="bg-white rounded-xl shadow p-6">
           <h3 className="text-lg font-bold text-gray-900 mb-4">📅 Participations aux dernières fosses</h3>
           {participationData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={participationData}>
+              <BarChart data={participationData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={11} />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={10} />
                 <YAxis allowDecimals={false} />
-                <Tooltip formatter={(value: number) => [value, 'Participants']} />
-                <Line 
-                  type="monotone" 
-                  dataKey="participants" 
-                  stroke="#8B5CF6" 
-                  strokeWidth={2}
-                  dot={{ fill: '#8B5CF6', strokeWidth: 2 }}
+                <Tooltip 
+                  formatter={(value: number, name: string) => [
+                    value, 
+                    name === 'eleves' ? '👨‍🎓 Élèves' : '👨‍🏫 Encadrants'
+                  ]}
                 />
-              </LineChart>
+                <Legend 
+                  formatter={(value) => value === 'eleves' ? '👨‍🎓 Élèves' : '👨‍🏫 Encadrants'}
+                />
+                <Bar dataKey="eleves" stackId="a" fill="#10B981" name="eleves" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="encadrants" stackId="a" fill="#3B82F6" name="encadrants" radius={[4, 4, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-[300px] flex items-center justify-center text-gray-500">
