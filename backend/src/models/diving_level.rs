@@ -71,7 +71,7 @@ impl DivingLevel {
     }
     
     /// Parse une chaîne en DivingLevel
-    pub fn from_str(s: &str) -> Option<DivingLevel> {
+    pub fn parse(s: &str) -> Option<DivingLevel> {
         match s.to_uppercase().as_str() {
             "N1" => Some(DivingLevel::N1),
             "N2" => Some(DivingLevel::N2),
@@ -143,7 +143,7 @@ impl DiverLevel {
                 continue;
             }
             
-            if let Some(level) = DivingLevel::from_str(trimmed) {
+            if let Some(level) = DivingLevel::parse(trimmed) {
                 diver_level.validated.push(level);
             }
         }
@@ -218,7 +218,7 @@ impl DiverLevel {
     
     /// Convertit en string pour la base de données
     #[allow(dead_code)]
-    pub fn to_string(&self) -> String {
+    pub fn to_db_string(&self) -> String {
         if self.validated.is_empty() {
             return String::new();
         }
@@ -251,11 +251,11 @@ mod tests {
     
     #[test]
     fn test_from_string() {
-        assert_eq!(DivingLevel::from_str("N1"), Some(DivingLevel::N1));
-        assert_eq!(DivingLevel::from_str("n2"), Some(DivingLevel::N2));
-        assert_eq!(DivingLevel::from_str("E2"), Some(DivingLevel::E2));
-        assert_eq!(DivingLevel::from_str("MF1"), Some(DivingLevel::MF1));
-        assert_eq!(DivingLevel::from_str("invalid"), None);
+        assert_eq!(DivingLevel::parse("N1"), Some(DivingLevel::N1));
+        assert_eq!(DivingLevel::parse("n2"), Some(DivingLevel::N2));
+        assert_eq!(DivingLevel::parse("E2"), Some(DivingLevel::E2));
+        assert_eq!(DivingLevel::parse("MF1"), Some(DivingLevel::MF1));
+        assert_eq!(DivingLevel::parse("invalid"), None);
     }
     
     #[test]

@@ -19,6 +19,8 @@ pub struct PersonResponse {
     pub diving_level_display: Option<String>,
     pub is_instructor: bool,
     pub preparing_level: Option<String>,
+    pub group_id: Option<Uuid>,
+    pub group_name: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -44,6 +46,7 @@ pub struct CreatePersonRequest {
     pub default_wants_stab: Option<bool>,
     pub default_stab_size: Option<String>,
     pub diving_level: Option<String>,
+    pub group_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, Validate)]
@@ -67,4 +70,5 @@ pub struct UpdatePersonRequest {
     pub default_wants_stab: Option<bool>,
     pub default_stab_size: Option<String>,
     pub diving_level: Option<String>,
+    pub group_id: Option<Uuid>,
 }

@@ -18,6 +18,7 @@ pub struct Model {
     pub default_wants_stab: bool,
     pub default_stab_size: Option<String>,
     pub diving_level: Option<String>,
+    pub group_id: Option<Uuid>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
@@ -28,6 +29,12 @@ pub enum Relation {
     Questionnaires,
     #[sea_orm(has_many = "super::email_jobs::Entity")]
     EmailJobs,
+    #[sea_orm(
+        belongs_to = "super::groups::Entity",
+        from = "Column::GroupId",
+        to = "super::groups::Column::Id"
+    )]
+    Group,
 }
 
 impl Related<super::questionnaires::Entity> for Entity {
@@ -39,6 +46,12 @@ impl Related<super::questionnaires::Entity> for Entity {
 impl Related<super::email_jobs::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::EmailJobs.def()
+    }
+}
+
+impl Related<super::groups::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Group.def()
     }
 }
 

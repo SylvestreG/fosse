@@ -1,6 +1,6 @@
 use crate::config::{GoogleOAuthConfig, JwtConfig};
 use crate::errors::{AppError, AppResult};
-use crate::models::{AuthResponse, Claims, GoogleTokenResponse, GoogleUserInfo};
+use crate::models::{AuthResponse, Claims, GoogleTokenResponse, GoogleUserInfo, ImpersonationInfo, ImpersonateResponse};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 
@@ -23,7 +23,13 @@ impl AuthService {
         }
     }
 
-    pub async fn handle_google_callback(&self, code: String) -> AppResult<AuthResponse> {
+    /// Vérifie si un email est admin
+    pub fn is_admin(&self, email: &str) -> bool {
+        self.admin_emails.contains(&email.to_string())
+    }
+
+    /// Échange le code OAuth contre les infos utilisateur Google
+    pub async fn get_google_user_info(&self, code: String) -> AppResult<GoogleUserInfo> {
         // Exchange code for token
         let client = reqwest::Client::new();
         let token_response = client
@@ -63,18 +69,19 @@ impl AuthService {
             .await
             .map_err(|e| AppError::ExternalService(format!("Failed to parse user info: {}", e)))?;
 
-        // Check if user is admin
-        if !self.admin_emails.contains(&user_info.email) {
-            return Err(AppError::Forbidden("User is not an admin".to_string()));
-        }
+        Ok(user_info)
+    }
 
-        // Generate JWT
+    /// Génère un JWT pour un utilisateur authentifié
+    pub fn generate_token(&self, email: &str, name: &str, is_admin: bool, impersonating: Option<ImpersonationInfo>) -> AppResult<String> {
         let exp = Utc::now() + Duration::hours(self.jwt_config.expiration_hours);
         let claims = Claims {
-            sub: user_info.email.clone(),
-            email: user_info.email.clone(),
-            name: user_info.name.clone(),
+            sub: email.to_string(),
+            email: email.to_string(),
+            name: name.to_string(),
             exp: exp.timestamp(),
+            is_admin,
+            impersonating,
         };
 
         let token = encode(
@@ -84,18 +91,54 @@ impl AuthService {
         )
         .map_err(|e| AppError::Internal(format!("Failed to generate JWT: {}", e)))?;
 
+        Ok(token)
+    }
+
+    /// Génère une réponse d'authentification complète
+    pub fn generate_auth_response(&self, email: &str, name: &str, is_admin: bool) -> AppResult<AuthResponse> {
+        let token = self.generate_token(email, name, is_admin, None)?;
+
         Ok(AuthResponse {
             token,
-            email: user_info.email,
-            name: user_info.name,
+            email: email.to_string(),
+            name: name.to_string(),
+            is_admin,
+            impersonating: None,
+        })
+    }
+
+    /// Génère un token d'impersonification
+    pub fn generate_impersonation_token(
+        &self, 
+        admin_email: &str, 
+        admin_name: &str,
+        target_id: &str,
+        target_email: &str, 
+        target_name: &str
+    ) -> AppResult<ImpersonateResponse> {
+        let impersonation = ImpersonationInfo {
+            user_id: target_id.to_string(),
+            user_email: target_email.to_string(),
+            user_name: target_name.to_string(),
+        };
+
+        let token = self.generate_token(admin_email, admin_name, true, Some(impersonation.clone()))?;
+
+        Ok(ImpersonateResponse {
+            token,
+            impersonating: impersonation,
         })
     }
 
     pub fn verify_jwt(&self, token: &str) -> AppResult<Claims> {
+        let mut validation = Validation::default();
+        // Permettre les tokens sans impersonating (backward compat)
+        validation.required_spec_claims.clear();
+        
         let token_data = decode::<Claims>(
             token,
             &DecodingKey::from_secret(self.jwt_config.secret.as_bytes()),
-            &Validation::default(),
+            &validation,
         )
         .map_err(|e| AppError::Unauthorized(format!("Invalid token: {}", e)))?;
 
@@ -106,4 +149,3 @@ impl AuthService {
         &self.google_config.client_id
     }
 }
-

@@ -117,6 +117,8 @@ export interface Person {
   diving_level_display?: string
   is_instructor: boolean
   preparing_level?: string
+  group_id?: string
+  group_name?: string
   created_at: string
   updated_at: string
 }
@@ -141,10 +143,28 @@ export interface ImportJob {
   updated_at: string
 }
 
+export interface ImpersonationInfo {
+  user_id: string
+  user_email: string
+  user_name: string
+}
+
+export interface AuthResponseData {
+  token: string
+  email: string
+  name: string
+  is_admin: boolean
+  impersonating?: ImpersonationInfo
+}
+
 export const authApi = {
   getConfig: () => api.get<{ client_id: string }>('/auth/config'),
   googleCallback: (code: string) =>
-    api.post<{ token: string; email: string; name: string }>('/auth/google/callback', { code }),
+    api.post<AuthResponseData>('/auth/google/callback', { code }),
+  impersonate: (userId: string) =>
+    api.post<{ token: string; impersonating: ImpersonationInfo }>('/auth/impersonate', { user_id: userId }),
+  stopImpersonation: () =>
+    api.post<AuthResponseData>('/auth/stop-impersonation'),
 }
 
 export interface ParticipantInfo {
@@ -207,7 +227,24 @@ export const questionnairesApi = {
     has_car: boolean
     car_seats?: number
     comments?: string
-  }) => api.post<Questionnaire>('/questionnaires', data),
+  }) => api.post<Questionnaire>('/questionnaires/submit', data),
+  // Auto-inscription (pour utilisateurs connectés)
+  register: (data: {
+    session_id: string
+    email: string
+    first_name: string
+    last_name: string
+    is_encadrant: boolean
+    wants_regulator: boolean
+    wants_nitrox: boolean
+    wants_2nd_reg: boolean
+    wants_stab: boolean
+    stab_size?: string
+    comes_from_issoire: boolean
+    has_car: boolean
+    car_seats?: number
+    comments?: string
+  }) => api.post<Questionnaire>('/questionnaires/register', data),
   list: (sessionId: string) =>
     api.get<Questionnaire[]>('/questionnaires', { params: { session_id: sessionId } }),
   listDetail: (sessionId: string) =>
@@ -263,6 +300,213 @@ export const peopleApi = {
   create: (data: Omit<Person, 'id' | 'created_at' | 'updated_at'>) => api.post<Person>('/people', data),
   update: (id: string, data: Partial<Omit<Person, 'id' | 'created_at' | 'updated_at'>>) => api.put<Person>(`/people/${id}`, data),
   delete: (id: string) => api.delete(`/people/${id}`),
+}
+
+export interface Competency {
+  id: string
+  level: string
+  name: string
+  description?: string
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface PermissionInfo {
+  key: string
+  description: string
+  category: string
+}
+
+export interface Group {
+  id: string
+  name: string
+  group_type: string
+  description?: string
+  permissions: string[]
+  created_at: string
+  updated_at: string
+}
+
+export interface CompetenciesByLevel {
+  level: string
+  competencies: Competency[]
+}
+
+// ============================================================================
+// NEW HIERARCHICAL COMPETENCY SYSTEM
+// ============================================================================
+
+export interface ValidationStage {
+  id: string
+  code: string
+  name: string
+  description?: string
+  color: string
+  icon: string
+  sort_order: number
+  is_final: boolean
+}
+
+export interface CompetencyDomain {
+  id: string
+  diving_level: string
+  name: string
+  sort_order: number
+  modules?: CompetencyModule[]
+}
+
+export interface CompetencyModule {
+  id: string
+  domain_id: string
+  name: string
+  sort_order: number
+  skills?: CompetencySkill[]
+}
+
+export interface CompetencySkill {
+  id: string
+  module_id: string
+  name: string
+  sort_order: number
+  min_validator_level: string
+}
+
+export interface SkillValidation {
+  id: string
+  person_id: string
+  person_name?: string
+  skill_id: string
+  skill_name?: string
+  stage_id: string
+  stage?: ValidationStage
+  validated_at: string
+  validated_by_id: string
+  validated_by_name?: string
+  notes?: string
+}
+
+export interface ProgressStats {
+  total: number
+  validated: number
+  in_progress: number
+  not_started: number
+  percentage: number
+}
+
+export interface SkillValidationInfo {
+  id: string
+  stage_id: string
+  stage_code: string
+  stage_name: string
+  stage_color: string
+  stage_icon: string
+  is_final: boolean
+  validated_at: string
+  validated_by_name: string
+  notes?: string
+}
+
+export interface CompetencySkillWithValidation {
+  id: string
+  name: string
+  sort_order: number
+  min_validator_level: string
+  validation?: SkillValidationInfo
+}
+
+export interface CompetencyModuleWithProgress {
+  id: string
+  name: string
+  sort_order: number
+  skills: CompetencySkillWithValidation[]
+  progress: ProgressStats
+}
+
+export interface CompetencyDomainWithProgress {
+  id: string
+  name: string
+  sort_order: number
+  modules: CompetencyModuleWithProgress[]
+  progress: ProgressStats
+}
+
+export interface CompetencyHierarchy {
+  diving_level: string
+  domains: CompetencyDomainWithProgress[]
+}
+
+export const validationStagesApi = {
+  list: () => api.get<ValidationStage[]>('/validation-stages'),
+  create: (data: { code: string; name: string; description?: string; color?: string; icon?: string; sort_order?: number; is_final?: boolean }) =>
+    api.post<ValidationStage>('/validation-stages', data),
+  update: (id: string, data: Partial<Omit<ValidationStage, 'id'>>) =>
+    api.put<ValidationStage>(`/validation-stages/${id}`, data),
+  delete: (id: string) => api.delete(`/validation-stages/${id}`),
+}
+
+export const competencyDomainsApi = {
+  list: (divingLevel?: string, includeModules?: boolean) =>
+    api.get<CompetencyDomain[]>('/competency-domains', { params: { diving_level: divingLevel, include_modules: includeModules } }),
+  create: (data: { diving_level: string; name: string; sort_order?: number }) =>
+    api.post<CompetencyDomain>('/competency-domains', data),
+  update: (id: string, data: Partial<Omit<CompetencyDomain, 'id' | 'modules'>>) =>
+    api.put<CompetencyDomain>(`/competency-domains/${id}`, data),
+  delete: (id: string) => api.delete(`/competency-domains/${id}`),
+}
+
+export const competencyModulesApi = {
+  list: (domainId?: string, includeSkills?: boolean) =>
+    api.get<CompetencyModule[]>('/competency-modules', { params: { domain_id: domainId, include_skills: includeSkills } }),
+  create: (data: { domain_id: string; name: string; sort_order?: number }) =>
+    api.post<CompetencyModule>('/competency-modules', data),
+  update: (id: string, data: Partial<Omit<CompetencyModule, 'id' | 'skills'>>) =>
+    api.put<CompetencyModule>(`/competency-modules/${id}`, data),
+  delete: (id: string) => api.delete(`/competency-modules/${id}`),
+}
+
+export const competencySkillsApi = {
+  list: (moduleId?: string) =>
+    api.get<CompetencySkill[]>('/competency-skills', { params: { module_id: moduleId } }),
+  create: (data: { module_id: string; name: string; sort_order?: number; min_validator_level?: string }) =>
+    api.post<CompetencySkill>('/competency-skills', data),
+  update: (id: string, data: Partial<Omit<CompetencySkill, 'id'>>) =>
+    api.put<CompetencySkill>(`/competency-skills/${id}`, data),
+  delete: (id: string) => api.delete(`/competency-skills/${id}`),
+}
+
+export const skillValidationsApi = {
+  list: (personId?: string, skillId?: string) =>
+    api.get<SkillValidation[]>('/skill-validations', { params: { person_id: personId, skill_id: skillId } }),
+  create: (data: { person_id: string; skill_id: string; stage_id: string; validated_at?: string; notes?: string }) =>
+    api.post<SkillValidation>('/skill-validations', data),
+  update: (id: string, data: { stage_id?: string; validated_at?: string; notes?: string }) =>
+    api.put<SkillValidation>(`/skill-validations/${id}`, data),
+  delete: (id: string) => api.delete(`/skill-validations/${id}`),
+  // Hierarchy views
+  getMyCompetencies: (divingLevel: string) =>
+    api.get<CompetencyHierarchy>('/my-competencies', { params: { diving_level: divingLevel } }),
+  getPersonCompetencies: (personId: string, divingLevel: string) =>
+    api.get<CompetencyHierarchy>(`/person-competencies/${personId}`, { params: { diving_level: divingLevel } }),
+}
+
+export const competenciesApi = {
+  list: (level?: string) => api.get<Competency[]>('/competencies', { params: { level } }),
+  listByLevel: () => api.get<CompetenciesByLevel[]>('/competencies/by-level'),
+  get: (id: string) => api.get<Competency>(`/competencies/${id}`),
+  create: (data: { level: string; name: string; description?: string; sort_order?: number }) => 
+    api.post<Competency>('/competencies', data),
+  update: (id: string, data: { level?: string; name?: string; description?: string; sort_order?: number }) => 
+    api.put<Competency>(`/competencies/${id}`, data),
+  delete: (id: string) => api.delete(`/competencies/${id}`),
+}
+
+export const groupsApi = {
+  listPermissions: () => api.get<PermissionInfo[]>('/permissions'),
+  list: () => api.get<Group[]>('/groups'),
+  get: (id: string) => api.get<Group>(`/groups/${id}`),
+  updatePermissions: (id: string, permissions: string[]) => 
+    api.put<Group>(`/groups/${id}`, { permissions }),
 }
 
 export default api

@@ -1,7 +1,8 @@
 use crate::config::Config;
 use crate::handlers::import::ImportState;
+use crate::handlers::auth::AuthState;
 use crate::handlers::*;
-use crate::middleware::auth::admin_auth_middleware;
+use crate::middleware::acl::{acl_auth_middleware, AclState};
 use crate::services::{AuthService, EmailService};
 use axum::{
     middleware,
@@ -38,19 +39,54 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
 
     let config_arc = Arc::new(config);
 
-    // Public routes - auth
-    let auth_routes = Router::new()
+    // ACL state for middleware
+    let acl_state = AclState {
+        auth_service: auth_service.clone(),
+        db: db.clone(),
+    };
+
+    // Auth state for login routes that need DB access
+    let auth_state = AuthState {
+        auth_service: auth_service.clone(),
+        db: db.clone(),
+    };
+
+    // Public routes - auth config
+    let auth_config_route = Router::new()
         .route("/api/v1/auth/config", get(get_oauth_config))
-        .route("/api/v1/auth/google/callback", post(google_callback))
         .with_state(auth_service.clone());
+
+    // Auth callback (needs DB to check if user exists)
+    let auth_callback_route = Router::new()
+        .route("/api/v1/auth/google/callback", post(google_callback))
+        .with_state(auth_state.clone());
+
+    // Impersonation routes (admin only, need auth + DB)
+    let impersonation_routes = Router::new()
+        .route("/api/v1/auth/impersonate", post(impersonate_user))
+        .route("/api/v1/auth/stop-impersonation", post(stop_impersonation))
+        .layer(middleware::from_fn_with_state(
+            acl_state.clone(),
+            acl_auth_middleware,
+        ))
+        .with_state(auth_state);
     
-    // Public routes - questionnaires
+    // Public routes - questionnaires (submit via magic link token)
     let questionnaire_public_routes = Router::new()
         .route(
             "/api/v1/questionnaires/by-token/:token",
             get(get_questionnaire_by_token),
         )
-        .route("/api/v1/questionnaires", post(submit_questionnaire))
+        .route("/api/v1/questionnaires/submit", post(submit_questionnaire))
+        .with_state(db.clone());
+
+    // Authenticated routes - questionnaires (self-registration)
+    let questionnaire_auth_routes = Router::new()
+        .route("/api/v1/questionnaires/register", post(create_questionnaire))
+        .layer(middleware::from_fn_with_state(
+            acl_state.clone(),
+            acl_auth_middleware,
+        ))
         .with_state(db.clone());
 
     // Public routes - session summary by token
@@ -59,6 +95,7 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .with_state((db.clone(), config_arc.clone()));
 
     // Admin-only routes for sessions and questionnaires
+    // Uses ACL middleware which injects AuthUser with permissions
     let admin_routes = Router::new()
         .route("/api/v1/sessions", post(create_session).get(list_sessions))
         .route("/api/v1/sessions/:id", get(get_session).delete(delete_session))
@@ -69,9 +106,36 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .route("/api/v1/emails/:id/sent", post(mark_email_sent))
         .route("/api/v1/people", post(create_person).get(list_people))
         .route("/api/v1/people/:id", get(get_person).put(update_person).delete(delete_person))
+        // Legacy flat competencies (backward compatibility)
+        .route("/api/v1/competencies", post(create_competency).get(list_competencies))
+        .route("/api/v1/competencies/by-level", get(list_competencies_by_level))
+        .route("/api/v1/competencies/:id", get(get_competency).put(update_competency).delete(delete_competency))
+        // New hierarchical competency system
+        // Validation stages (étapes de progression)
+        .route("/api/v1/validation-stages", get(list_validation_stages).post(create_validation_stage))
+        .route("/api/v1/validation-stages/:id", axum::routing::put(update_validation_stage).delete(delete_validation_stage))
+        // Competency domains (COMMUNES, PE40, PA20, etc.)
+        .route("/api/v1/competency-domains", get(list_competency_domains).post(create_competency_domain))
+        .route("/api/v1/competency-domains/:id", axum::routing::put(update_competency_domain).delete(delete_competency_domain))
+        // Competency modules (groupes dans un domaine)
+        .route("/api/v1/competency-modules", get(list_competency_modules).post(create_competency_module))
+        .route("/api/v1/competency-modules/:id", axum::routing::put(update_competency_module).delete(delete_competency_module))
+        // Competency skills (acquis individuels)
+        .route("/api/v1/competency-skills", get(list_competency_skills).post(create_competency_skill))
+        .route("/api/v1/competency-skills/:id", axum::routing::put(update_competency_skill).delete(delete_competency_skill))
+        // Skill validations (progression des élèves)
+        .route("/api/v1/skill-validations", get(list_skill_validations).post(create_skill_validation))
+        .route("/api/v1/skill-validations/:id", axum::routing::put(update_skill_validation).delete(delete_skill_validation))
+        // Hierarchy views
+        .route("/api/v1/my-competencies", get(get_my_competencies))
+        .route("/api/v1/person-competencies/:person_id", get(get_person_competencies))
+        // Groups and permissions management
+        .route("/api/v1/permissions", get(list_permissions))
+        .route("/api/v1/groups", get(list_groups))
+        .route("/api/v1/groups/:id", get(get_group).put(update_group_permissions))
         .layer(middleware::from_fn_with_state(
-            auth_service.clone(),
-            admin_auth_middleware,
+            acl_state.clone(),
+            acl_auth_middleware,
         ))
         .with_state(db.clone());
     
@@ -80,8 +144,8 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .route("/api/v1/questionnaires-detail", get(list_questionnaires_detail))
         .route("/api/v1/sessions/:id/summary", get(get_session_summary))
         .layer(middleware::from_fn_with_state(
-            auth_service.clone(),
-            admin_auth_middleware,
+            acl_state.clone(),
+            acl_auth_middleware,
         ))
         .with_state((db.clone(), config_arc));
     
@@ -90,8 +154,8 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .route("/api/v1/import", post(import_csv))
         .route("/api/v1/import/:id", get(get_import_job))
         .layer(middleware::from_fn_with_state(
-            auth_service.clone(),
-            admin_auth_middleware,
+            acl_state.clone(),
+            acl_auth_middleware,
         ))
         .with_state(import_state);
 
@@ -99,15 +163,18 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
     let email_service_routes = Router::new()
         .route("/api/v1/sessions/:id/generate-links", post(generate_magic_links))
         .layer(middleware::from_fn_with_state(
-            auth_service.clone(),
-            admin_auth_middleware,
+            acl_state,
+            acl_auth_middleware,
         ))
         .with_state((db.clone(), email_service));
 
     // API routes
     let api_routes = Router::new()
-        .merge(auth_routes)
+        .merge(auth_config_route)
+        .merge(auth_callback_route)
+        .merge(impersonation_routes)
         .merge(questionnaire_public_routes)
+        .merge(questionnaire_auth_routes)
         .merge(summary_public_routes)
         .merge(admin_routes)
         .merge(admin_detail_routes)

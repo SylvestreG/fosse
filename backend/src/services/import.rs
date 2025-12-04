@@ -4,7 +4,7 @@ use crate::models::{CsvImportRow, ImportError};
 use crate::services::EmailService;
 use chrono::Utc;
 use csv::ReaderBuilder;
-use sea_orm::{entity::prelude::Json, *};
+use sea_orm::*;
 use uuid::Uuid;
 
 pub struct ImportService;
@@ -99,7 +99,7 @@ impl ImportService {
         let errors_json = if errors.is_empty() {
             None
         } else {
-            Some(Json::from(serde_json::to_value(&errors).unwrap()))
+            Some(serde_json::to_value(&errors).unwrap())
         };
 
         let mut active: import_jobs::ActiveModel = import_job.into();
@@ -157,6 +157,7 @@ impl ImportService {
                 default_wants_stab: Set(false),
                 default_stab_size: Set(None),
                 diving_level: Set(None),
+                group_id: Set(None),
                 created_at: Set(now),
                 updated_at: Set(now),
             };

@@ -73,8 +73,7 @@ impl EmailService {
         let expiration_date = expires_at.format("%d/%m/%Y à %H:%M").to_string();
         
         // Generate email content
-        let session_location = session.location.as_ref()
-            .map(|l| l.as_str())
+        let session_location = session.location.as_deref()
             .unwrap_or("À définir");
         
         let (subject, body) = self.generate_email_content(
@@ -242,8 +241,7 @@ impl EmailService {
             let magic_link = format!("{}/q/{}", self.magic_link_base_url, token);
             let expiration_date = expires_at.format("%d/%m/%Y à %H:%M").to_string();
 
-            let session_location = session.location.as_ref()
-                .map(|l| l.as_str())
+            let session_location = session.location.as_deref()
                 .unwrap_or("À définir");
 
             let person_name = format!("{} {}", person.first_name, person.last_name);

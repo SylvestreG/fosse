@@ -2,8 +2,9 @@ import { useAuthStore } from '@/lib/auth'
 import { useNavigate, Link } from 'react-router-dom'
 
 export default function Header() {
-  const { email, name, logout } = useAuthStore()
+  const { email, name, logout, isAdminView } = useAuthStore()
   const navigate = useNavigate()
+  const isAdmin = isAdminView()
 
   const handleLogout = () => {
     logout()
@@ -23,18 +24,37 @@ export default function Header() {
               <Link to="/dashboard/sessions" className="text-gray-700 hover:text-primary-600 transition-colors">
                 Sessions
               </Link>
-              <Link to="/dashboard/users" className="text-gray-700 hover:text-primary-600 transition-colors">
-                Utilisateurs
+              {isAdmin ? (
+                <Link to="/dashboard/users" className="text-gray-700 hover:text-primary-600 transition-colors">
+                  Utilisateurs
+                </Link>
+              ) : (
+                <Link to="/dashboard/profile" className="text-gray-700 hover:text-primary-600 transition-colors">
+                  Mon Profil
+                </Link>
+              )}
+              <Link to="/dashboard/competences" className="text-gray-700 hover:text-primary-600 transition-colors">
+                Compétences
               </Link>
-              <Link to="/dashboard/emails" className="text-gray-700 hover:text-primary-600 transition-colors">
-                Emails
-              </Link>
+              {isAdmin && (
+                <>
+                  <Link to="/dashboard/groups" className="text-gray-700 hover:text-primary-600 transition-colors">
+                    Groupes
+                  </Link>
+                  <Link to="/dashboard/emails" className="text-gray-700 hover:text-primary-600 transition-colors">
+                    Emails
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-sm">
               <p className="font-medium text-gray-900">{name}</p>
               <p className="text-gray-500">{email}</p>
+              {!isAdmin && (
+                <p className="text-xs text-blue-600">Membre</p>
+              )}
             </div>
             <button
               onClick={handleLogout}
@@ -48,4 +68,3 @@ export default function Header() {
     </header>
   )
 }
-

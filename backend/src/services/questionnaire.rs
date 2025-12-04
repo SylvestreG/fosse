@@ -1,7 +1,7 @@
 use crate::entities::prelude::*;
-use crate::entities::{email_jobs, questionnaires};
+use crate::entities::{email_jobs, people, questionnaires};
 use crate::errors::{AppError, AppResult};
-use crate::models::{QuestionnaireDetailResponse, QuestionnaireResponse, QuestionnaireTokenData, SubmitQuestionnaireRequest, UpdateQuestionnaireRequest};
+use crate::models::{CreateQuestionnaireRequest, QuestionnaireDetailResponse, QuestionnaireResponse, QuestionnaireTokenData, SubmitQuestionnaireRequest, UpdateQuestionnaireRequest};
 use chrono::Utc;
 use sea_orm::*;
 use uuid::Uuid;
@@ -119,6 +119,8 @@ impl QuestionnaireService {
                 diving_level_display,
                 is_instructor,
                 preparing_level,
+                group_id: person.group_id,
+                group_name: None, // Not fetched in public context
                 created_at: person.created_at.to_string(),
                 updated_at: person.updated_at.to_string(),
             },
@@ -416,6 +418,148 @@ impl QuestionnaireService {
         } else {
             request.car_seats = None;
         }
+    }
+
+    fn apply_business_rules_create(request: &mut CreateQuestionnaireRequest) {
+        // Rule 1: Encadrant gets 2nd regulator by default
+        if request.is_encadrant {
+            if !request.wants_2nd_reg {
+                request.wants_2nd_reg = true;
+            }
+        } else {
+            // Rule 1b: Only encadrants can request nitrox and 2nd regulator
+            request.wants_nitrox = false;
+            request.wants_2nd_reg = false;
+        }
+
+        // Rule 2: Only store stab_size if wants_stab is true
+        if !request.wants_stab {
+            request.stab_size = None;
+        }
+
+        // Rule 3: Car seats validation
+        if request.has_car {
+            if let Some(seats) = request.car_seats {
+                if seats < 1 {
+                    request.car_seats = Some(1);
+                }
+            } else {
+                request.car_seats = Some(1);
+            }
+        } else {
+            request.car_seats = None;
+        }
+    }
+
+    /// Créer un questionnaire directement (auto-inscription)
+    pub async fn create_direct(
+        db: &DatabaseConnection,
+        mut request: CreateQuestionnaireRequest,
+    ) -> AppResult<QuestionnaireResponse> {
+        // Vérifier que la session existe
+        let session = Sessions::find_by_id(request.session_id)
+            .one(db)
+            .await
+            .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query session: {}", e))))?
+            .ok_or_else(|| AppError::NotFound("Session not found".to_string()))?;
+
+        // Trouver ou créer la personne
+        let person = People::find()
+            .filter(people::Column::Email.eq(&request.email))
+            .one(db)
+            .await
+            .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query person: {}", e))))?;
+
+        let now = Utc::now().naive_utc();
+
+        let person_id = if let Some(p) = person {
+            p.id
+        } else {
+            // Créer la personne
+            let new_person = people::ActiveModel {
+                id: Set(Uuid::new_v4()),
+                first_name: Set(request.first_name.clone()),
+                last_name: Set(request.last_name.clone()),
+                email: Set(request.email.clone()),
+                phone: Set(None),
+                default_is_encadrant: Set(false),
+                default_wants_regulator: Set(request.wants_regulator),
+                default_wants_nitrox: Set(request.wants_nitrox),
+                default_wants_2nd_reg: Set(request.wants_2nd_reg),
+                default_wants_stab: Set(request.wants_stab),
+                default_stab_size: Set(request.stab_size.clone()),
+                diving_level: Set(None),
+                group_id: Set(None),
+                created_at: Set(now),
+                updated_at: Set(now),
+            };
+
+            let created_person = new_person
+                .insert(db)
+                .await
+                .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to create person: {}", e))))?;
+
+            created_person.id
+        };
+
+        // Vérifier si un questionnaire existe déjà pour cette personne et session
+        let existing = Questionnaires::find()
+            .filter(questionnaires::Column::PersonId.eq(person_id))
+            .filter(questionnaires::Column::SessionId.eq(session.id))
+            .one(db)
+            .await
+            .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query questionnaire: {}", e))))?;
+
+        if existing.is_some() {
+            return Err(AppError::Validation("Vous êtes déjà inscrit à cette session".to_string()));
+        }
+
+        // Appliquer les règles métier
+        Self::apply_business_rules_create(&mut request);
+
+        // Créer le questionnaire
+        let new_questionnaire = questionnaires::ActiveModel {
+            id: Set(Uuid::new_v4()),
+            session_id: Set(session.id),
+            person_id: Set(person_id),
+            is_encadrant: Set(request.is_encadrant),
+            wants_regulator: Set(request.wants_regulator),
+            wants_nitrox: Set(request.wants_nitrox),
+            wants_2nd_reg: Set(request.wants_2nd_reg),
+            wants_stab: Set(request.wants_stab),
+            stab_size: Set(request.stab_size),
+            comes_from_issoire: Set(request.comes_from_issoire),
+            has_car: Set(request.has_car),
+            car_seats: Set(request.car_seats),
+            comments: Set(request.comments),
+            submitted_at: Set(Some(now)), // Marqué comme soumis immédiatement
+            created_at: Set(now),
+            updated_at: Set(now),
+        };
+
+        let created = new_questionnaire
+            .insert(db)
+            .await
+            .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to create questionnaire: {}", e))))?;
+
+        Ok(QuestionnaireResponse {
+            id: created.id,
+            session_id: created.session_id,
+            person_id: created.person_id,
+            is_encadrant: created.is_encadrant,
+            wants_regulator: created.wants_regulator,
+            wants_nitrox: created.wants_nitrox,
+            wants_2nd_reg: created.wants_2nd_reg,
+            wants_stab: created.wants_stab,
+            stab_size: created.stab_size,
+            comes_from_issoire: created.comes_from_issoire,
+            has_car: created.has_car,
+            car_seats: created.car_seats,
+            comments: created.comments,
+            submitted_at: created.submitted_at.map(|dt| dt.to_string()),
+            created_at: created.created_at.to_string(),
+            updated_at: created.updated_at.to_string(),
+        })
     }
 }
 

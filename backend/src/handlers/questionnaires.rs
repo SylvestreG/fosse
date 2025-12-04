@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::errors::AppError;
-use crate::models::{QuestionnaireDetailResponse, QuestionnaireResponse, QuestionnaireTokenData, SubmitQuestionnaireRequest, UpdateQuestionnaireRequest};
+use crate::models::{CreateQuestionnaireRequest, QuestionnaireDetailResponse, QuestionnaireResponse, QuestionnaireTokenData, SubmitQuestionnaireRequest, UpdateQuestionnaireRequest};
 use crate::services::QuestionnaireService;
 use axum::{
     extract::{Path, Query, State},
@@ -30,6 +30,19 @@ pub async fn submit_questionnaire(
     Json(payload): Json<SubmitQuestionnaireRequest>,
 ) -> Result<Json<QuestionnaireResponse>, AppError> {
     let response = QuestionnaireService::submit(db.as_ref(), payload).await?;
+    Ok(Json(response))
+}
+
+/// Créer un questionnaire directement (auto-inscription)
+pub async fn create_questionnaire(
+    State(db): State<Arc<DatabaseConnection>>,
+    Json(payload): Json<CreateQuestionnaireRequest>,
+) -> Result<Json<QuestionnaireResponse>, AppError> {
+    payload
+        .validate()
+        .map_err(|e| AppError::Validation(e.to_string()))?;
+    
+    let response = QuestionnaireService::create_direct(db.as_ref(), payload).await?;
     Ok(Json(response))
 }
 

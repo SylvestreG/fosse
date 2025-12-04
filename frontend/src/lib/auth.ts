@@ -1,29 +1,56 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+interface ImpersonationInfo {
+  user_id: string
+  user_email: string
+  user_name: string
+}
+
 interface AuthState {
   token: string | null
   email: string | null
   name: string | null
   isAuthenticated: boolean
-  setAuth: (token: string, email: string, name: string) => void
+  isAdmin: boolean
+  impersonating: ImpersonationInfo | null
+  // Getter: retourne true si admin ET pas en train d'impersonnifier
+  isAdminView: () => boolean
+  setAuth: (token: string, email: string, name: string, isAdmin: boolean, impersonating?: ImpersonationInfo | null) => void
+  setImpersonation: (token: string, impersonating: ImpersonationInfo) => void
+  stopImpersonation: (token: string) => void
   logout: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       token: null,
       email: null,
       name: null,
       isAuthenticated: false,
-      setAuth: (token, email, name) => {
+      isAdmin: false,
+      impersonating: null,
+      // Quand on impersonnifie, on voit l'interface comme l'utilisateur (pas admin)
+      isAdminView: () => {
+        const state = get()
+        return state.isAdmin && !state.impersonating
+      },
+      setAuth: (token, email, name, isAdmin, impersonating = null) => {
         localStorage.setItem('auth_token', token)
-        set({ token, email, name, isAuthenticated: true })
+        set({ token, email, name, isAuthenticated: true, isAdmin, impersonating })
+      },
+      setImpersonation: (token, impersonating) => {
+        localStorage.setItem('auth_token', token)
+        set({ token, impersonating })
+      },
+      stopImpersonation: (token) => {
+        localStorage.setItem('auth_token', token)
+        set({ token, impersonating: null })
       },
       logout: () => {
         localStorage.removeItem('auth_token')
-        set({ token: null, email: null, name: null, isAuthenticated: false })
+        set({ token: null, email: null, name: null, isAuthenticated: false, isAdmin: false, impersonating: null })
       },
     }),
     {
@@ -59,4 +86,3 @@ export async function initiateGoogleLogin() {
     alert('Erreur lors de la récupération de la configuration OAuth')
   }
 }
-

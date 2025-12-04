@@ -14,35 +14,35 @@ impl CsvImportRow {
     pub fn validate(&self, _row_number: usize) -> Result<(), String> {
         // Validate first_name
         if self.first_name.trim().is_empty() {
-            return Err(format!("Le prénom est obligatoire"));
+            return Err("Le prénom est obligatoire".to_string());
         }
         if self.first_name.len() > 100 {
-            return Err(format!("Le prénom est trop long (max 100 caractères)"));
+            return Err("Le prénom est trop long (max 100 caractères)".to_string());
         }
 
         // Validate last_name
         if self.last_name.trim().is_empty() {
-            return Err(format!("Le nom est obligatoire"));
+            return Err("Le nom est obligatoire".to_string());
         }
         if self.last_name.len() > 100 {
-            return Err(format!("Le nom est trop long (max 100 caractères)"));
+            return Err("Le nom est trop long (max 100 caractères)".to_string());
         }
 
         // Validate email
         if self.email.trim().is_empty() {
-            return Err(format!("L'email est obligatoire"));
+            return Err("L'email est obligatoire".to_string());
         }
         if !self.email.contains('@') {
             return Err(format!("L'email '{}' n'est pas valide", self.email));
         }
         if self.email.len() > 255 {
-            return Err(format!("L'email est trop long (max 255 caractères)"));
+            return Err("L'email est trop long (max 255 caractères)".to_string());
         }
 
         // Validate phone (optionnel)
         if let Some(phone) = &self.phone {
             if !phone.trim().is_empty() && phone.len() > 20 {
-                return Err(format!("Le téléphone est trop long (max 20 caractères)"));
+                return Err("Le téléphone est trop long (max 20 caractères)".to_string());
             }
         }
 

@@ -5,16 +5,17 @@ interface ModalProps {
   onClose: () => void
   title: string
   children: React.ReactNode
+  className?: string
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export default function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black opacity-30" onClick={onClose} />
-        <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <div className={`relative bg-white rounded-lg shadow-xl max-w-md w-full p-6 ${className || ''}`}>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
             <button

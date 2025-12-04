@@ -9,11 +9,12 @@ use axum::{
 use std::sync::Arc;
 
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct AdminAuth {
-    #[allow(dead_code)]
     pub claims: Claims,
 }
 
+#[allow(dead_code)]
 pub async fn admin_auth_middleware(
     State(auth_service): State<Arc<AuthService>>,
     mut request: Request,

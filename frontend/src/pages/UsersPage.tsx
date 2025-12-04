@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { peopleApi, Person } from '@/lib/api'
+import { peopleApi, authApi, Person } from '@/lib/api'
+import { useAuthStore } from '@/lib/auth'
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
 import Modal from '@/components/Modal'
@@ -12,6 +13,8 @@ export default function UsersPage() {
   const [showDivingLevelModal, setShowDivingLevelModal] = useState(false)
   const [editingPerson, setEditingPerson] = useState<Person | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+  const { isAdmin, setImpersonation } = useAuthStore()
+  // Note: ici on garde isAdmin (pas isAdminView) car cette page n'est accessible qu'aux vrais admins
 
   useEffect(() => {
     loadPeople()
@@ -38,6 +41,18 @@ export default function UsersPage() {
       loadPeople()
     } catch (error) {
       setToast({ message: 'Erreur lors de la suppression', type: 'error' })
+    }
+  }
+
+  const handleImpersonate = async (person: Person) => {
+    if (!confirm(`Voulez-vous impersonnifier ${person.first_name} ${person.last_name} ?`)) return
+    
+    try {
+      const response = await authApi.impersonate(person.id)
+      setImpersonation(response.data.token, response.data.impersonating)
+      setToast({ message: `Vous êtes maintenant ${person.first_name} ${person.last_name}`, type: 'success' })
+    } catch (error) {
+      setToast({ message: 'Erreur lors de l\'impersonification', type: 'error' })
     }
   }
 
@@ -101,13 +116,18 @@ export default function UsersPage() {
               {person.default_wants_stab && person.default_stab_size && <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">Stab {person.default_stab_size}</span>}
             </div>
 
-            <div className="mt-4 flex space-x-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               <Button size="sm" variant="secondary" onClick={() => { setEditingPerson(person); setShowModal(true) }}>
                 ✏️ Modifier
               </Button>
               <Button size="sm" variant="secondary" onClick={() => { setEditingPerson(person); setShowDivingLevelModal(true) }}>
                 🤿 Niveau
               </Button>
+              {isAdmin && (
+                <Button size="sm" variant="secondary" onClick={() => handleImpersonate(person)} title="Impersonnifier cet utilisateur">
+                  👤 Impersonnifier
+                </Button>
+              )}
               <Button size="sm" variant="secondary" onClick={() => handleDelete(person.id)}>
                 🗑️
               </Button>

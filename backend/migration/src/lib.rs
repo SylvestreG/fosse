@@ -16,6 +16,9 @@ mod m20240101_000013_ensure_people_structure;
 mod m20240101_000014_add_unique_constraints;
 mod m20240101_000015_add_session_summary_token;
 mod m20240101_000016_add_diving_level;
+mod m20240101_000017_create_competencies;
+mod m20240101_000018_create_groups_acl;
+mod m20240101_000019_create_competency_hierarchy;
 
 pub struct Migrator;
 
@@ -39,6 +42,9 @@ impl MigratorTrait for Migrator {
         Box::new(m20240101_000014_add_unique_constraints::Migration),
         Box::new(m20240101_000015_add_session_summary_token::Migration),
         Box::new(m20240101_000016_add_diving_level::Migration),
+        Box::new(m20240101_000017_create_competencies::Migration),
+        Box::new(m20240101_000018_create_groups_acl::Migration),
+        Box::new(m20240101_000019_create_competency_hierarchy::Migration),
         ]
     }
 }

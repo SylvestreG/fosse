@@ -10,6 +10,7 @@ use chrono::Utc;
 use sea_orm::*;
 use sea_orm::sea_query::Expr;
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 use validator::Validate;
@@ -67,12 +68,16 @@ pub async fn list_people(
             AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query people: {}", e)))
         })?;
 
+    // Get all groups to map group_id to group_name
+    let groups_map = get_groups_map(db.as_ref()).await?;
+
     let response: Vec<PersonResponse> = people_list
         .into_iter()
         .map(|p| {
             let diving_level_display = compute_diving_level_display(&p.diving_level);
             let is_instructor = compute_is_instructor(&p.diving_level);
             let preparing_level = compute_preparing_level(&p.diving_level);
+            let group_name = p.group_id.and_then(|gid| groups_map.get(&gid).cloned());
             PersonResponse {
                 id: p.id,
                 first_name: p.first_name.clone(),
@@ -89,6 +94,8 @@ pub async fn list_people(
                 diving_level_display,
                 is_instructor,
                 preparing_level,
+                group_id: p.group_id,
+                group_name,
                 created_at: p.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
                 updated_at: p.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
             }
@@ -96,6 +103,36 @@ pub async fn list_people(
         .collect();
 
     Ok(Json(response))
+}
+
+/// Helper pour récupérer la map des groupes
+async fn get_groups_map(db: &DatabaseConnection) -> Result<HashMap<Uuid, String>, AppError> {
+    let groups_list = Groups::find()
+        .all(db)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to query groups: {:?}", e);
+            AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query groups: {}", e)))
+        })?;
+    
+    Ok(groups_list.into_iter().map(|g| (g.id, g.name)).collect())
+}
+
+/// Helper pour récupérer le nom d'un groupe
+async fn get_group_name(db: &DatabaseConnection, group_id: Option<Uuid>) -> Result<Option<String>, AppError> {
+    let Some(gid) = group_id else {
+        return Ok(None);
+    };
+    
+    let group = Groups::find_by_id(gid)
+        .one(db)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to query group: {:?}", e);
+            AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query group: {}", e)))
+        })?;
+    
+    Ok(group.map(|g| g.name))
 }
 
 pub async fn get_person(
@@ -111,6 +148,7 @@ pub async fn get_person(
     let diving_level_display = compute_diving_level_display(&person.diving_level);
     let is_instructor = compute_is_instructor(&person.diving_level);
     let preparing_level = compute_preparing_level(&person.diving_level);
+    let group_name = get_group_name(db.as_ref(), person.group_id).await?;
 
     Ok(Json(PersonResponse {
         id: person.id,
@@ -128,6 +166,8 @@ pub async fn get_person(
         diving_level_display,
         is_instructor,
         preparing_level,
+        group_id: person.group_id,
+        group_name,
         created_at: person.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         updated_at: person.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
     }))
@@ -155,6 +195,7 @@ pub async fn create_person(
         default_wants_stab: Set(payload.default_wants_stab.unwrap_or(true)),
         default_stab_size: Set(payload.default_stab_size),
         diving_level: Set(payload.diving_level),
+        group_id: Set(payload.group_id),
         created_at: Set(now),
         updated_at: Set(now),
     };
@@ -179,6 +220,7 @@ pub async fn create_person(
     let diving_level_display = compute_diving_level_display(&person.diving_level);
     let is_instructor = compute_is_instructor(&person.diving_level);
     let preparing_level = compute_preparing_level(&person.diving_level);
+    let group_name = get_group_name(db.as_ref(), person.group_id).await?;
 
     Ok(Json(PersonResponse {
         id: person.id,
@@ -196,6 +238,8 @@ pub async fn create_person(
         diving_level_display,
         is_instructor,
         preparing_level,
+        group_id: person.group_id,
+        group_name,
         created_at: person.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         updated_at: person.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
     }))
@@ -251,6 +295,9 @@ pub async fn update_person(
     if let Some(val) = payload.diving_level {
         person.diving_level = Set(Some(val));
     }
+    if let Some(val) = payload.group_id {
+        person.group_id = Set(Some(val));
+    }
     
     person.updated_at = Set(Utc::now().naive_utc());
 
@@ -274,6 +321,7 @@ pub async fn update_person(
     let diving_level_display = compute_diving_level_display(&updated.diving_level);
     let is_instructor = compute_is_instructor(&updated.diving_level);
     let preparing_level = compute_preparing_level(&updated.diving_level);
+    let group_name = get_group_name(db.as_ref(), updated.group_id).await?;
 
     Ok(Json(PersonResponse {
         id: updated.id,
@@ -291,6 +339,8 @@ pub async fn update_person(
         diving_level_display,
         is_instructor,
         preparing_level,
+        group_id: updated.group_id,
+        group_name,
         created_at: updated.created_at.format("%Y-%m-%d %H:%M:%S").to_string(),
         updated_at: updated.updated_at.format("%Y-%m-%d %H:%M:%S").to_string(),
     }))

@@ -34,8 +34,8 @@ export default function LoginAdmin() {
     setLoading(true)
     try {
       const response = await authApi.googleCallback(code)
-      const { token, email, name } = response.data
-      setAuth(token, email, name)
+      const { token, email, name, is_admin, impersonating } = response.data
+      setAuth(token, email, name, is_admin, impersonating)
       // Clear the URL parameters and navigate
       window.history.replaceState({}, '', '/login')
       navigate('/dashboard', { replace: true })
@@ -88,7 +88,7 @@ export default function LoginAdmin() {
           </Button>
 
           <p className="text-sm text-gray-500 text-center mt-4">
-            Seuls les administrateurs autorisés peuvent se connecter
+            Accès réservé aux administrateurs et utilisateurs enregistrés
           </p>
         </div>
       </div>

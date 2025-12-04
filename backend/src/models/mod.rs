@@ -6,6 +6,8 @@ pub mod auth;
 pub mod email;
 pub mod summary;
 pub mod diving_level;
+pub mod competency;
+pub mod acl;
 
 pub use session::*;
 pub use person::*;
@@ -15,4 +17,6 @@ pub use auth::*;
 pub use email::*;
 pub use summary::*;
 pub use diving_level::*;
+pub use competency::*;
+pub use acl::*;
 
