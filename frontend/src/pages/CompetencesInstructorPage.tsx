@@ -416,6 +416,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                     value, 
                     name === 'eleves' ? '👨‍🎓 Élèves' : '👨‍🏫 Encadrants'
                   ]}
+                  labelFormatter={(label) => `📅 ${label}`}
                 />
                 <Legend 
                   formatter={(value) => value === 'eleves' ? '👨‍🎓 Élèves' : '👨‍🏫 Encadrants'}
