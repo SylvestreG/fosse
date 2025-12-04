@@ -6,18 +6,26 @@ import {
   competencyDomainsApi, 
   competencyModulesApi, 
   competencySkillsApi,
+  sessionsApi,
+  questionnairesApi,
+  skillValidationsApi,
   Person, 
   ValidationStage,
   CompetencyDomain,
   CompetencyModule,
   CompetencySkill,
+  Session,
 } from '@/lib/api'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import Toast from '@/components/Toast'
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  PieChart, Pie, Cell, LineChart, Line
+} from 'recharts'
 
-// Ordre des niveaux
-const LEVEL_ORDER = ['N1', 'N2', 'N3', 'N4', 'N5', 'E2', 'MF1', 'MF2']
+// Ordre des niveaux - limité à N1, N2, N3 pour l'instant
+const LEVEL_ORDER = ['N1', 'N2', 'N3']
 const MIN_VALIDATOR_LEVELS = ['E2', 'MF1', 'MF2', 'N4', 'N3']
 
 // Noms complets des niveaux
@@ -32,7 +40,7 @@ const LEVEL_NAMES: Record<string, string> = {
   MF2: 'MF2 - Moniteur Fédéral 2',
 }
 
-type ManageMode = 'hierarchy' | 'stages' | 'students'
+type ManageMode = 'hierarchy' | 'stages' | 'students' | 'stats'
 
 export default function CompetencesAdminPage() {
   const navigate = useNavigate()
@@ -173,13 +181,19 @@ export default function CompetencesAdminPage() {
             variant={manageMode === 'stages' ? 'primary' : 'secondary'}
             onClick={() => setManageMode('stages')}
           >
-            📊 Étapes
+            🔄 Étapes
           </Button>
           <Button
             variant={manageMode === 'students' ? 'primary' : 'secondary'}
             onClick={() => setManageMode('students')}
           >
             👨‍🎓 Élèves
+          </Button>
+          <Button
+            variant={manageMode === 'stats' ? 'primary' : 'secondary'}
+            onClick={() => setManageMode('stats')}
+          >
+            📊 Statistiques
           </Button>
         </div>
       </div>
@@ -268,6 +282,13 @@ export default function CompetencesAdminPage() {
           level={activeTab}
           students={studentsForCurrentLevel}
           onViewProgress={(student) => navigate(`/dashboard/competences/student/${student.id}`)}
+        />
+      )}
+
+      {manageMode === 'stats' && (
+        <StatisticsSection
+          people={people}
+          stages={stages}
         />
       )}
 
@@ -686,6 +707,321 @@ function StudentsSection({ level, students, onViewProgress }: StudentsSectionPro
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+// ============================================================================
+// STATISTICS SECTION
+// ============================================================================
+
+interface StatisticsSectionProps {
+  people: Person[]
+  stages: ValidationStage[]
+}
+
+function StatisticsSection({ people }: StatisticsSectionProps) {
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [participationData, setParticipationData] = useState<{ name: string; participants: number }[]>([])
+  const [progressData, setProgressData] = useState<Record<string, { validated: number; inProgress: number; notStarted: number }>>({})
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadStatistics()
+  }, [people])
+
+  const loadStatistics = async () => {
+    try {
+      setLoading(true)
+      
+      // Charger les sessions
+      const sessionsRes = await sessionsApi.list()
+      const sortedSessions = sessionsRes.data.sort((a, b) => 
+        new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
+      )
+      setSessions(sortedSessions)
+      
+      // Charger les participations par session (questionnaires)
+      const participationPromises = sortedSessions.slice(-10).map(async (session) => {
+        try {
+          const res = await questionnairesApi.list(session.id)
+          return {
+            name: session.name.length > 15 ? session.name.substring(0, 15) + '...' : session.name,
+            participants: res.data.length
+          }
+        } catch {
+          return { name: session.name, participants: 0 }
+        }
+      })
+      const participations = await Promise.all(participationPromises)
+      setParticipationData(participations)
+
+      // Charger la progression des compétences par niveau
+      const studentsPreparingLevels = people.filter(p => p.preparing_level && LEVEL_ORDER.includes(p.preparing_level))
+      const progressByLevel: Record<string, { validated: number; inProgress: number; notStarted: number }> = {}
+      
+      for (const level of LEVEL_ORDER) {
+        progressByLevel[level] = { validated: 0, inProgress: 0, notStarted: 0 }
+      }
+      
+      // Pour chaque élève avec un niveau en préparation, charger ses compétences
+      for (const student of studentsPreparingLevels.slice(0, 20)) { // Limiter à 20 pour la perf
+        if (!student.preparing_level) continue
+        try {
+          const competencies = await skillValidationsApi.getPersonCompetencies(student.id, student.preparing_level)
+          for (const domain of competencies.data.domains) {
+            progressByLevel[student.preparing_level].validated += domain.progress.validated
+            progressByLevel[student.preparing_level].inProgress += domain.progress.in_progress
+            progressByLevel[student.preparing_level].notStarted += domain.progress.not_started
+          }
+        } catch {
+          // Ignorer les erreurs silencieusement
+        }
+      }
+      
+      setProgressData(progressByLevel as any)
+    } catch (error) {
+      console.error('Error loading statistics:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Données pour le graphique des élèves par niveau
+  const studentsByLevelData = LEVEL_ORDER.map((level) => {
+    const count = people.filter(p => p.preparing_level === level).length
+    return { level, count, name: LEVEL_NAMES[level] || level }
+  })
+
+  // Données pour le graphique des niveaux actuels (tous les plongeurs)
+  const currentLevelData = (() => {
+    const levelCounts: Record<string, number> = {}
+    people.forEach(p => {
+      if (p.diving_level_display) {
+        levelCounts[p.diving_level_display] = (levelCounts[p.diving_level_display] || 0) + 1
+      }
+    })
+    return Object.entries(levelCounts)
+      .map(([level, count]) => ({ level, count }))
+      .sort((a, b) => {
+        const orderA = LEVEL_ORDER.indexOf(a.level)
+        const orderB = LEVEL_ORDER.indexOf(b.level)
+        if (orderA === -1 && orderB === -1) return 0
+        if (orderA === -1) return 1
+        if (orderB === -1) return -1
+        return orderA - orderB
+      })
+  })()
+
+  // Données pour le graphique encadrants vs élèves
+  const encadrantsVsEleves = (() => {
+    const encadrants = people.filter(p => p.default_is_encadrant).length
+    const eleves = people.filter(p => !p.default_is_encadrant).length
+    return [
+      { name: 'Encadrants', value: encadrants, color: '#3B82F6' },
+      { name: 'Élèves', value: eleves, color: '#10B981' }
+    ]
+  })()
+
+  // Progression par niveau
+  const progressChartData = LEVEL_ORDER.map(level => {
+    const data = progressData[level] || { validated: 0, inProgress: 0, notStarted: 0 }
+    return {
+      level,
+      'Validé': data.validated,
+      'En cours': data.inProgress,
+      'Non commencé': data.notStarted
+    }
+  })
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-2 text-gray-500">Chargement des statistiques...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Cartes de résumé */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+          <div className="text-3xl font-bold">{people.length}</div>
+          <div className="text-blue-100">Membres total</div>
+        </div>
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
+          <div className="text-3xl font-bold">{people.filter(p => p.default_is_encadrant).length}</div>
+          <div className="text-green-100">Encadrants</div>
+        </div>
+        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-6 text-white">
+          <div className="text-3xl font-bold">{people.filter(p => p.preparing_level).length}</div>
+          <div className="text-amber-100">En préparation</div>
+        </div>
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+          <div className="text-3xl font-bold">{sessions.length}</div>
+          <div className="text-purple-100">Sessions de fosse</div>
+        </div>
+      </div>
+
+      {/* Graphiques en grille */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Élèves par niveau préparé */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">👨‍🎓 Élèves par niveau préparé</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={studentsByLevelData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="level" />
+              <YAxis allowDecimals={false} />
+              <Tooltip 
+                formatter={(value: number) => [value, 'Élèves']}
+                labelFormatter={(label) => LEVEL_NAMES[label] || label}
+              />
+              <Bar dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Répartition Encadrants / Élèves */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">👥 Répartition des membres</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={encadrantsVsEleves}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={100}
+                fill="#8884d8"
+                dataKey="value"
+                label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+              >
+                {encadrantsVsEleves.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Niveaux actuels des membres */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">🤿 Niveaux actuels des membres</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={currentLevelData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis type="number" allowDecimals={false} />
+              <YAxis dataKey="level" type="category" width={60} />
+              <Tooltip formatter={(value: number) => [value, 'Membres']} />
+              <Bar dataKey="count" fill="#10B981" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Participations aux fosses */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">📅 Participations aux dernières fosses</h3>
+          {participationData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={participationData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={11} />
+                <YAxis allowDecimals={false} />
+                <Tooltip formatter={(value: number) => [value, 'Participants']} />
+                <Line 
+                  type="monotone" 
+                  dataKey="participants" 
+                  stroke="#8B5CF6" 
+                  strokeWidth={2}
+                  dot={{ fill: '#8B5CF6', strokeWidth: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-gray-500">
+              Aucune donnée de participation disponible
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Progression des compétences par niveau */}
+      <div className="bg-white rounded-xl shadow p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4">📈 Progression des compétences par niveau</h3>
+        <ResponsiveContainer width="100%" height={350}>
+          <BarChart data={progressChartData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="level" />
+            <YAxis allowDecimals={false} />
+            <Tooltip />
+            <Legend />
+            <Bar dataKey="Validé" stackId="a" fill="#10B981" />
+            <Bar dataKey="En cours" stackId="a" fill="#F59E0B" />
+            <Bar dataKey="Non commencé" stackId="a" fill="#E5E7EB" />
+          </BarChart>
+        </ResponsiveContainer>
+        <p className="text-sm text-gray-500 mt-2 text-center">
+          Agrégation des compétences des élèves préparant chaque niveau
+        </p>
+      </div>
+
+      {/* Tableau détaillé par niveau */}
+      <div className="bg-white rounded-xl shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900">📋 Détail par niveau</h3>
+        </div>
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Niveau</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Élèves en préparation</th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Membres avec ce niveau</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {LEVEL_ORDER.map((level) => {
+              const preparing = people.filter(p => p.preparing_level === level).length
+              const current = people.filter(p => p.diving_level_display === level).length
+              return (
+                <tr key={level} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
+                      {level}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600">
+                    {LEVEL_NAMES[level] || level}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {preparing > 0 ? (
+                      <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-sm">
+                        {preparing} 👨‍🎓
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {current > 0 ? (
+                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                        {current} 🤿
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }
