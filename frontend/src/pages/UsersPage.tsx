@@ -12,6 +12,7 @@ export default function UsersPage() {
   const [showModal, setShowModal] = useState(false)
   const [showDivingLevelModal, setShowDivingLevelModal] = useState(false)
   const [editingPerson, setEditingPerson] = useState<Person | null>(null)
+  const [confirmAction, setConfirmAction] = useState<{ type: 'delete' | 'impersonate'; person: Person } | null>(null)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const { isAdmin, setImpersonation } = useAuthStore()
   // Note: ici on garde isAdmin (pas isAdminView) car cette page n'est accessible qu'aux vrais admins
@@ -32,29 +33,38 @@ export default function UsersPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) return
-    
-    try {
-      await peopleApi.delete(id)
-      setToast({ message: 'Utilisateur supprimé', type: 'success' })
-      loadPeople()
-    } catch (error) {
-      setToast({ message: 'Erreur lors de la suppression', type: 'error' })
-    }
+  const handleDelete = async (person: Person) => {
+    setConfirmAction({ type: 'delete', person })
   }
 
   const handleImpersonate = async (person: Person) => {
-    if (!confirm(`Voulez-vous impersonnifier ${person.first_name} ${person.last_name} ?`)) return
+    setConfirmAction({ type: 'impersonate', person })
+  }
+
+  const executeConfirmAction = async () => {
+    if (!confirmAction) return
     
-    try {
-      const response = await authApi.impersonate(person.id)
-      console.log('Impersonation response:', response.data)
-      console.log('can_validate_competencies:', response.data.can_validate_competencies)
-      setImpersonation(response.data.token, response.data.impersonating, response.data.can_validate_competencies)
-      setToast({ message: `Vous êtes maintenant ${person.first_name} ${person.last_name}`, type: 'success' })
-    } catch (error) {
-      setToast({ message: 'Erreur lors de l\'impersonification', type: 'error' })
+    const { type, person } = confirmAction
+    setConfirmAction(null)
+    
+    if (type === 'delete') {
+      try {
+        await peopleApi.delete(person.id)
+        setToast({ message: 'Utilisateur supprimé', type: 'success' })
+        loadPeople()
+      } catch (error) {
+        setToast({ message: 'Erreur lors de la suppression', type: 'error' })
+      }
+    } else if (type === 'impersonate') {
+      try {
+        const response = await authApi.impersonate(person.id)
+        console.log('Impersonation response:', response.data)
+        console.log('can_validate_competencies:', response.data.can_validate_competencies)
+        setImpersonation(response.data.token, response.data.impersonating, response.data.can_validate_competencies)
+        setToast({ message: `Vous êtes maintenant ${person.first_name} ${person.last_name}`, type: 'success' })
+      } catch (error) {
+        setToast({ message: 'Erreur lors de l\'impersonification', type: 'error' })
+      }
     }
   }
 
@@ -63,43 +73,43 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Utilisateurs</h1>
-        <Button onClick={() => { setEditingPerson(null); setShowModal(true) }}>
-          ➕ Nouvel utilisateur
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Utilisateurs</h1>
+        <Button onClick={() => { setEditingPerson(null); setShowModal(true) }} className="text-sm sm:text-base">
+          ➕ <span className="hidden sm:inline">Nouvel </span>utilisateur
         </Button>
       </div>
 
       <div>
         <input
           type="text"
-          placeholder="Rechercher par nom ou email..."
+          placeholder="Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+          className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-sm sm:text-base"
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {people.map((person) => (
-          <div key={person.id} className="bg-white p-4 rounded-lg shadow">
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="text-lg font-semibold">{person.first_name} {person.last_name}</h3>
+          <div key={person.id} className="bg-white p-3 sm:p-4 rounded-lg shadow">
+            <div className="flex justify-between items-start mb-2 gap-2">
+              <h3 className="text-sm sm:text-lg font-semibold">{person.first_name} {person.last_name}</h3>
               {person.is_instructor && (
-                <span className="text-xs px-2 py-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full font-semibold">
-                  👨‍🏫 Encadrant
+                <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full font-semibold flex-shrink-0">
+                  👨‍🏫<span className="hidden sm:inline"> Encadrant</span>
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-600">{person.email}</p>
-            {person.phone && <p className="text-sm text-gray-600">📞 {person.phone}</p>}
+            <p className="text-xs sm:text-sm text-gray-600 truncate">{person.email}</p>
+            {person.phone && <p className="text-xs sm:text-sm text-gray-600">📞 {person.phone}</p>}
             
             {person.diving_level_display && (
               <div className="mt-2 space-y-1">
                 <div>
-                  <span className="text-sm font-medium text-blue-700">
-                    🤿 Niveau: {person.diving_level_display}
+                  <span className="text-xs sm:text-sm font-medium text-blue-700">
+                    🤿 {person.diving_level_display}
                   </span>
                 </div>
                 {person.preparing_level && (
@@ -112,25 +122,25 @@ export default function UsersPage() {
               </div>
             )}
             
-            <div className="mt-3 flex flex-wrap gap-1">
-              {person.default_is_encadrant && <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded">Encadrant (défaut)</span>}
-              {person.default_wants_nitrox && <span className="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Nitrox</span>}
-              {person.default_wants_stab && person.default_stab_size && <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">Stab {person.default_stab_size}</span>}
+            <div className="mt-2 sm:mt-3 flex flex-wrap gap-1">
+              {person.default_is_encadrant && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-purple-100 text-purple-800 rounded">Encadrant</span>}
+              {person.default_wants_nitrox && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-yellow-100 text-yellow-800 rounded">Nitrox</span>}
+              {person.default_wants_stab && person.default_stab_size && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-100 text-blue-800 rounded">Stab {person.default_stab_size}</span>}
             </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button size="sm" variant="secondary" onClick={() => { setEditingPerson(person); setShowModal(true) }}>
-                ✏️ Modifier
+            <div className="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2">
+              <Button size="sm" variant="secondary" onClick={() => { setEditingPerson(person); setShowModal(true) }} className="text-xs sm:text-sm px-2 sm:px-3">
+                ✏️<span className="hidden sm:inline"> Modifier</span>
               </Button>
-              <Button size="sm" variant="secondary" onClick={() => { setEditingPerson(person); setShowDivingLevelModal(true) }}>
-                🤿 Niveau
+              <Button size="sm" variant="secondary" onClick={() => { setEditingPerson(person); setShowDivingLevelModal(true) }} className="text-xs sm:text-sm px-2 sm:px-3">
+                🤿<span className="hidden sm:inline"> Niveau</span>
               </Button>
               {isAdmin && (
-                <Button size="sm" variant="secondary" onClick={() => handleImpersonate(person)} title="Impersonnifier cet utilisateur">
-                  👤 Impersonnifier
+                <Button size="sm" variant="secondary" onClick={() => handleImpersonate(person)} className="text-xs sm:text-sm px-2 sm:px-3">
+                  👤<span className="hidden sm:inline"> Impersonnifier</span>
                 </Button>
               )}
-              <Button size="sm" variant="secondary" onClick={() => handleDelete(person.id)}>
+              <Button size="sm" variant="secondary" onClick={() => handleDelete(person)} className="text-xs sm:text-sm px-2 sm:px-3">
                 🗑️
               </Button>
             </div>
@@ -170,6 +180,41 @@ export default function UsersPage() {
 
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
+
+      {/* Modal de confirmation */}
+      {confirmAction && (
+        <Modal
+          isOpen={true}
+          onClose={() => setConfirmAction(null)}
+          title={confirmAction.type === 'delete' ? '🗑️ Supprimer l\'utilisateur' : '👤 Impersonnifier'}
+        >
+          <div className="space-y-4">
+            <p className="text-gray-700">
+              {confirmAction.type === 'delete' ? (
+                <>Êtes-vous sûr de vouloir supprimer <strong>{confirmAction.person.first_name} {confirmAction.person.last_name}</strong> ?</>
+              ) : (
+                <>Voulez-vous impersonnifier <strong>{confirmAction.person.first_name} {confirmAction.person.last_name}</strong> ?</>
+              )}
+            </p>
+            {confirmAction.type === 'impersonate' && (
+              <p className="text-sm text-gray-500">
+                Vous verrez l'application comme cet utilisateur.
+              </p>
+            )}
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button variant="secondary" onClick={() => setConfirmAction(null)}>
+                Annuler
+              </Button>
+              <Button 
+                onClick={executeConfirmAction}
+                className={confirmAction.type === 'delete' ? 'bg-red-600 hover:bg-red-700' : ''}
+              >
+                {confirmAction.type === 'delete' ? 'Supprimer' : 'Impersonnifier'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </div>
   )
