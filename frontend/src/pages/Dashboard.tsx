@@ -13,6 +13,7 @@ import MyProfilePage from './MyProfilePage'
 import CompetencesPage from './CompetencesPage'
 import CompetencesAdminPage from './CompetencesAdminPage'
 import CompetencesInstructorPage from './CompetencesInstructorPage'
+import StudentCompetencesPage from './StudentCompetencesPage'
 import MyCompetencesPage from './MyCompetencesPage'
 import GroupsPage from './GroupsPage'
 import { useAuthStore } from '@/lib/auth'
@@ -56,6 +57,11 @@ export default function Dashboard() {
               canValidateCompetencies ? <CompetencesInstructorPage /> : 
               <MyCompetencesPage />
             } />
+            
+            {/* Page de validation des compétences d'un élève - admin et encadrants */}
+            {(isAdmin || canValidateCompetencies) && (
+              <Route path="/competences/student/:studentId" element={<StudentCompetencesPage />} />
+            )}
             
             {/* Legacy competences page - redirect to new one */}
             {isAdmin && <Route path="/competences-legacy" element={<CompetencesPage />} />}

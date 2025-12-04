@@ -58,7 +58,13 @@ pub async fn acl_auth_middleware(
         .map_err(|_| AppError::Unauthorized("Invalid token".to_string()))?;
 
     // Récupérer les permissions de l'utilisateur
-    let permissions = get_permissions_for_email(&state.db, &claims.email).await?;
+    // Si on impersonnifie, utiliser l'email de l'utilisateur impersonnifié
+    let email_for_permissions = claims.impersonating
+        .as_ref()
+        .map(|i| i.user_email.as_str())
+        .unwrap_or(&claims.email);
+    
+    let permissions = get_permissions_for_email(&state.db, email_for_permissions).await?;
 
     request.extensions_mut().insert(AuthUser { claims, permissions });
 

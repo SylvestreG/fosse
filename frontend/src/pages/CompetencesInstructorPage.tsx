@@ -1,14 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { 
   peopleApi, 
-  validationStagesApi, 
-  skillValidationsApi,
   Person, 
-  ValidationStage,
-  CompetencyHierarchy,
 } from '@/lib/api'
-import Button from '@/components/Button'
-import Modal from '@/components/Modal'
 import Toast from '@/components/Toast'
 
 // Ordre des niveaux
@@ -27,29 +22,21 @@ const LEVEL_NAMES: Record<string, string> = {
 }
 
 export default function CompetencesInstructorPage() {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('N2')
   const [people, setPeople] = useState<Person[]>([])
-  const [stages, setStages] = useState<ValidationStage[]>([])
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-  
-  const [showStudentProgressModal, setShowStudentProgressModal] = useState(false)
-  const [selectedStudent, setSelectedStudent] = useState<Person | null>(null)
-  const [studentProgress, setStudentProgress] = useState<CompetencyHierarchy | null>(null)
 
   useEffect(() => {
     loadData()
-  }, [activeTab])
+  }, [])
 
   const loadData = async () => {
     try {
       setLoading(true)
-      const [peopleRes, stagesRes] = await Promise.all([
-        peopleApi.list(),
-        validationStagesApi.list(),
-      ])
+      const peopleRes = await peopleApi.list()
       setPeople(peopleRes.data)
-      setStages(stagesRes.data)
     } catch (error) {
       console.error('Error loading data:', error)
       setToast({ message: 'Erreur lors du chargement des données', type: 'error' })
@@ -64,20 +51,6 @@ export default function CompetencesInstructorPage() {
 
   const getStudentCountByLevel = (level: string) => {
     return getStudentsPreparingLevel(level).length
-  }
-
-  const handleViewStudentProgress = async (student: Person) => {
-    setSelectedStudent(student)
-    try {
-      const level = student.preparing_level || student.diving_level_display
-      if (level) {
-        const res = await skillValidationsApi.getPersonCompetencies(student.id, level)
-        setStudentProgress(res.data)
-      }
-    } catch (error) {
-      console.error('Error loading student progress:', error)
-    }
-    setShowStudentProgressModal(true)
   }
 
   if (loading) {
@@ -146,9 +119,10 @@ export default function CompetencesInstructorPage() {
             {studentsForCurrentLevel.map((student) => (
               <div
                 key={student.id}
-                className="p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors"
+                onClick={() => navigate(`/dashboard/competences/student/${student.id}`)}
+                className="p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
               >
-                <div className="font-medium text-gray-900">
+                <div className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
                   {student.first_name} {student.last_name}
                 </div>
                 <div className="text-sm text-gray-500">{student.email}</div>
@@ -157,37 +131,15 @@ export default function CompetencesInstructorPage() {
                     🤿 Niveau actuel: {student.diving_level_display}
                   </div>
                 )}
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => handleViewStudentProgress(student)}
-                  className="mt-3 w-full"
-                >
-                  📊 Voir et valider
-                </Button>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-xs text-gray-400">Cliquez pour voir et valider</span>
+                  <span className="text-blue-500 group-hover:translate-x-1 transition-transform">→</span>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {/* Student Progress Modal */}
-      {showStudentProgressModal && selectedStudent && (
-        <StudentProgressModal
-          student={selectedStudent}
-          progress={studentProgress}
-          stages={stages}
-          onClose={() => { setShowStudentProgressModal(false); setStudentProgress(null) }}
-          onValidate={async () => {
-            // Refresh student progress
-            const level = selectedStudent.preparing_level || selectedStudent.diving_level_display
-            if (level) {
-              const res = await skillValidationsApi.getPersonCompetencies(selectedStudent.id, level)
-              setStudentProgress(res.data)
-            }
-          }}
-        />
-      )}
 
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
@@ -195,177 +147,3 @@ export default function CompetencesInstructorPage() {
     </div>
   )
 }
-
-// ============================================================================
-// STUDENT PROGRESS MODAL
-// ============================================================================
-
-interface StudentProgressModalProps {
-  student: Person
-  progress: CompetencyHierarchy | null
-  stages: ValidationStage[]
-  onClose: () => void
-  onValidate: () => void
-}
-
-function StudentProgressModal({ student, progress, stages, onClose, onValidate }: StudentProgressModalProps) {
-  const [selectedSkill, setSelectedSkill] = useState<string | null>(null)
-  const [selectedStage, setSelectedStage] = useState<string>('')
-  const [notes, setNotes] = useState('')
-  const [saving, setSaving] = useState(false)
-
-  const handleValidateSkill = async () => {
-    if (!selectedSkill || !selectedStage) return
-    setSaving(true)
-    try {
-      await skillValidationsApi.create({
-        person_id: student.id,
-        skill_id: selectedSkill,
-        stage_id: selectedStage,
-        notes: notes || undefined,
-      })
-      setSelectedSkill(null)
-      setSelectedStage('')
-      setNotes('')
-      onValidate()
-    } catch (error) {
-      console.error('Error validating skill:', error)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <Modal 
-      isOpen={true} 
-      onClose={onClose} 
-      title={`Progression de ${student.first_name} ${student.last_name}`}
-      className="max-w-4xl"
-    >
-      <div className="space-y-4 max-h-[70vh] overflow-y-auto">
-        {!progress ? (
-          <p className="text-center text-gray-500 py-8">Chargement...</p>
-        ) : progress.domains.length === 0 ? (
-          <p className="text-center text-gray-500 py-8">
-            Aucune compétence définie pour le niveau {progress.diving_level}
-          </p>
-        ) : (
-          progress.domains.map((domain) => (
-            <div key={domain.id} className="border rounded-lg overflow-hidden">
-              <div className="bg-blue-50 p-3 flex justify-between items-center">
-                <div>
-                  <span className="font-bold">{domain.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">
-                    {domain.progress.validated}/{domain.progress.total} validés
-                  </span>
-                  <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 transition-all"
-                      style={{ width: `${domain.progress.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {domain.modules.map((module) => (
-                <div key={module.id} className="border-t">
-                  <div className="bg-gray-50 p-2 pl-6 text-sm font-medium text-gray-700 flex justify-between">
-                    <span>{module.name}</span>
-                    <span className="text-xs text-gray-500">
-                      {module.progress.validated}/{module.progress.total}
-                    </span>
-                  </div>
-                  <div className="divide-y divide-gray-100">
-                    {module.skills.map((skill) => (
-                      <div
-                        key={skill.id}
-                        className={`p-2 pl-10 flex items-center justify-between hover:bg-gray-50 ${
-                          selectedSkill === skill.id ? 'bg-blue-50' : ''
-                        }`}
-                      >
-                        <span className="text-sm text-gray-700">{skill.name}</span>
-                        <div className="flex items-center gap-2">
-                          {skill.validation ? (
-                            <div className="flex items-center gap-2">
-                              <span 
-                                className="px-2 py-0.5 text-xs rounded flex items-center gap-1"
-                                style={{ 
-                                  backgroundColor: skill.validation.stage_color + '20', 
-                                  color: skill.validation.stage_color 
-                                }}
-                              >
-                                {skill.validation.stage_icon} {skill.validation.stage_name}
-                              </span>
-                              <span className="text-xs text-gray-400">
-                                par {skill.validation.validated_by_name}
-                              </span>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setSelectedSkill(selectedSkill === skill.id ? null : skill.id)}
-                              className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                            >
-                              Valider
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))
-        )}
-
-        {/* Validation form */}
-        {selectedSkill && (
-          <div className="sticky bottom-0 bg-white border-t p-4 space-y-3">
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="block text-sm font-medium mb-1">Étape de validation</label>
-                <select
-                  value={selectedStage}
-                  onChange={(e) => setSelectedStage(e.target.value)}
-                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Sélectionner une étape...</option>
-                  {stages.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.icon} {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium mb-1">Notes (optionnel)</label>
-                <input
-                  type="text"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Commentaires..."
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="secondary" onClick={() => setSelectedSkill(null)}>
-                Annuler
-              </Button>
-              <Button onClick={handleValidateSkill} disabled={!selectedStage || saving}>
-                {saving ? 'Enregistrement...' : 'Valider'}
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="flex justify-end pt-4 border-t mt-4">
-        <Button onClick={onClose}>Fermer</Button>
-      </div>
-    </Modal>
-  )
-}
-
