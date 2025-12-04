@@ -71,24 +71,76 @@ export default function MyCompetencesPage() {
   const currentLevel = myPerson.diving_level_display
   const preparingLevel = myPerson.preparing_level
 
-  // Si pas de niveau en préparation et pas de niveau actuel
-  if (!preparingLevel && !currentLevel) {
+  // Si pas de niveau en préparation → pas de page compétences
+  if (!preparingLevel) {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold text-gray-900">🎯 Mes Compétences</h1>
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <p className="text-gray-500 text-lg mb-4">
-            Vous n'avez pas encore de niveau de plongée enregistré.
-          </p>
-          <p className="text-gray-400">
-            Contactez un administrateur pour configurer votre niveau.
-          </p>
+        
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          {/* Header avec illustration */}
+          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-8 text-white text-center">
+            <div className="text-6xl mb-4">🤿</div>
+            <h2 className="text-2xl font-bold">Pas de niveau en préparation</h2>
+          </div>
+          
+          {/* Contenu */}
+          <div className="p-8 text-center">
+            {currentLevel ? (
+              <>
+                <div className="mb-6">
+                  <span className="text-gray-500">Votre niveau actuel :</span>
+                  <div className="text-3xl font-bold text-blue-600 mt-2">{currentLevel}</div>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-md mx-auto">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">💡</span>
+                    <div className="text-left">
+                      <p className="text-amber-800">
+                        Vous n'avez pas de niveau en cours de préparation.
+                      </p>
+                      <p className="text-amber-700 text-sm mt-2">
+                        Si vous souhaitez préparer un nouveau niveau, contactez un administrateur 
+                        pour qu'il configure votre formation.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-500 text-lg mb-4">
+                  Vous n'avez pas encore de niveau de plongée enregistré.
+                </p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+                  <p className="text-blue-800">
+                    Contactez un administrateur pour configurer votre niveau et démarrer votre formation.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Info */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <div className="flex gap-3">
+            <span className="text-2xl">📚</span>
+            <div>
+              <h3 className="font-medium text-gray-900">À propos des compétences</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Lorsque vous préparez un niveau, vous aurez accès ici à la liste des compétences 
+                à acquérir et pourrez suivre votre progression. Les compétences sont validées 
+                par vos encadrants lors des sessions de fosse et en mer.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
 
-  const displayLevel = preparingLevel || currentLevel
+  const displayLevel = preparingLevel
 
   // Calcul des stats globales
   const globalStats = hierarchy?.domains.reduce(
