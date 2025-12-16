@@ -953,9 +953,13 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                 <YAxis allowDecimals={false} />
                 <Tooltip 
                   cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length > 0 && payload[0]?.payload) {
-                      const data = payload[0].payload
+                  content={(props) => {
+                    const { active, payload, label } = props
+                    console.log('Tooltip props:', { active, label, payloadLength: payload?.length, firstPayload: payload?.[0] })
+                    if (active && payload && payload.length > 0) {
+                      const data = payload[0]?.payload
+                      console.log('Data from payload:', data)
+                      if (!data) return null
                       return (
                         <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
                           <p className="font-semibold text-gray-900 mb-2">📅 {data.fullName}</p>
