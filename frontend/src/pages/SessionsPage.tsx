@@ -186,6 +186,38 @@ Cordialement,`
     setToast({ message: 'Email de demande de matériel copié !', type: 'success' })
   }
 
+  const copyInvitationEmail = () => {
+    if (!selectedSession) return
+    
+    const date = new Date(selectedSession.start_date)
+    const formattedDate = date.toLocaleDateString('fr-FR', { 
+      weekday: 'long',
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    })
+    
+    const lieu = selectedSession.location || 'Coubertin'
+    
+    const emailContent = `Bonjour,
+
+Vous êtes inscrits à la fosse de ${lieu} ce ${formattedDate}.
+
+Merci de me confirmer votre présence, de m'indiquer si vous serez au local ou directement à la piscine de ${lieu} et si vous avez une voiture à disposition ( et si oui combien de place) . Pour rappel : départ d'Issoire à 19h, rendez-vous à Coubertin aux alentours de 20h. 
+
+
+Merci également de m'indiquer au plus vite si vous avez besoin de matériel ; si oui, précisez la taille du gilet et si vous avez besoin d'un détendeur.
+
+
+Si besoin, voici mon numéro de téléphone : 06 63 90 35 21
+
+
+Cordialement,`
+    
+    navigator.clipboard.writeText(emailContent)
+    setToast({ message: 'Email d\'invitation copié !', type: 'success' })
+  }
+
   const handleGenerateMagicLinks = async () => {
     if (!selectedSession) return
     
@@ -300,9 +332,12 @@ Cordialement,`
               </Button>
               <h2 className="text-2xl font-semibold text-gray-900">{selectedSession.name}</h2>
             </div>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 flex-wrap gap-2">
               <Button variant="secondary" onClick={handleGenerateMagicLinks}>
                 🔗 Générer les liens
+              </Button>
+              <Button variant="secondary" onClick={copyInvitationEmail}>
+                ✉️ Email invitation
               </Button>
               <Button variant="secondary" onClick={copyMaterialRequestEmail}>
                 📧 Email matériel
