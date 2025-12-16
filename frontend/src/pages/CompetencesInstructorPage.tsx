@@ -425,21 +425,13 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                 <YAxis allowDecimals={false} />
                 <Tooltip 
                   cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length > 0) {
-                      const entry = payload[0]?.payload
-                      if (!entry) return null
-                      
-                      return (
-                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50">
-                          <p className="font-semibold text-gray-900 mb-2">📅 {entry.fullName || label}</p>
-                          <p className="text-green-600">👨‍🎓 Élèves : {entry.eleves}</p>
-                          <p className="text-blue-600">👨‍🏫 Encadrants : {entry.encadrants}</p>
-                          <p className="text-gray-700 font-medium border-t mt-2 pt-2">Total : {entry.total}</p>
-                        </div>
-                      )
-                    }
-                    return null
+                  formatter={(value: number, name: string) => {
+                    const label = name === 'eleves' ? '👨‍🎓 Élèves' : '👨‍🏫 Encadrants'
+                    return [value, label]
+                  }}
+                  labelFormatter={(label: string) => {
+                    const found = participationData.find(d => d.name === label)
+                    return `📅 ${found?.fullName || label}`
                   }}
                 />
                 <Legend 
