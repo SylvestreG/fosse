@@ -722,7 +722,7 @@ interface StatisticsSectionProps {
 
 function StatisticsSection({ people }: StatisticsSectionProps) {
   const [sessions, setSessions] = useState<Session[]>([])
-  const [participationData, setParticipationData] = useState<{ name: string; eleves: number; encadrants: number; total: number }[]>([])
+  const [participationData, setParticipationData] = useState<{ name: string; fullName: string; eleves: number; encadrants: number; total: number }[]>([])
   const [progressData, setProgressData] = useState<Record<string, { validated: number; inProgress: number; notStarted: number }>>({})
   const [loading, setLoading] = useState(true)
 
@@ -752,12 +752,13 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
           const elevesCount = res.data.length - encadrantsCount
           return {
             name: session.name.length > 12 ? session.name.substring(0, 12) + '...' : session.name,
+            fullName: session.name,
             eleves: elevesCount,
             encadrants: encadrantsCount,
             total: res.data.length
           }
         } catch {
-          return { name: session.name, eleves: 0, encadrants: 0, total: 0 }
+          return { name: session.name, fullName: session.name, eleves: 0, encadrants: 0, total: 0 }
         }
       })
       const participations = await Promise.all(participationPromises)
@@ -940,17 +941,15 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={10} />
                 <YAxis allowDecimals={false} />
                 <Tooltip 
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      const eleves = payload.find(p => p.dataKey === 'eleves')?.value || 0
-                      const encadrants = payload.find(p => p.dataKey === 'encadrants')?.value || 0
-                      const total = Number(eleves) + Number(encadrants)
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length > 0) {
+                      const data = payload[0].payload as { name: string; fullName: string; eleves: number; encadrants: number; total: number }
                       return (
                         <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                          <p className="font-semibold text-gray-900 mb-2">📅 {label}</p>
-                          <p className="text-green-600">👨‍🎓 Élèves : {eleves}</p>
-                          <p className="text-blue-600">👨‍🏫 Encadrants : {encadrants}</p>
-                          <p className="text-gray-700 font-medium border-t mt-2 pt-2">Total : {total}</p>
+                          <p className="font-semibold text-gray-900 mb-2">📅 {data.fullName}</p>
+                          <p className="text-green-600">👨‍🎓 Élèves : {data.eleves}</p>
+                          <p className="text-blue-600">👨‍🏫 Encadrants : {data.encadrants}</p>
+                          <p className="text-gray-700 font-medium border-t mt-2 pt-2">Total : {data.total}</p>
                         </div>
                       )
                     }
