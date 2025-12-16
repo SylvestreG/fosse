@@ -194,7 +194,7 @@ interface StatisticsSectionProps {
 
 function StatisticsSection({ people }: StatisticsSectionProps) {
   const [sessions, setSessions] = useState<Session[]>([])
-  const [participationData, setParticipationData] = useState<{ name: string; fullName: string; eleves: number; encadrants: number; total: number }[]>([])
+  const [participationData, setParticipationData] = useState<{ id: string; name: string; fullName: string; eleves: number; encadrants: number; total: number }[]>([])
   const [progressData, setProgressData] = useState<Record<string, { validated: number; inProgress: number; notStarted: number }>>({})
   const [loading, setLoading] = useState(true)
 
@@ -217,23 +217,34 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
       setSessions(sortedSessions)
       
       // Charger les participations par session (10 plus récentes) - différencier élèves et encadrants
-      const participationPromises = sortedSessions.slice(-10).map(async (session) => {
+      const recentSessions = sortedSessions.slice(-10)
+      const participations: { id: string; name: string; fullName: string; eleves: number; encadrants: number; total: number }[] = []
+      
+      for (const session of recentSessions) {
         try {
           const res = await questionnairesApi.list(session.id)
           const encadrantsCount = res.data.filter(q => encadrantIds.has(q.person_id)).length
           const elevesCount = res.data.length - encadrantsCount
-          return {
+          participations.push({
+            id: session.id,
             name: session.name.length > 12 ? session.name.substring(0, 12) + '...' : session.name,
             fullName: session.name,
             eleves: elevesCount,
             encadrants: encadrantsCount,
             total: res.data.length
-          }
+          })
         } catch {
-          return { name: session.name, fullName: session.name, eleves: 0, encadrants: 0, total: 0 }
+          participations.push({ 
+            id: session.id, 
+            name: session.name, 
+            fullName: session.name, 
+            eleves: 0, 
+            encadrants: 0, 
+            total: 0 
+          })
         }
-      })
-      const participations = await Promise.all(participationPromises)
+      }
+      
       setParticipationData(participations)
 
       // Charger la progression des compétences par niveau
@@ -413,15 +424,18 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={10} />
                 <YAxis allowDecimals={false} />
                 <Tooltip 
-                  content={({ active, payload }) => {
+                  cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+                  content={({ active, payload, label }) => {
                     if (active && payload && payload.length > 0) {
-                      const data = payload[0].payload as { name: string; fullName: string; eleves: number; encadrants: number; total: number }
+                      const entry = payload[0]?.payload
+                      if (!entry) return null
+                      
                       return (
-                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                          <p className="font-semibold text-gray-900 mb-2">📅 {data.fullName}</p>
-                          <p className="text-green-600">👨‍🎓 Élèves : {data.eleves}</p>
-                          <p className="text-blue-600">👨‍🏫 Encadrants : {data.encadrants}</p>
-                          <p className="text-gray-700 font-medium border-t mt-2 pt-2">Total : {data.total}</p>
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-50">
+                          <p className="font-semibold text-gray-900 mb-2">📅 {entry.fullName || label}</p>
+                          <p className="text-green-600">👨‍🎓 Élèves : {entry.eleves}</p>
+                          <p className="text-blue-600">👨‍🏫 Encadrants : {entry.encadrants}</p>
+                          <p className="text-gray-700 font-medium border-t mt-2 pt-2">Total : {entry.total}</p>
                         </div>
                       )
                     }
