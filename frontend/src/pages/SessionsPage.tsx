@@ -144,98 +144,6 @@ export default function SessionsPage() {
     setToast({ message: 'Lien copié !', type: 'success' })
   }
 
-  const copySummaryLink = (session: Session) => {
-    if (!session.summary_token) {
-      setToast({ message: 'Aucun token de récapitulatif disponible', type: 'error' })
-      return
-    }
-    const basePath = import.meta.env.MODE === 'production' ? '/fosse' : ''
-    const summaryUrl = `${window.location.origin}${basePath}/s/${session.summary_token}`
-    navigator.clipboard.writeText(summaryUrl)
-    setToast({ message: 'Lien du récapitulatif copié !', type: 'success' })
-  }
-
-  const copyMaterialRequestEmail = () => {
-    if (!selectedSession) return
-    
-    if (!selectedSession.summary_token) {
-      setToast({ message: 'Aucun token de récapitulatif disponible', type: 'error' })
-      return
-    }
-    
-    const basePath = import.meta.env.MODE === 'production' ? '/fosse' : ''
-    const summaryUrl = `${window.location.origin}${basePath}/s/${selectedSession.summary_token}`
-    
-    const date = new Date(selectedSession.start_date)
-    const formattedDate = date.toLocaleDateString('fr-FR', { 
-      weekday: 'long',
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    })
-    
-    const emailContent = `Bonjour,
-
-Je vous contacte pour une demande de matériel pour la session de fosse prévue le ${formattedDate} à ${selectedSession.location}.
-
-Le matériel demandé peut se suivre ici : ${summaryUrl}
-
-Cordialement,`
-    
-    navigator.clipboard.writeText(emailContent)
-    setToast({ message: 'Email de demande de matériel copié !', type: 'success' })
-  }
-
-  const copyInvitationEmail = () => {
-    if (!selectedSession) return
-    
-    const date = new Date(selectedSession.start_date)
-    const formattedDate = date.toLocaleDateString('fr-FR', { 
-      weekday: 'long',
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    })
-    
-    const lieu = selectedSession.location || 'Coubertin'
-    
-    const emailContent = `Bonjour,
-
-Vous êtes inscrits à la fosse de ${lieu} ce ${formattedDate}.
-
-Merci de me confirmer votre présence, de m'indiquer si vous serez au local ou directement à la piscine de ${lieu} et si vous avez une voiture à disposition ( et si oui combien de place) . Pour rappel : départ d'Issoire à 19h, rendez-vous à Coubertin aux alentours de 20h. 
-
-
-Merci également de m'indiquer au plus vite si vous avez besoin de matériel ; si oui, précisez la taille du gilet et si vous avez besoin d'un détendeur.
-
-
-Si besoin, voici mon numéro de téléphone : 06 63 90 35 21
-
-
-Cordialement,`
-    
-    navigator.clipboard.writeText(emailContent)
-    setToast({ message: 'Email d\'invitation copié !', type: 'success' })
-  }
-
-  const handleGenerateMagicLinks = async () => {
-    if (!selectedSession) return
-    
-    if (!confirm('Générer les magic links pour tous les participants qui n\'en ont pas encore ?')) {
-      return
-    }
-
-    try {
-      const response = await sessionsApi.generateMagicLinks(selectedSession.id)
-      setToast({ message: response.data.message, type: 'success' })
-      // Reload questionnaires to show the new magic links
-      await loadQuestionnaires(selectedSession.id)
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Erreur lors de la génération des magic links'
-      setToast({ message: errorMessage, type: 'error' })
-    }
-  }
-
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -295,14 +203,8 @@ Cordialement,`
           <Button size="sm" onClick={() => handleViewSession(row)}>
             Questionnaires
           </Button>
-          <Button size="sm" variant="secondary" onClick={() => navigate(`/dashboard/emails/session/${row.id}`)}>
-            📧 Emails
-          </Button>
           <Button size="sm" variant="secondary" onClick={() => navigate(`/dashboard/summary/${row.id}`)}>
             📊 Récap
-          </Button>
-          <Button size="sm" variant="secondary" onClick={() => copySummaryLink(row)}>
-            🔗 Copier lien
           </Button>
           <Button size="sm" variant="secondary" onClick={() => handleDeleteSession(row)}>
             🗑️ Supprimer
@@ -333,15 +235,6 @@ Cordialement,`
               <h2 className="text-2xl font-semibold text-gray-900">{selectedSession.name}</h2>
             </div>
             <div className="flex space-x-2 flex-wrap gap-2">
-              <Button variant="secondary" onClick={handleGenerateMagicLinks}>
-                🔗 Générer les liens
-              </Button>
-              <Button variant="secondary" onClick={copyInvitationEmail}>
-                ✉️ Email invitation
-              </Button>
-              <Button variant="secondary" onClick={copyMaterialRequestEmail}>
-                📧 Email matériel
-              </Button>
               <Button onClick={() => setShowAddParticipantModal(true)}>
                 ➕ Ajouter un participant
               </Button>

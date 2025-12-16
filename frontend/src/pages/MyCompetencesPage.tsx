@@ -109,13 +109,13 @@ export default function MyCompetencesPage() {
               </>
             ) : (
               <>
-                <p className="text-gray-500 text-lg mb-4">
-                  Vous n'avez pas encore de niveau de plongée enregistré.
-                </p>
+          <p className="text-gray-500 text-lg mb-4">
+            Vous n'avez pas encore de niveau de plongée enregistré.
+          </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
                   <p className="text-blue-800">
                     Contactez un administrateur pour configurer votre niveau et démarrer votre formation.
-                  </p>
+          </p>
                 </div>
               </>
             )}
@@ -171,22 +171,22 @@ export default function MyCompetencesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4 sm:block">
             <div className="text-4xl sm:text-5xl sm:hidden">🤿</div>
-            <div>
-              {currentLevel && (
+          <div>
+            {currentLevel && (
                 <div className="mb-1 sm:mb-2">
                   <span className="text-blue-100 text-xs sm:text-sm">Niveau actuel</span>
                   <p className="text-xl sm:text-2xl font-bold">{currentLevel}</p>
-                </div>
-              )}
-              {preparingLevel && (
-                <div>
+              </div>
+            )}
+            {preparingLevel && (
+              <div>
                   <span className="text-blue-100 text-xs sm:text-sm">En préparation</span>
                   <p className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
-                    🎯 {preparingLevel}
-                  </p>
-                </div>
-              )}
-            </div>
+                  🎯 {preparingLevel}
+                </p>
+              </div>
+            )}
+          </div>
           </div>
           <div className="flex items-center justify-between sm:flex-col sm:text-right">
             <div className="text-4xl sm:text-5xl hidden sm:block sm:mb-2">🤿</div>
@@ -277,7 +277,7 @@ export default function MyCompetencesPage() {
                     <span className="text-xs sm:text-sm text-gray-500">
                       {domain.progress.validated}/{domain.progress.total} validés
                     </span>
-                  </div>
+          </div>
                 </div>
 
                 {/* Barre de progression du domaine */}
@@ -291,7 +291,7 @@ export default function MyCompetencesPage() {
                       className="bg-yellow-400 transition-all" 
                       style={{ width: `${(domain.progress.in_progress / domain.progress.total) * 100}%` }}
                     />
-                  </div>
+                </div>
                 </div>
               </div>
 
@@ -354,10 +354,10 @@ export default function MyCompetencesPage() {
                           </div>
                         </div>
                       ))}
-                    </div>
-                  </div>
-                ))}
+                </div>
               </div>
+            ))}
+          </div>
             </div>
           ))}
         </div>
