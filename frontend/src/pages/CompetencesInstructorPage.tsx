@@ -220,14 +220,18 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
       const recentSessions = sortedSessions.slice(-10)
       const participations: { id: string; name: string; fullName: string; eleves: number; encadrants: number; total: number }[] = []
       
-      for (const session of recentSessions) {
+      for (let i = 0; i < recentSessions.length; i++) {
+        const session = recentSessions[i]
         try {
           const res = await questionnairesApi.list(session.id)
           const encadrantsCount = res.data.filter(q => encadrantIds.has(q.person_id)).length
           const elevesCount = res.data.length - encadrantsCount
+          // Extraire juste la date pour l'axe X (format court et unique)
+          const dateMatch = session.name.match(/(\d{2}\/\d{2}\/\d{4})/)
+          const shortName = dateMatch ? dateMatch[1] : `Session ${i + 1}`
           participations.push({
             id: session.id,
-            name: session.name.length > 12 ? session.name.substring(0, 12) + '...' : session.name,
+            name: shortName,
             fullName: session.name,
             eleves: elevesCount,
             encadrants: encadrantsCount,
@@ -236,7 +240,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         } catch {
           participations.push({ 
             id: session.id, 
-            name: session.name, 
+            name: `Session ${i + 1}`, 
             fullName: session.name, 
             eleves: 0, 
             encadrants: 0, 

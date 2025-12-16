@@ -748,14 +748,18 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
       const recentSessions = sortedSessions.slice(-10)
       const participations: { id: string; name: string; fullName: string; eleves: number; encadrants: number; total: number }[] = []
       
-      for (const session of recentSessions) {
+      for (let i = 0; i < recentSessions.length; i++) {
+        const session = recentSessions[i]
         try {
           const res = await questionnairesApi.list(session.id)
           const encadrantsCount = res.data.filter(q => encadrantIds.has(q.person_id)).length
           const elevesCount = res.data.length - encadrantsCount
+          // Extraire juste la date pour l'axe X (format court et unique)
+          const dateMatch = session.name.match(/(\d{2}\/\d{2}\/\d{4})/)
+          const shortName = dateMatch ? dateMatch[1] : `Session ${i + 1}`
           participations.push({
             id: session.id,
-            name: session.name.length > 12 ? session.name.substring(0, 12) + '...' : session.name,
+            name: shortName,
             fullName: session.name,
             eleves: elevesCount,
             encadrants: encadrantsCount,
@@ -764,7 +768,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         } catch {
           participations.push({ 
             id: session.id, 
-            name: session.name, 
+            name: `Session ${i + 1}`, 
             fullName: session.name, 
             eleves: 0, 
             encadrants: 0, 
@@ -953,13 +957,9 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                 <YAxis allowDecimals={false} />
                 <Tooltip 
                   cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
-                  content={(props) => {
-                    const { active, payload, label } = props
-                    console.log('Tooltip props:', { active, label, payloadLength: payload?.length, firstPayload: payload?.[0] })
-                    if (active && payload && payload.length > 0) {
-                      const data = payload[0]?.payload
-                      console.log('Data from payload:', data)
-                      if (!data) return null
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length > 0 && payload[0]?.payload) {
+                      const data = payload[0].payload
                       return (
                         <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
                           <p className="font-semibold text-gray-900 mb-2">📅 {data.fullName}</p>
