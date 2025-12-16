@@ -5,9 +5,16 @@ import Button from '@/components/Button'
 import Toast from '@/components/Toast'
 import Modal from '@/components/Modal'
 
+// Constantes pour les filtres
+const ALL_LEVELS = ['N1', 'N2', 'N3', 'N4', 'N5', 'E2', 'E3', 'E4', 'MF1', 'MF2']
+const PREPARING_LEVELS = ['N1', 'N2', 'N3', 'N4', 'N5', 'E2']
+
 export default function UsersPage() {
   const [people, setPeople] = useState<Person[]>([])
   const [search, setSearch] = useState('')
+  const [filterLevel, setFilterLevel] = useState<string>('')
+  const [filterPreparingLevel, setFilterPreparingLevel] = useState<string>('')
+  const [filterEncadrant, setFilterEncadrant] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [showDivingLevelModal, setShowDivingLevelModal] = useState(false)
@@ -16,6 +23,26 @@ export default function UsersPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const { isAdmin, setImpersonation } = useAuthStore()
   // Note: ici on garde isAdmin (pas isAdminView) car cette page n'est accessible qu'aux vrais admins
+
+  // Filtrer les utilisateurs
+  const filteredPeople = people.filter(person => {
+    // Filtre par niveau actuel
+    if (filterLevel) {
+      const levels = person.diving_level?.split(',').map(l => l.trim()) || []
+      if (!levels.includes(filterLevel)) return false
+    }
+    
+    // Filtre par niveau en préparation
+    if (filterPreparingLevel) {
+      if (person.preparing_level !== filterPreparingLevel) return false
+    }
+    
+    // Filtre par encadrant
+    if (filterEncadrant === 'encadrant' && !person.is_instructor) return false
+    if (filterEncadrant === 'eleve' && person.is_instructor) return false
+    
+    return true
+  })
 
   useEffect(() => {
     loadPeople()
@@ -81,7 +108,8 @@ export default function UsersPage() {
         </Button>
       </div>
 
-      <div>
+      {/* Barre de recherche et filtres */}
+      <div className="space-y-3">
         <input
           type="text"
           placeholder="Rechercher..."
@@ -89,10 +117,67 @@ export default function UsersPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-sm sm:text-base"
         />
+        
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          {/* Filtre par niveau actuel */}
+          <select
+            value={filterLevel}
+            onChange={(e) => setFilterLevel(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          >
+            <option value="">🤿 Tous niveaux</option>
+            {ALL_LEVELS.map(level => (
+              <option key={level} value={level}>{level}</option>
+            ))}
+          </select>
+
+          {/* Filtre par niveau en préparation */}
+          <select
+            value={filterPreparingLevel}
+            onChange={(e) => setFilterPreparingLevel(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          >
+            <option value="">🎯 Préparation: tous</option>
+            {PREPARING_LEVELS.map(level => (
+              <option key={level} value={level}>Prépare {level}</option>
+            ))}
+          </select>
+
+          {/* Filtre encadrant/élève */}
+          <select
+            value={filterEncadrant}
+            onChange={(e) => setFilterEncadrant(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          >
+            <option value="">👥 Tous</option>
+            <option value="encadrant">👨‍🏫 Encadrants</option>
+            <option value="eleve">👨‍🎓 Élèves</option>
+          </select>
+
+          {/* Bouton reset filtres */}
+          {(filterLevel || filterPreparingLevel || filterEncadrant) && (
+            <button
+              onClick={() => {
+                setFilterLevel('')
+                setFilterPreparingLevel('')
+                setFilterEncadrant('')
+              }}
+              className="px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg border border-red-200"
+            >
+              ✕ Reset filtres
+            </button>
+          )}
+        </div>
+
+        {/* Compteur de résultats */}
+        <p className="text-sm text-gray-500">
+          {filteredPeople.length} utilisateur{filteredPeople.length > 1 ? 's' : ''} 
+          {filteredPeople.length !== people.length && ` sur ${people.length}`}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        {people.map((person) => (
+        {filteredPeople.map((person) => (
           <div key={person.id} className="bg-white p-3 sm:p-4 rounded-lg shadow">
             <div className="flex justify-between items-start mb-2 gap-2">
               <h3 className="text-sm sm:text-lg font-semibold">{person.first_name} {person.last_name}</h3>
@@ -148,9 +233,9 @@ export default function UsersPage() {
         ))}
       </div>
 
-      {people.length === 0 && (
+      {filteredPeople.length === 0 && (
         <div className="text-center py-12 text-gray-500">
-          Aucun utilisateur trouvé
+          {people.length === 0 ? 'Aucun utilisateur trouvé' : 'Aucun utilisateur ne correspond aux filtres'}
         </div>
       )}
 
