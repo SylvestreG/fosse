@@ -57,8 +57,9 @@ export default function Header() {
               )}
             </button>
             
-            <Link to="/dashboard" className="text-2xl font-bold text-primary-600">
-              USI
+            <Link to="/dashboard" className="flex items-center gap-2">
+              <img src="/logo.png" alt="USI" className="w-10 h-10 object-contain" />
+              <span className="text-2xl font-bold text-primary-600 hidden sm:inline">USI</span>
             </Link>
             
             {/* Desktop navigation */}
