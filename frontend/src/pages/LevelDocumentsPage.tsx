@@ -9,10 +9,8 @@ import {
 } from '@/lib/api'
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
-import * as pdfjsLib from 'pdfjs-dist'
-
-// Disable worker to avoid MIME type issues - runs on main thread
-pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+// Use legacy build that works without web worker
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 
 const DIVING_LEVELS = ['N1', 'N2', 'N3', 'N4', 'E1', 'E2', 'E3', 'E4']
 
