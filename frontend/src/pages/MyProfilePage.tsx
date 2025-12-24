@@ -87,20 +87,20 @@ export default function MyProfilePage() {
 
       {/* Informations de base (lecture seule) */}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Informations personnelles</h2>
+        <h2 className="text-xl font-semibold mb-4 text-white">Informations personnelles</h2>
         
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-slate-400">Prénom</label>
-            <p className="text-lg font-medium">{person.first_name}</p>
+            <p className="text-lg font-medium text-white">{person.first_name}</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-400">Nom</label>
-            <p className="text-lg font-medium">{person.last_name}</p>
+            <p className="text-lg font-medium text-white">{person.last_name}</p>
           </div>
           <div className="col-span-2">
             <label className="block text-sm font-medium text-slate-400">Email</label>
-            <p className="text-lg">{person.email}</p>
+            <p className="text-lg text-white">{person.email}</p>
           </div>
           <div className="col-span-2">
             <label className="block text-sm font-medium text-slate-400 mb-1">Téléphone</label>
@@ -108,7 +108,7 @@ export default function MyProfilePage() {
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-600 rounded-lg"
+              className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               placeholder="06 12 34 56 78"
             />
           </div>
@@ -117,12 +117,12 @@ export default function MyProfilePage() {
 
       {/* Niveau de plongée (lecture seule) */}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">🤿 Niveau de plongée</h2>
+        <h2 className="text-xl font-semibold mb-4 text-white">🤿 Niveau de plongée</h2>
         
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <span className="text-slate-300">Niveau validé :</span>
-            <span className="text-lg font-semibold text-blue-700">
+            <span className="text-lg font-semibold text-cyan-400">
               {person.diving_level_display || 'Aucun'}
             </span>
           </div>
@@ -130,14 +130,14 @@ export default function MyProfilePage() {
           {person.preparing_level && (
             <div className="flex items-center gap-3">
               <span className="text-slate-300">En préparation :</span>
-              <span className="text-lg font-semibold text-amber-700">
+              <span className="text-lg font-semibold text-amber-400">
                 🎯 {person.preparing_level}
               </span>
             </div>
           )}
           
           {person.is_instructor && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-800 rounded-full">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded-full">
               👨‍🏫 Encadrant
             </div>
           )}
@@ -150,75 +150,75 @@ export default function MyProfilePage() {
 
       {/* Préférences de matériel (modifiable) */}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">⚙️ Préférences de matériel</h2>
+        <h2 className="text-xl font-semibold mb-4 text-white">⚙️ Préférences de matériel</h2>
         <p className="text-sm text-slate-300 mb-4">
           Ces préférences seront utilisées par défaut lors de vos inscriptions aux sessions.
         </p>
         
         <div className="space-y-4">
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30 cursor-pointer">
+          <label className="flex items-center gap-3 p-3 border border-slate-600 rounded-lg hover:bg-slate-700/30 cursor-pointer">
             <input
               type="checkbox"
               checked={formData.default_wants_regulator}
               onChange={(e) => setFormData({ ...formData, default_wants_regulator: e.target.checked })}
-              className="w-5 h-5"
+              className="w-5 h-5 accent-cyan-500"
             />
             <div>
-              <span className="font-medium">Détendeur</span>
+              <span className="font-medium text-white">Détendeur</span>
               <p className="text-sm text-slate-400">J'ai besoin d'un détendeur</p>
             </div>
           </label>
 
           {person.is_instructor && (
             <>
-              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30 cursor-pointer">
+              <label className="flex items-center gap-3 p-3 border border-slate-600 rounded-lg hover:bg-slate-700/30 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.default_wants_nitrox}
                   onChange={(e) => setFormData({ ...formData, default_wants_nitrox: e.target.checked })}
-                  className="w-5 h-5"
+                  className="w-5 h-5 accent-cyan-500"
                 />
                 <div>
-                  <span className="font-medium">Nitrox</span>
+                  <span className="font-medium text-white">Nitrox</span>
                   <p className="text-sm text-slate-400">Je plonge au Nitrox</p>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30 cursor-pointer">
+              <label className="flex items-center gap-3 p-3 border border-slate-600 rounded-lg hover:bg-slate-700/30 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.default_wants_2nd_reg}
                   onChange={(e) => setFormData({ ...formData, default_wants_2nd_reg: e.target.checked })}
-                  className="w-5 h-5"
+                  className="w-5 h-5 accent-cyan-500"
                 />
                 <div>
-                  <span className="font-medium">2ème détendeur</span>
+                  <span className="font-medium text-white">2ème détendeur</span>
                   <p className="text-sm text-slate-400">J'ai besoin d'un 2ème détendeur (encadrement)</p>
                 </div>
               </label>
             </>
           )}
 
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30 cursor-pointer">
+          <label className="flex items-center gap-3 p-3 border border-slate-600 rounded-lg hover:bg-slate-700/30 cursor-pointer">
             <input
               type="checkbox"
               checked={formData.default_wants_stab}
               onChange={(e) => setFormData({ ...formData, default_wants_stab: e.target.checked })}
-              className="w-5 h-5"
+              className="w-5 h-5 accent-cyan-500"
             />
             <div>
-              <span className="font-medium">Stab</span>
+              <span className="font-medium text-white">Stab</span>
               <p className="text-sm text-slate-400">J'ai besoin d'une stab</p>
             </div>
           </label>
 
           {formData.default_wants_stab && (
             <div className="ml-8">
-              <label className="block text-sm font-medium mb-1">Taille de stab</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Taille de stab</label>
               <select
                 value={formData.default_stab_size}
                 onChange={(e) => setFormData({ ...formData, default_stab_size: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-600 rounded-lg"
+                className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
               >
                 <option value="XS">XS</option>
                 <option value="S">S</option>
