@@ -117,7 +117,7 @@ export default function PublicQuestionnaire() {
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-lg shadow-xl p-8">
           <div className="text-center mb-8">
-            <img src="/logo.png" alt="USI Plongée" className="w-20 h-20 mx-auto mb-4 object-contain" />
+            <img src={`${import.meta.env.BASE_URL}logo.png`} alt="USI Plongée" className="w-20 h-20 mx-auto mb-4 object-contain" />
             <h1 className="text-3xl font-bold text-primary-600 mb-2">USI - Commission Technique</h1>
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Questionnaire plongée</h2>
             <p className="text-gray-600">

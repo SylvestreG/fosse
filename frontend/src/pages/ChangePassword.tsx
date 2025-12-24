@@ -58,7 +58,7 @@ export default function ChangePassword() {
         {/* Logo */}
         <div className="text-center mb-6">
           <img 
-            src="/logo.png" 
+            src={`${import.meta.env.BASE_URL}logo.png`}
             alt="USI Plongée" 
             className="w-20 h-20 mx-auto mb-4 object-contain"
           />
