@@ -123,7 +123,7 @@ export default function UsersPage() {
           <select
             value={filterLevel}
             onChange={(e) => setFilterLevel(e.target.value)}
-            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl"
+            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl text-white"
           >
             <option value="">🤿 Tous niveaux</option>
             {ALL_LEVELS.map(level => (
@@ -135,7 +135,7 @@ export default function UsersPage() {
           <select
             value={filterPreparingLevel}
             onChange={(e) => setFilterPreparingLevel(e.target.value)}
-            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl"
+            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl text-white"
           >
             <option value="">🎯 Préparation: tous</option>
             {PREPARING_LEVELS.map(level => (
@@ -147,7 +147,7 @@ export default function UsersPage() {
           <select
             value={filterEncadrant}
             onChange={(e) => setFilterEncadrant(e.target.value)}
-            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl"
+            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl text-white"
           >
             <option value="">👥 Tous</option>
             <option value="encadrant">👨‍🏫 Encadrants</option>
