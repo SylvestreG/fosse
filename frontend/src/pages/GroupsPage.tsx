@@ -125,15 +125,15 @@ export default function GroupsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">⚙️ Gestion des groupes</h1>
-        <p className="text-gray-600 mt-1">Configurez les permissions pour chaque groupe d'utilisateurs</p>
+        <h1 className="text-3xl font-bold text-white">⚙️ Gestion des groupes</h1>
+        <p className="text-slate-300 mt-1">Configurez les permissions pour chaque groupe d'utilisateurs</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Liste des groupes */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow p-4">
-            <h2 className="font-semibold text-gray-900 mb-4">Groupes</h2>
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4">
+            <h2 className="font-semibold text-white mb-4">Groupes</h2>
             <div className="space-y-2">
               {groups.map(group => (
                 <button
@@ -142,11 +142,11 @@ export default function GroupsPage() {
                   className={`w-full text-left p-3 rounded-lg transition-colors ${
                     selectedGroup?.id === group.id
                       ? 'bg-blue-100 border-2 border-blue-500'
-                      : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                      : 'bg-slate-700/30 border-2 border-transparent hover:bg-slate-700/50'
                   }`}
                 >
-                  <div className="font-medium text-gray-900">{group.name}</div>
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="font-medium text-white">{group.name}</div>
+                  <div className="text-xs text-slate-400 mt-1">
                     {group.permissions.length} permission{group.permissions.length > 1 ? 's' : ''}
                   </div>
                   {group.description && (
@@ -161,13 +161,13 @@ export default function GroupsPage() {
         {/* Permissions du groupe sélectionné */}
         <div className="lg:col-span-3">
           {selectedGroup ? (
-            <div className="bg-white rounded-lg shadow">
+            <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow">
               <div className="p-4 border-b flex justify-between items-center">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">
+                  <h2 className="text-xl font-bold text-white">
                     Permissions: {selectedGroup.name}
                   </h2>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-slate-400">
                     Type: <span className="font-medium">{selectedGroup.group_type}</span>
                   </p>
                 </div>
@@ -186,11 +186,11 @@ export default function GroupsPage() {
                   
                   return (
                     <div key={category.key} className="border rounded-lg overflow-hidden">
-                      <div className="bg-gray-50 px-4 py-3 flex justify-between items-center">
+                      <div className="bg-slate-700/30 px-4 py-3 flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <span className="text-xl">{category.icon}</span>
-                          <span className="font-semibold text-gray-900">{category.key}</span>
-                          <span className="text-xs text-gray-500">
+                          <span className="font-semibold text-white">{category.key}</span>
+                          <span className="text-xs text-slate-400">
                             ({category.permissions.filter(p => editedPermissions.has(p.key)).length}/{category.permissions.length})
                           </span>
                         </div>
@@ -205,7 +205,7 @@ export default function GroupsPage() {
                           <button
                             onClick={() => handleDeselectAll(category.key)}
                             disabled={!someSelected}
-                            className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 disabled:opacity-50"
+                            className="text-xs px-2 py-1 bg-slate-700/50 text-slate-200 rounded hover:bg-gray-200 disabled:opacity-50"
                           >
                             Aucun
                           </button>
@@ -218,7 +218,7 @@ export default function GroupsPage() {
                             className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
                               editedPermissions.has(perm.key)
                                 ? 'bg-green-50 hover:bg-green-100'
-                                : 'bg-gray-50 hover:bg-gray-100'
+                                : 'bg-slate-700/30 hover:bg-slate-700/50'
                             }`}
                           >
                             <input
@@ -228,7 +228,7 @@ export default function GroupsPage() {
                               className="w-4 h-4 rounded"
                             />
                             <div>
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-white">
                                 {perm.description}
                               </div>
                               <div className="text-xs text-gray-400 font-mono">
@@ -244,7 +244,7 @@ export default function GroupsPage() {
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow p-12 text-center text-gray-500">
+            <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-12 text-center text-slate-400">
               Sélectionnez un groupe pour voir et modifier ses permissions
             </div>
           )}

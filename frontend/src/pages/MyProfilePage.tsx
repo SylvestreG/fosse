@@ -76,39 +76,39 @@ export default function MyProfilePage() {
   if (!person) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Profil non trouvé. Contactez un administrateur.</p>
+        <p className="text-slate-400">Profil non trouvé. Contactez un administrateur.</p>
       </div>
     )
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">👤 Mon Profil</h1>
+      <h1 className="text-3xl font-bold text-white">👤 Mon Profil</h1>
 
       {/* Informations de base (lecture seule) */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">Informations personnelles</h2>
         
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-500">Prénom</label>
+            <label className="block text-sm font-medium text-slate-400">Prénom</label>
             <p className="text-lg font-medium">{person.first_name}</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-500">Nom</label>
+            <label className="block text-sm font-medium text-slate-400">Nom</label>
             <p className="text-lg font-medium">{person.last_name}</p>
           </div>
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-500">Email</label>
+            <label className="block text-sm font-medium text-slate-400">Email</label>
             <p className="text-lg">{person.email}</p>
           </div>
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-500 mb-1">Téléphone</label>
+            <label className="block text-sm font-medium text-slate-400 mb-1">Téléphone</label>
             <input
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-3 py-2 border border-slate-600 rounded-lg"
               placeholder="06 12 34 56 78"
             />
           </div>
@@ -116,12 +116,12 @@ export default function MyProfilePage() {
       </div>
 
       {/* Niveau de plongée (lecture seule) */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">🤿 Niveau de plongée</h2>
         
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <span className="text-gray-600">Niveau validé :</span>
+            <span className="text-slate-300">Niveau validé :</span>
             <span className="text-lg font-semibold text-blue-700">
               {person.diving_level_display || 'Aucun'}
             </span>
@@ -129,7 +129,7 @@ export default function MyProfilePage() {
           
           {person.preparing_level && (
             <div className="flex items-center gap-3">
-              <span className="text-gray-600">En préparation :</span>
+              <span className="text-slate-300">En préparation :</span>
               <span className="text-lg font-semibold text-amber-700">
                 🎯 {person.preparing_level}
               </span>
@@ -143,20 +143,20 @@ export default function MyProfilePage() {
           )}
         </div>
         
-        <p className="text-sm text-gray-500 mt-4">
+        <p className="text-sm text-slate-400 mt-4">
           Pour modifier votre niveau, contactez un administrateur.
         </p>
       </div>
 
       {/* Préférences de matériel (modifiable) */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">⚙️ Préférences de matériel</h2>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-slate-300 mb-4">
           Ces préférences seront utilisées par défaut lors de vos inscriptions aux sessions.
         </p>
         
         <div className="space-y-4">
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30 cursor-pointer">
             <input
               type="checkbox"
               checked={formData.default_wants_regulator}
@@ -165,13 +165,13 @@ export default function MyProfilePage() {
             />
             <div>
               <span className="font-medium">Détendeur</span>
-              <p className="text-sm text-gray-500">J'ai besoin d'un détendeur</p>
+              <p className="text-sm text-slate-400">J'ai besoin d'un détendeur</p>
             </div>
           </label>
 
           {person.is_instructor && (
             <>
-              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.default_wants_nitrox}
@@ -180,11 +180,11 @@ export default function MyProfilePage() {
                 />
                 <div>
                   <span className="font-medium">Nitrox</span>
-                  <p className="text-sm text-gray-500">Je plonge au Nitrox</p>
+                  <p className="text-sm text-slate-400">Je plonge au Nitrox</p>
                 </div>
               </label>
 
-              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.default_wants_2nd_reg}
@@ -193,13 +193,13 @@ export default function MyProfilePage() {
                 />
                 <div>
                   <span className="font-medium">2ème détendeur</span>
-                  <p className="text-sm text-gray-500">J'ai besoin d'un 2ème détendeur (encadrement)</p>
+                  <p className="text-sm text-slate-400">J'ai besoin d'un 2ème détendeur (encadrement)</p>
                 </div>
               </label>
             </>
           )}
 
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30 cursor-pointer">
             <input
               type="checkbox"
               checked={formData.default_wants_stab}
@@ -208,7 +208,7 @@ export default function MyProfilePage() {
             />
             <div>
               <span className="font-medium">Stab</span>
-              <p className="text-sm text-gray-500">J'ai besoin d'une stab</p>
+              <p className="text-sm text-slate-400">J'ai besoin d'une stab</p>
             </div>
           </label>
 
@@ -218,7 +218,7 @@ export default function MyProfilePage() {
               <select
                 value={formData.default_stab_size}
                 onChange={(e) => setFormData({ ...formData, default_stab_size: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-3 py-2 border border-slate-600 rounded-lg"
               >
                 <option value="XS">XS</option>
                 <option value="S">S</option>

@@ -31,7 +31,7 @@ export default function ImpersonationBanner() {
       <button
         onClick={handleStopImpersonation}
         disabled={loading}
-        className="bg-white text-red-600 px-2 sm:px-4 py-1 rounded font-medium hover:bg-red-100 transition-colors disabled:opacity-50 text-xs sm:text-base flex-shrink-0"
+        className="bg-slate-800/90 backdrop-blur-xl text-red-600 px-2 sm:px-4 py-1 rounded font-medium hover:bg-red-100 transition-colors disabled:opacity-50 text-xs sm:text-base flex-shrink-0"
       >
         {loading ? '...' : '✕'}
         <span className="hidden sm:inline"> Sortir</span>

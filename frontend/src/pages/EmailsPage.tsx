@@ -147,13 +147,13 @@ Cordialement,`
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">📧 Emails</h1>
-        <p className="text-gray-600 mt-1">Sélectionnez une fosse et copiez l'email à envoyer</p>
+        <h1 className="text-2xl font-bold text-white">📧 Emails</h1>
+        <p className="text-slate-300 mt-1">Sélectionnez une fosse et copiez l'email à envoyer</p>
       </div>
 
       {/* Sélecteur de session */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+        <label className="block text-sm font-medium text-slate-200 mb-2">
           🏊 Sélectionner une fosse
         </label>
         <select
@@ -162,7 +162,7 @@ Cordialement,`
             const session = sessions.find(s => s.id === e.target.value)
             setSelectedSession(session || null)
           }}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+          className="w-full px-4 py-3 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
         >
           <option value="">-- Choisir une fosse --</option>
           {sessions.map(session => {
@@ -202,7 +202,7 @@ Cordialement,`
           </div>
 
           {/* Liste des destinataires */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
             <div className="bg-purple-50 px-6 py-4 border-b border-purple-200 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-purple-900">👥 Destinataires</h3>
@@ -221,14 +221,14 @@ Cordialement,`
             </div>
             <div className="p-6">
               {loadingParticipants ? (
-                <p className="text-center text-gray-500">Chargement des participants...</p>
+                <p className="text-center text-slate-400">Chargement des participants...</p>
               ) : filteredParticipants.length === 0 ? (
-                <p className="text-center text-gray-500">Aucun participant pour cette session</p>
+                <p className="text-center text-slate-400">Aucun participant pour cette session</p>
               ) : (
                 <>
                   {/* Emails copiables en une ligne */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-slate-200 mb-2">
                       📧 Emails (à coller dans "À:")
                     </label>
                     <div className="flex gap-2">
@@ -236,7 +236,7 @@ Cordialement,`
                         type="text"
                         readOnly
                         value={filteredParticipants.map(p => p.email).join(', ')}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
+                        className="flex-1 px-4 py-2 border border-slate-600 rounded-lg bg-slate-700/30 text-sm font-mono"
                       />
                       <Button variant="secondary" onClick={copyAllEmails}>
                         📋
@@ -247,9 +247,9 @@ Cordialement,`
                   {/* Liste détaillée */}
                   <div className="border rounded-lg divide-y max-h-48 overflow-y-auto">
                     {filteredParticipants.map(p => (
-                      <div key={p.id} className="px-4 py-2 flex items-center justify-between hover:bg-gray-50">
+                      <div key={p.id} className="px-4 py-2 flex items-center justify-between hover:bg-slate-700/30">
                         <div>
-                          <span className="font-medium text-gray-900">{p.first_name} {p.last_name}</span>
+                          <span className="font-medium text-white">{p.first_name} {p.last_name}</span>
                           {p.is_encadrant && (
                             <span className="ml-2 text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">
                               Encadrant
@@ -257,10 +257,10 @@ Cordialement,`
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-500">{p.email}</span>
+                          <span className="text-sm text-slate-400">{p.email}</span>
                           <button
                             onClick={() => copyToClipboard(p.email, 'Email')}
-                            className="text-gray-400 hover:text-gray-600"
+                            className="text-gray-400 hover:text-slate-300"
                           >
                             📋
                           </button>
@@ -274,7 +274,7 @@ Cordialement,`
           </div>
 
           {/* Objet du mail */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
             <div className="bg-blue-50 px-6 py-4 border-b border-blue-200 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-blue-900">📝 Objet du mail</h3>
@@ -292,7 +292,7 @@ Cordialement,`
                   type="text"
                   readOnly
                   value={generateSubject(selectedSession)}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-lg font-medium"
+                  className="flex-1 px-4 py-3 border border-slate-600 rounded-lg bg-slate-700/30 text-lg font-medium"
                 />
                 <Button variant="secondary" onClick={() => copyToClipboard(generateSubject(selectedSession), 'Objet')}>
                   📋
@@ -302,7 +302,7 @@ Cordialement,`
           </div>
 
           {/* Email d'invitation */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
             <div className="bg-green-50 px-6 py-4 border-b border-green-200 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-green-900">✉️ Corps du mail - Invitation</h3>
@@ -316,14 +316,14 @@ Cordialement,`
               </Button>
             </div>
             <div className="p-6">
-              <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-4 rounded-lg border font-sans leading-relaxed">
+              <pre className="whitespace-pre-wrap text-sm text-slate-200 bg-slate-700/30 p-4 rounded-lg border font-sans leading-relaxed">
                 {generateInvitationEmail(selectedSession)}
               </pre>
             </div>
           </div>
 
           {/* Email de demande de matériel */}
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
             <div className="bg-amber-50 px-6 py-4 border-b border-amber-200 flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-amber-900">🎒 Corps du mail - Demande de matériel</h3>
@@ -337,7 +337,7 @@ Cordialement,`
               </Button>
             </div>
             <div className="p-6">
-              <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-4 rounded-lg border font-sans leading-relaxed">
+              <pre className="whitespace-pre-wrap text-sm text-slate-200 bg-slate-700/30 p-4 rounded-lg border font-sans leading-relaxed">
                 {generateMaterialEmail(selectedSession)}
               </pre>
             </div>
@@ -346,14 +346,14 @@ Cordialement,`
       )}
 
       {!selectedSession && sessions.length > 0 && (
-        <div className="bg-gray-50 rounded-lg p-12 text-center">
-          <p className="text-gray-500 text-lg">👆 Sélectionnez une fosse ci-dessus pour voir les emails</p>
+        <div className="bg-slate-700/30 rounded-lg p-12 text-center">
+          <p className="text-slate-400 text-lg">👆 Sélectionnez une fosse ci-dessus pour voir les emails</p>
         </div>
       )}
 
       {sessions.length === 0 && (
-        <div className="bg-gray-50 rounded-lg p-12 text-center">
-          <p className="text-gray-500">Aucune session disponible</p>
+        <div className="bg-slate-700/30 rounded-lg p-12 text-center">
+          <p className="text-slate-400">Aucune session disponible</p>
         </div>
       )}
 

@@ -267,7 +267,7 @@ export default function StudentCompetencesPage() {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-gray-500">Chargement...</p>
+        <p className="mt-2 text-slate-400">Chargement...</p>
       </div>
     )
   }
@@ -275,7 +275,7 @@ export default function StudentCompetencesPage() {
   if (!student || !progress) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Élève non trouvé</p>
+        <p className="text-slate-400">Élève non trouvé</p>
         <Button onClick={() => navigate('/dashboard/competences')} className="mt-4">
           ← Retour
         </Button>
@@ -298,10 +298,10 @@ export default function StudentCompetencesPage() {
             ← <span className="hidden sm:inline">Retour</span>
           </Button>
           <div>
-            <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
+            <h1 className="text-lg sm:text-2xl font-bold text-white">
               {student.first_name} {student.last_name}
             </h1>
-            <p className="text-gray-500 text-xs sm:text-base">
+            <p className="text-slate-400 text-xs sm:text-base">
               Prépare <span className="font-semibold text-blue-600">{level}</span>
               {student.diving_level_display && student.diving_level_display !== level && (
                 <span className="ml-1 sm:ml-2 text-gray-400">• Actuel: {student.diving_level_display}</span>
@@ -321,56 +321,56 @@ export default function StudentCompetencesPage() {
       {/* Statistiques de l'élève */}
       {studentStats && (
         <div className="grid grid-cols-2 gap-2 sm:gap-4">
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-blue-500">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-blue-500">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
                 <span className="text-lg sm:text-2xl">🏊</span>
               </div>
               <div>
-                <div className="text-lg sm:text-2xl font-bold text-gray-900">{studentStats.attendedSessions}</div>
-                <div className="text-xs sm:text-sm text-gray-500">Fosses</div>
+                <div className="text-lg sm:text-2xl font-bold text-white">{studentStats.attendedSessions}</div>
+                <div className="text-xs sm:text-sm text-slate-400">Fosses</div>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-green-500">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-green-500">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg">
                 <span className="text-lg sm:text-2xl">✅</span>
               </div>
               <div>
-                <div className="text-lg sm:text-2xl font-bold text-gray-900">
+                <div className="text-lg sm:text-2xl font-bold text-white">
                   {progress?.domains.reduce((sum, d) => sum + d.progress.validated, 0) || 0}
                 </div>
-                <div className="text-xs sm:text-sm text-gray-500">Validées</div>
+                <div className="text-xs sm:text-sm text-slate-400">Validées</div>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-amber-500">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-amber-500">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 bg-amber-100 rounded-lg">
                 <span className="text-lg sm:text-2xl">🔄</span>
               </div>
               <div>
-                <div className="text-lg sm:text-2xl font-bold text-gray-900">
+                <div className="text-lg sm:text-2xl font-bold text-white">
                   {progress?.domains.reduce((sum, d) => sum + d.progress.in_progress, 0) || 0}
                 </div>
-                <div className="text-xs sm:text-sm text-gray-500">En cours</div>
+                <div className="text-xs sm:text-sm text-slate-400">En cours</div>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-purple-500">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-purple-500">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg">
                 <span className="text-lg sm:text-2xl">📅</span>
               </div>
               <div className="min-w-0">
-                <div className="text-xs sm:text-sm font-medium text-gray-900 truncate" title={studentStats.lastSessionName || undefined}>
+                <div className="text-xs sm:text-sm font-medium text-white truncate" title={studentStats.lastSessionName || undefined}>
                   {studentStats.lastSessionName || 'Aucune'}
                 </div>
-                <div className="text-xs sm:text-sm text-gray-500">
+                <div className="text-xs sm:text-sm text-slate-400">
                   {studentStats.lastSessionDate 
                     ? new Date(studentStats.lastSessionDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
                     : 'Dernière fosse'}
@@ -403,9 +403,9 @@ export default function StudentCompetencesPage() {
             </div>
           </div>
         </div>
-        <div className="mt-3 sm:mt-4 bg-white/20 rounded-full h-2 sm:h-3 overflow-hidden">
+        <div className="mt-3 sm:mt-4 bg-slate-800/50 backdrop-blur-xl/20 rounded-full h-2 sm:h-3 overflow-hidden">
           <div 
-            className="h-full bg-white transition-all duration-500"
+            className="h-full bg-slate-800/50 backdrop-blur-xl transition-all duration-500"
             style={{ 
               width: `${progress.domains.length > 0 
                 ? progress.domains.reduce((sum, d) => sum + d.progress.percentage, 0) / progress.domains.length
@@ -416,10 +416,10 @@ export default function StudentCompetencesPage() {
       </div>
 
       {/* Légende des étapes */}
-      <div className="bg-white rounded-lg shadow p-3 sm:p-4">
-        <h3 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Étapes de validation</h3>
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 sm:p-4">
+        <h3 className="text-xs sm:text-sm font-medium text-slate-200 mb-2 sm:mb-3">Étapes de validation</h3>
         <div className="flex flex-wrap gap-2 sm:gap-3">
-          <div className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-gray-500">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-slate-400">
             <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-gray-200"></span>
             Non commencé
           </div>
@@ -438,13 +438,13 @@ export default function StudentCompetencesPage() {
 
       {/* Liste des compétences */}
       {progress.domains.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-6 sm:p-8 text-center">
-          <p className="text-gray-500 text-sm sm:text-base">Aucune compétence définie pour le niveau {level}</p>
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 sm:p-8 text-center">
+          <p className="text-slate-400 text-sm sm:text-base">Aucune compétence définie pour le niveau {level}</p>
         </div>
       ) : (
         <div className="space-y-3 sm:space-y-4">
           {progress.domains.map(domain => (
-            <div key={domain.id} className="bg-white rounded-lg shadow overflow-hidden">
+            <div key={domain.id} className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
               {/* Header du domaine */}
               <div 
                 className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-cyan-50 cursor-pointer hover:from-blue-100 hover:to-cyan-100 transition-colors gap-2"
@@ -452,11 +452,11 @@ export default function StudentCompetencesPage() {
               >
                 <div className="flex items-center gap-2 sm:gap-3">
                   <span className="text-lg sm:text-xl">{expandedDomains.has(domain.id) ? '📂' : '📁'}</span>
-                  <span className="font-bold text-gray-900 text-sm sm:text-base">{domain.name}</span>
+                  <span className="font-bold text-white text-sm sm:text-base">{domain.name}</span>
                 </div>
                 <div className="flex items-center gap-2 sm:gap-4 ml-7 sm:ml-0">
                   <div className="text-right flex-shrink-0">
-                    <span className="text-xs sm:text-sm font-medium text-gray-700">
+                    <span className="text-xs sm:text-sm font-medium text-slate-200">
                       {domain.progress.validated}/{domain.progress.total}
                     </span>
                   </div>
@@ -466,7 +466,7 @@ export default function StudentCompetencesPage() {
                       style={{ width: `${domain.progress.percentage}%` }}
                     />
                   </div>
-                  <span className="text-xs sm:text-sm font-bold text-gray-600 w-10 sm:w-12 text-right">
+                  <span className="text-xs sm:text-sm font-bold text-slate-300 w-10 sm:w-12 text-right">
                     {Math.round(domain.progress.percentage)}%
                   </span>
                 </div>
@@ -479,15 +479,15 @@ export default function StudentCompetencesPage() {
                     <div key={module.id} className="border-b border-gray-50 last:border-b-0">
                       {/* Header du module */}
                       <div 
-                        className="flex items-center justify-between p-2 sm:p-3 pl-6 sm:pl-8 hover:bg-gray-50 cursor-pointer"
+                        className="flex items-center justify-between p-2 sm:p-3 pl-6 sm:pl-8 hover:bg-slate-700/30 cursor-pointer"
                         onClick={() => toggleModule(module.id)}
                       >
                         <div className="flex items-center gap-1.5 sm:gap-2">
                           <span className="text-sm sm:text-base">{expandedModules.has(module.id) ? '📖' : '📕'}</span>
-                          <span className="font-medium text-gray-800 text-xs sm:text-base">{module.name}</span>
+                          <span className="font-medium text-slate-100 text-xs sm:text-base">{module.name}</span>
                         </div>
                         <div className="flex items-center gap-2 sm:gap-3">
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-slate-400">
                             {module.progress.validated}/{module.progress.total}
                           </span>
                           <div className="w-12 sm:w-16 h-1 sm:h-1.5 bg-gray-200 rounded-full overflow-hidden">
@@ -501,7 +501,7 @@ export default function StudentCompetencesPage() {
 
                       {/* Skills */}
                       {expandedModules.has(module.id) && (
-                        <div className="bg-gray-50 border-t border-gray-100">
+                        <div className="bg-slate-700/30 border-t border-gray-100">
                           {module.skills.map((skill, index) => {
                             const pending = pendingChanges.get(skill.id)
                             const currentStage = skill.validation
@@ -509,13 +509,13 @@ export default function StudentCompetencesPage() {
                             return (
                               <div 
                                 key={skill.id}
-                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 pl-8 sm:pl-14 border-b border-gray-100 last:border-b-0 hover:bg-gray-100 gap-2"
+                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 pl-8 sm:pl-14 border-b border-gray-100 last:border-b-0 hover:bg-slate-700/50 gap-2"
                               >
                                 <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
                                   <span className="w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
                                     {index + 1}
                                   </span>
-                                  <span className="text-xs sm:text-sm text-gray-700">{skill.name}</span>
+                                  <span className="text-xs sm:text-sm text-slate-200">{skill.name}</span>
                                   <span className="text-xs text-gray-400 bg-gray-200 px-1 sm:px-1.5 py-0.5 rounded hidden sm:inline">
                                     Min: {skill.min_validator_level}
                                   </span>
@@ -629,14 +629,14 @@ export default function StudentCompetencesPage() {
               </p>
             </div>
             
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-gray-600">
+            <div className="bg-slate-700/30 rounded-lg p-4">
+              <p className="text-slate-300">
                 Vous êtes sur le point de valider :
               </p>
-              <p className="font-semibold text-gray-900 mt-2">
+              <p className="font-semibold text-white mt-2">
                 📋 {confirmDialog.skillName}
               </p>
-              <p className="text-gray-600 mt-2">
+              <p className="text-slate-300 mt-2">
                 Vers l'étape :
               </p>
               <p className="font-semibold text-blue-600 mt-1">

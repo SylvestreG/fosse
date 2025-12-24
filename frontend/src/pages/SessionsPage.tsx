@@ -221,7 +221,7 @@ export default function SessionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Sessions</h1>
+        <h1 className="text-3xl font-bold text-white">Sessions</h1>
         <Button onClick={() => setShowCreateModal(true)}>Créer une session</Button>
       </div>
 
@@ -232,7 +232,7 @@ export default function SessionsPage() {
               <Button variant="secondary" onClick={() => setSelectedSession(null)}>
                 ← Retour
               </Button>
-              <h2 className="text-2xl font-semibold text-gray-900">{selectedSession.name}</h2>
+              <h2 className="text-2xl font-semibold text-white">{selectedSession.name}</h2>
             </div>
             <div className="flex space-x-2 flex-wrap gap-2">
               <Button onClick={() => setShowAddParticipantModal(true)}>
@@ -242,7 +242,7 @@ export default function SessionsPage() {
           </div>
           {questionnaires.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 mb-4">Aucun participant pour cette session.</p>
+              <p className="text-slate-400 mb-4">Aucun participant pour cette session.</p>
               <Button onClick={() => setShowAddParticipantModal(true)}>
                 ➕ Ajouter le premier participant
               </Button>
@@ -250,11 +250,11 @@ export default function SessionsPage() {
           ) : (
             <div className="space-y-4">
               {questionnaires.map((q) => (
-                <div key={q.id} className="bg-white p-6 rounded-lg shadow space-y-3">
+                <div key={q.id} className="bg-slate-800/50 backdrop-blur-xl p-6 rounded-lg shadow space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-lg font-medium">{q.first_name} {q.last_name}</p>
-                      <p className="text-sm text-gray-600">{q.email}</p>
+                      <p className="text-sm text-slate-300">{q.email}</p>
                     </div>
                     <div className="flex space-x-2">
                       <Button size="sm" onClick={() => handleEditQuestionnaire(q)}>
@@ -285,24 +285,24 @@ export default function SessionsPage() {
                   </div>
 
                   {q.comments && (
-                    <p className="text-sm italic text-gray-600 border-t pt-2">"{q.comments}"</p>
+                    <p className="text-sm italic text-slate-300 border-t pt-2">"{q.comments}"</p>
                   )}
 
                   {q.magic_link && (
                     <div className="border-t pt-3 space-y-2">
-                      <p className="text-sm font-medium text-gray-700">Magic Link:</p>
+                      <p className="text-sm font-medium text-slate-200">Magic Link:</p>
                       <div className="flex items-center space-x-2">
                         <input
                           type="text"
                           value={q.magic_link}
                           readOnly
-                          className="flex-1 text-sm px-3 py-2 border rounded-lg bg-gray-50 font-mono"
+                          className="flex-1 text-sm px-3 py-2 border rounded-lg bg-slate-700/30 font-mono"
                         />
                         <Button size="sm" onClick={() => copyToClipboard(q.magic_link!)}>
                           📋 Copier
                         </Button>
                       </div>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-slate-400">
                         Statut email: <span className="font-medium">{q.email_status || 'N/A'}</span>
                       </p>
                     </div>
@@ -313,7 +313,7 @@ export default function SessionsPage() {
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
           <Table data={sessions} columns={sessionColumns} />
         </div>
       )}
@@ -321,13 +321,13 @@ export default function SessionsPage() {
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Créer une session">
         <form onSubmit={handleCreateSession} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-200 mb-1">
               Lieu
             </label>
             <select
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
               <option value="Coubertin">Coubertin</option>
@@ -348,19 +348,19 @@ export default function SessionsPage() {
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
             disabled
-            className="bg-gray-50"
+            className="bg-slate-700/30"
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-200 mb-1">
               Liste des participants (CSV)
             </label>
             <input
               type="file"
               accept=".csv"
               onChange={(e) => setFormData({ ...formData, csvFile: e.target.files?.[0] || null })}
-              className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+              className="block w-full text-sm text-white border border-slate-600 rounded-lg cursor-pointer bg-slate-700/30 focus:outline-none"
             />
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-400">
               Optionnel - Importez directement la liste des plongeurs
             </p>
           </div>

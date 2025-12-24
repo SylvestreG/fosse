@@ -80,7 +80,7 @@ export default function EditQuestionnaireModal({
     <Modal isOpen={isOpen} onClose={onClose} title={`Modifier - ${questionnaire.first_name} ${questionnaire.last_name}`}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <p className="text-sm text-gray-600">Email: {questionnaire.email}</p>
+          <p className="text-sm text-slate-300">Email: {questionnaire.email}</p>
         </div>
 
         <div className="space-y-3">
@@ -94,7 +94,7 @@ export default function EditQuestionnaireModal({
                 wants_nitrox: e.target.checked ? formData.wants_nitrox : false,
                 wants_2nd_reg: e.target.checked ? formData.wants_2nd_reg : false
               })}
-              className="rounded border-gray-300"
+              className="rounded border-slate-600"
             />
             <span className="text-sm">Encadrant</span>
           </label>
@@ -104,7 +104,7 @@ export default function EditQuestionnaireModal({
               type="checkbox"
               checked={formData.wants_regulator}
               onChange={(e) => setFormData({ ...formData, wants_regulator: e.target.checked })}
-              className="rounded border-gray-300"
+              className="rounded border-slate-600"
             />
             <span className="text-sm">Souhaite un détendeur</span>
           </label>
@@ -116,7 +116,7 @@ export default function EditQuestionnaireModal({
                   type="checkbox"
                   checked={formData.wants_2nd_reg}
                   onChange={(e) => setFormData({ ...formData, wants_2nd_reg: e.target.checked })}
-                  className="rounded border-gray-300"
+                  className="rounded border-slate-600"
                 />
                 <span className="text-sm">Souhaite 2ème détendeur</span>
               </label>
@@ -126,7 +126,7 @@ export default function EditQuestionnaireModal({
                   type="checkbox"
                   checked={formData.wants_nitrox}
                   onChange={(e) => setFormData({ ...formData, wants_nitrox: e.target.checked })}
-                  className="rounded border-gray-300"
+                  className="rounded border-slate-600"
                 />
                 <span className="text-sm">Souhaite Nitrox</span>
               </label>
@@ -138,20 +138,20 @@ export default function EditQuestionnaireModal({
               type="checkbox"
               checked={formData.wants_stab}
               onChange={(e) => setFormData({ ...formData, wants_stab: e.target.checked })}
-              className="rounded border-gray-300"
+              className="rounded border-slate-600"
             />
             <span className="text-sm">Souhaite stab</span>
           </label>
 
           {formData.wants_stab && (
             <div className="ml-6">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-200 mb-1">
                 Taille stab
               </label>
               <select
                 value={formData.stab_size}
                 onChange={(e) => setFormData({ ...formData, stab_size: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Sélectionner</option>
                 <option value="XS">XS</option>
@@ -168,7 +168,7 @@ export default function EditQuestionnaireModal({
               type="checkbox"
               checked={formData.comes_from_issoire}
               onChange={(e) => setFormData({ ...formData, comes_from_issoire: e.target.checked, has_car: e.target.checked ? formData.has_car : false })}
-              className="rounded border-gray-300"
+              className="rounded border-slate-600"
             />
             <span className="text-sm">🗺️ Vient d'Issoire</span>
           </label>
@@ -180,7 +180,7 @@ export default function EditQuestionnaireModal({
                   type="checkbox"
                   checked={formData.has_car}
                   onChange={(e) => setFormData({ ...formData, has_car: e.target.checked })}
-                  className="rounded border-gray-300"
+                  className="rounded border-slate-600"
                 />
                 <span className="text-sm">🚗 A une voiture</span>
               </label>
@@ -210,14 +210,14 @@ export default function EditQuestionnaireModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-slate-200 mb-1">
               Commentaires
             </label>
             <textarea
               value={formData.comments}
               onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>

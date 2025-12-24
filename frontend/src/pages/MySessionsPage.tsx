@@ -74,13 +74,13 @@ export default function MySessionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">📅 Sessions à venir</h1>
-        <p className="text-gray-600 mt-1">Inscrivez-vous aux prochaines sessions de fosse</p>
+        <h1 className="text-3xl font-bold text-white">📅 Sessions à venir</h1>
+        <p className="text-slate-300 mt-1">Inscrivez-vous aux prochaines sessions de fosse</p>
       </div>
 
       {sessions.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <p className="text-gray-500 text-lg">Aucune session à venir pour le moment.</p>
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-12 text-center">
+          <p className="text-slate-400 text-lg">Aucune session à venir pour le moment.</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -97,17 +97,17 @@ export default function MySessionsPage() {
             return (
               <div 
                 key={session.id} 
-                className={`bg-white rounded-lg shadow p-6 border-l-4 ${
+                className={`bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 border-l-4 ${
                   isRegistered ? 'border-green-500' : 'border-blue-500'
                 }`}
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">{session.name}</h2>
-                    <p className="text-gray-600 mt-1">📍 {session.location || 'Lieu non précisé'}</p>
-                    <p className="text-gray-600">📆 {formattedDate}</p>
+                    <h2 className="text-xl font-semibold text-white">{session.name}</h2>
+                    <p className="text-slate-300 mt-1">📍 {session.location || 'Lieu non précisé'}</p>
+                    <p className="text-slate-300">📆 {formattedDate}</p>
                     {session.description && (
-                      <p className="text-gray-500 mt-2 text-sm">{session.description}</p>
+                      <p className="text-slate-400 mt-2 text-sm">{session.description}</p>
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -222,10 +222,10 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
           <p className="text-blue-800">📍 {session.location}</p>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="bg-slate-700/30 p-4 rounded-lg">
           <p className="font-medium">Participant</p>
-          <p className="text-gray-600">{person.first_name} {person.last_name}</p>
-          <p className="text-gray-500 text-sm">{person.email}</p>
+          <p className="text-slate-300">{person.first_name} {person.last_name}</p>
+          <p className="text-slate-400 text-sm">{person.email}</p>
         </div>
 
         {/* Encadrant - seulement si la personne est instructeur */}
@@ -240,7 +240,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
               />
               <div>
                 <span className="font-medium">👨‍🏫 Je serai encadrant</span>
-                <p className="text-sm text-gray-500">Je participe en tant qu'encadrant pour cette session</p>
+                <p className="text-sm text-slate-400">Je participe en tant qu'encadrant pour cette session</p>
               </div>
             </label>
           </div>
@@ -250,7 +250,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
         <div className="space-y-4">
           <h3 className="font-semibold">Matériel demandé</h3>
 
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
             <input
               type="checkbox"
               checked={formData.wants_regulator}
@@ -262,7 +262,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
 
           {person.is_instructor && formData.is_encadrant && (
             <>
-              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
                 <input
                   type="checkbox"
                   checked={formData.wants_nitrox}
@@ -272,7 +272,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
                 <span>Nitrox</span>
               </label>
 
-              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
                 <input
                   type="checkbox"
                   checked={formData.wants_2nd_reg}
@@ -284,7 +284,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
             </>
           )}
 
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
             <input
               type="checkbox"
               checked={formData.wants_stab}
@@ -300,7 +300,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
               <select
                 value={formData.stab_size}
                 onChange={(e) => setFormData({ ...formData, stab_size: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-3 py-2 border border-slate-600 rounded-lg"
               >
                 <option value="XS">XS</option>
                 <option value="S">S</option>
@@ -316,7 +316,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
         <div className="space-y-4">
           <h3 className="font-semibold">Transport</h3>
 
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
             <input
               type="checkbox"
               checked={formData.comes_from_issoire}
@@ -326,7 +326,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
             <span>Je pars d'Issoire</span>
           </label>
 
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50">
+          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
             <input
               type="checkbox"
               checked={formData.has_car}
@@ -345,7 +345,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
                 max="10"
                 value={formData.car_seats}
                 onChange={(e) => setFormData({ ...formData, car_seats: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-3 py-2 border border-slate-600 rounded-lg"
               />
             </div>
           )}
@@ -357,7 +357,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
           <textarea
             value={formData.comments}
             onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            className="w-full px-3 py-2 border border-slate-600 rounded-lg"
             rows={3}
             placeholder="Informations supplémentaires..."
           />

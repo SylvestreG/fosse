@@ -102,7 +102,7 @@ export default function UsersPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <h1 className="text-xl sm:text-3xl font-bold text-gray-900">Utilisateurs</h1>
+        <h1 className="text-xl sm:text-3xl font-bold text-white">Utilisateurs</h1>
         <Button onClick={() => { setEditingPerson(null); setShowModal(true) }} className="text-sm sm:text-base">
           ➕ <span className="hidden sm:inline">Nouvel </span>utilisateur
         </Button>
@@ -115,7 +115,7 @@ export default function UsersPage() {
           placeholder="Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-sm sm:text-base"
+          className="w-full px-3 sm:px-4 py-2 border border-slate-600 rounded-lg text-sm sm:text-base"
         />
         
         <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -123,7 +123,7 @@ export default function UsersPage() {
           <select
             value={filterLevel}
             onChange={(e) => setFilterLevel(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl"
           >
             <option value="">🤿 Tous niveaux</option>
             {ALL_LEVELS.map(level => (
@@ -135,7 +135,7 @@ export default function UsersPage() {
           <select
             value={filterPreparingLevel}
             onChange={(e) => setFilterPreparingLevel(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl"
           >
             <option value="">🎯 Préparation: tous</option>
             {PREPARING_LEVELS.map(level => (
@@ -147,7 +147,7 @@ export default function UsersPage() {
           <select
             value={filterEncadrant}
             onChange={(e) => setFilterEncadrant(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl"
           >
             <option value="">👥 Tous</option>
             <option value="encadrant">👨‍🏫 Encadrants</option>
@@ -170,7 +170,7 @@ export default function UsersPage() {
         </div>
 
         {/* Compteur de résultats */}
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-slate-400">
           {filteredPeople.length} utilisateur{filteredPeople.length > 1 ? 's' : ''} 
           {filteredPeople.length !== people.length && ` sur ${people.length}`}
         </p>
@@ -178,7 +178,7 @@ export default function UsersPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {filteredPeople.map((person) => (
-          <div key={person.id} className="bg-white p-3 sm:p-4 rounded-lg shadow">
+          <div key={person.id} className="bg-slate-800/50 backdrop-blur-xl p-3 sm:p-4 rounded-lg shadow">
             <div className="flex justify-between items-start mb-2 gap-2">
               <h3 className="text-sm sm:text-lg font-semibold">{person.first_name} {person.last_name}</h3>
               {person.is_instructor && (
@@ -187,8 +187,8 @@ export default function UsersPage() {
                 </span>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-gray-600 truncate">{person.email}</p>
-            {person.phone && <p className="text-xs sm:text-sm text-gray-600">📞 {person.phone}</p>}
+            <p className="text-xs sm:text-sm text-slate-300 truncate">{person.email}</p>
+            {person.phone && <p className="text-xs sm:text-sm text-slate-300">📞 {person.phone}</p>}
             
             {person.diving_level_display && (
               <div className="mt-2 space-y-1">
@@ -234,7 +234,7 @@ export default function UsersPage() {
       </div>
 
       {filteredPeople.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
+        <div className="text-center py-12 text-slate-400">
           {people.length === 0 ? 'Aucun utilisateur trouvé' : 'Aucun utilisateur ne correspond aux filtres'}
         </div>
       )}
@@ -275,7 +275,7 @@ export default function UsersPage() {
           title={confirmAction.type === 'delete' ? '🗑️ Supprimer l\'utilisateur' : '👤 Impersonnifier'}
         >
           <div className="space-y-4">
-            <p className="text-gray-700">
+            <p className="text-slate-200">
               {confirmAction.type === 'delete' ? (
                 <>Êtes-vous sûr de vouloir supprimer <strong>{confirmAction.person.first_name} {confirmAction.person.last_name}</strong> ?</>
               ) : (
@@ -283,7 +283,7 @@ export default function UsersPage() {
               )}
             </p>
             {confirmAction.type === 'impersonate' && (
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-slate-400">
                 Vous verrez l'application comme cet utilisateur.
               </p>
             )}
@@ -349,10 +349,10 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-slate-800/50 backdrop-blur-xl border-b px-6 py-4 flex justify-between items-center">
           <h2 className="text-2xl font-bold">{person ? 'Modifier' : 'Nouvel'} utilisateur</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+          <button onClick={onClose} className="text-gray-400 hover:text-slate-300 text-2xl">×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -552,13 +552,13 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
         
         {/* Niveaux complets */}
         <div>
-          <h3 className="font-semibold text-lg mb-3 text-gray-900">🎓 Niveaux validés</h3>
-          <p className="text-sm text-gray-600 mb-3">
+          <h3 className="font-semibold text-lg mb-3 text-white">🎓 Niveaux validés</h3>
+          <p className="text-sm text-slate-300 mb-3">
             💡 Cocher un niveau coche automatiquement tous les niveaux précédents
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {levelHierarchy.map((level) => (
-              <label key={level} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+              <label key={level} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-slate-700/30 cursor-pointer">
                 <input 
                   type="checkbox" 
                   checked={completeLevels[level as keyof typeof completeLevels]} 
@@ -573,14 +573,14 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
 
         {/* Niveau en préparation */}
         <div className="border-t pt-4">
-          <h3 className="font-semibold text-lg mb-3 text-gray-900">🎯 Niveau en préparation (optionnel)</h3>
-          <p className="text-sm text-gray-600 mb-3">
+          <h3 className="font-semibold text-lg mb-3 text-white">🎯 Niveau en préparation (optionnel)</h3>
+          <p className="text-sm text-slate-300 mb-3">
             Sélectionnez le niveau que cette personne prépare actuellement
           </p>
           <select
             value={preparingLevel}
             onChange={(e) => setPreparingLevel(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {getPreparingOptions().map((option) => (
               <option key={option.value} value={option.value}>

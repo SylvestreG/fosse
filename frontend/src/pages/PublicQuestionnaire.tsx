@@ -95,7 +95,7 @@ export default function PublicQuestionnaire() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-xl text-gray-700">Chargement...</p>
+          <p className="text-xl text-slate-200">Chargement...</p>
         </div>
       </div>
     )
@@ -104,9 +104,9 @@ export default function PublicQuestionnaire() {
   if (!data) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full text-center">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow-xl p-8 max-w-md w-full text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Lien invalide</h2>
-          <p className="text-gray-600">Ce lien est invalide ou a expiré.</p>
+          <p className="text-slate-300">Ce lien est invalide ou a expiré.</p>
         </div>
       </div>
     )
@@ -115,12 +115,12 @@ export default function PublicQuestionnaire() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 py-8 px-4">
       <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-xl p-8">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow-xl p-8">
           <div className="text-center mb-8">
             <img src={`${import.meta.env.BASE_URL}logo.png`} alt="USI Plongée" className="w-20 h-20 mx-auto mb-4 object-contain" />
             <h1 className="text-3xl font-bold text-primary-600 mb-2">USI - Commission Technique</h1>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">Questionnaire plongée</h2>
-            <p className="text-gray-600">
+            <h2 className="text-2xl font-semibold text-white mb-2">Questionnaire plongée</h2>
+            <p className="text-slate-300">
               Bonjour {data.person.first_name} {data.person.last_name}
             </p>
           </div>
@@ -128,14 +128,14 @@ export default function PublicQuestionnaire() {
           {data.questionnaire?.submitted_at ? (
             <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
               <p className="text-green-700 font-medium mb-2">Questionnaire déjà soumis</p>
-              <p className="text-gray-600 text-sm">
+              <p className="text-slate-300 text-sm">
                 Vous avez déjà soumis ce questionnaire le {new Date(data.questionnaire.submitted_at).toLocaleDateString()}
               </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Informations</h3>
+                <h3 className="text-lg font-semibold text-white">Informations</h3>
                 
                 <div className="flex items-center space-x-2">
                   <input
@@ -150,7 +150,7 @@ export default function PublicQuestionnaire() {
                     })}
                     className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                   />
-                  <label htmlFor="is_encadrant" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="is_encadrant" className="text-sm font-medium text-slate-200">
                     Je suis encadrant
                   </label>
                 </div>
@@ -163,7 +163,7 @@ export default function PublicQuestionnaire() {
                     onChange={(e) => setFormData({ ...formData, wants_regulator: e.target.checked })}
                     className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                   />
-                  <label htmlFor="wants_regulator" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="wants_regulator" className="text-sm font-medium text-slate-200">
                     Je souhaite un détendeur
                   </label>
                 </div>
@@ -178,7 +178,7 @@ export default function PublicQuestionnaire() {
                         onChange={(e) => setFormData({ ...formData, wants_2nd_reg: e.target.checked })}
                         className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                       />
-                      <label htmlFor="wants_2nd_reg" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="wants_2nd_reg" className="text-sm font-medium text-slate-200">
                         Je souhaite un 2ème détendeur
                       </label>
                     </div>
@@ -191,7 +191,7 @@ export default function PublicQuestionnaire() {
                         onChange={(e) => setFormData({ ...formData, wants_nitrox: e.target.checked })}
                         className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                       />
-                      <label htmlFor="wants_nitrox" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="wants_nitrox" className="text-sm font-medium text-slate-200">
                         Je souhaite plonger au nitrox
                       </label>
                     </div>
@@ -200,7 +200,7 @@ export default function PublicQuestionnaire() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Matériel</h3>
+                <h3 className="text-lg font-semibold text-white">Matériel</h3>
                 
                 <div className="flex items-center space-x-2">
                   <input
@@ -210,21 +210,21 @@ export default function PublicQuestionnaire() {
                     onChange={(e) => setFormData({ ...formData, wants_stab: e.target.checked })}
                     className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                   />
-                  <label htmlFor="wants_stab" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="wants_stab" className="text-sm font-medium text-slate-200">
                     J'ai besoin d'une stab
                   </label>
                 </div>
 
                 {formData.wants_stab && (
                   <div>
-                    <label htmlFor="stab_size" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="stab_size" className="block text-sm font-medium text-slate-200 mb-1">
                       Taille de la stab
                     </label>
                     <select
                       id="stab_size"
                       value={formData.stab_size}
                       onChange={(e) => setFormData({ ...formData, stab_size: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                       required
                     >
                       <option value="">Sélectionner une taille</option>
@@ -239,7 +239,7 @@ export default function PublicQuestionnaire() {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">🗺️ Déplacement</h3>
+                <h3 className="text-lg font-semibold text-white">🗺️ Déplacement</h3>
                 
                 <div className="flex items-center space-x-2">
                   <input
@@ -249,7 +249,7 @@ export default function PublicQuestionnaire() {
                     onChange={(e) => setFormData({ ...formData, comes_from_issoire: e.target.checked, has_car: e.target.checked ? formData.has_car : false, car_seats: e.target.checked ? formData.car_seats : '' })}
                     className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                   />
-                  <label htmlFor="comes_from_issoire" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="comes_from_issoire" className="text-sm font-medium text-slate-200">
                     Je pars d'Issoire
                   </label>
                 </div>
@@ -264,7 +264,7 @@ export default function PublicQuestionnaire() {
                         onChange={(e) => setFormData({ ...formData, has_car: e.target.checked })}
                         className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
                       />
-                      <label htmlFor="has_car" className="text-sm font-medium text-gray-700">
+                      <label htmlFor="has_car" className="text-sm font-medium text-slate-200">
                         Je peux proposer du covoiturage
                       </label>
                     </div>
@@ -287,7 +287,7 @@ export default function PublicQuestionnaire() {
                           onChange={(e) => setFormData({ ...formData, car_seats: e.target.value })}
                           placeholder="Ex: 4 (dont vous-même)"
                         />
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-slate-300">
                           Par exemple, si vous avez 5 places dans votre voiture et vous êtes le conducteur, indiquez 5.
                         </p>
                       </div>
@@ -297,14 +297,14 @@ export default function PublicQuestionnaire() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-200 mb-1">
                   Commentaires (optionnel)
                 </label>
                 <textarea
                   value={formData.comments}
                   onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Informations supplémentaires..."
                 />
               </div>
@@ -318,7 +318,7 @@ export default function PublicQuestionnaire() {
           )}
         </div>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
+        <div className="mt-6 text-center text-sm text-slate-300">
           <p>Ce lien est personnel et ne doit pas être partagé.</p>
         </div>
       </div>

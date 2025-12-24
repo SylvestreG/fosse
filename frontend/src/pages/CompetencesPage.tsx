@@ -99,8 +99,8 @@ export default function CompetencesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">🎯 Compétences</h1>
-          <p className="text-gray-600 mt-1">Gestion des compétences par niveau de plongée</p>
+          <h1 className="text-3xl font-bold text-white">🎯 Compétences</h1>
+          <p className="text-slate-300 mt-1">Gestion des compétences par niveau de plongée</p>
         </div>
         <Button onClick={handleAddCompetency}>
           ➕ Nouvelle compétence
@@ -108,7 +108,7 @@ export default function CompetencesPage() {
       </div>
 
       {/* Tabs pour les niveaux */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-slate-600">
         <nav className="-mb-px flex space-x-1 overflow-x-auto pb-px">
           {LEVEL_ORDER.map((level) => {
             const studentCount = getStudentCountByLevel(level)
@@ -122,14 +122,14 @@ export default function CompetencesPage() {
                   flex items-center gap-2
                   ${activeTab === level
                     ? 'border-blue-500 text-blue-600 bg-blue-50'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
                   }
                 `}
               >
                 {level}
                 <span className={`
                   px-1.5 py-0.5 text-xs rounded
-                  ${activeTab === level ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-gray-600'}
+                  ${activeTab === level ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-slate-300'}
                 `}>
                   {competencyCount}
                 </span>
@@ -151,11 +151,11 @@ export default function CompetencesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Colonne gauche : Compétences du niveau */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-xl font-bold text-gray-900">{LEVEL_NAMES[activeTab] || activeTab}</h2>
-                <p className="text-sm text-gray-500 mt-1">
+                <h2 className="text-xl font-bold text-white">{LEVEL_NAMES[activeTab] || activeTab}</h2>
+                <p className="text-sm text-slate-400 mt-1">
                   {currentLevelCompetencies.length} compétence{currentLevelCompetencies.length > 1 ? 's' : ''} à valider
                 </p>
               </div>
@@ -165,7 +165,7 @@ export default function CompetencesPage() {
             </div>
 
             {currentLevelCompetencies.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-slate-400">
                 <p className="mb-4">Aucune compétence définie pour ce niveau</p>
                 <Button size="sm" onClick={handleAddCompetency}>
                   ➕ Ajouter une compétence
@@ -176,16 +176,16 @@ export default function CompetencesPage() {
                 {currentLevelCompetencies.map((competency, index) => (
                   <div
                     key={competency.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors group"
+                    className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors group"
                   >
                     <div className="flex items-center flex-1">
                       <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-semibold mr-3">
                         {index + 1}
                       </span>
                       <div>
-                        <span className="text-gray-700 font-medium">{competency.name}</span>
+                        <span className="text-slate-200 font-medium">{competency.name}</span>
                         {competency.description && (
-                          <p className="text-sm text-gray-500 mt-0.5">{competency.description}</p>
+                          <p className="text-sm text-slate-400 mt-0.5">{competency.description}</p>
                         )}
                       </div>
                     </div>
@@ -214,9 +214,9 @@ export default function CompetencesPage() {
 
         {/* Colonne droite : Élèves préparant ce niveau */}
         <div className="space-y-4">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-gray-900">
+              <h3 className="text-lg font-bold text-white">
                 👨‍🎓 Élèves préparant {activeTab}
               </h3>
               <span className="px-2 py-1 bg-amber-100 text-amber-700 text-sm font-semibold rounded">
@@ -225,7 +225,7 @@ export default function CompetencesPage() {
             </div>
 
             {studentsForCurrentLevel.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center py-6">
+              <p className="text-slate-400 text-sm text-center py-6">
                 Aucun élève ne prépare ce niveau actuellement
               </p>
             ) : (
@@ -233,12 +233,12 @@ export default function CompetencesPage() {
                 {studentsForCurrentLevel.map((student) => (
                   <div
                     key={student.id}
-                    className="p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors"
+                    className="p-3 bg-slate-700/30 rounded-lg border border-gray-100 hover:bg-slate-700/50 transition-colors"
                   >
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-white">
                       {student.first_name} {student.last_name}
                     </div>
-                    <div className="text-sm text-gray-500">{student.email}</div>
+                    <div className="text-sm text-slate-400">{student.email}</div>
                     {student.diving_level_display && (
                       <div className="text-xs text-blue-600 mt-1">
                         🤿 Niveau actuel: {student.diving_level_display}
@@ -272,7 +272,7 @@ export default function CompetencesPage() {
                     <span className="text-white/80">{level}</span>
                     <div className="flex items-center gap-2">
                       <div
-                        className="h-2 bg-white/30 rounded-full"
+                        className="h-2 bg-slate-800/50 backdrop-blur-xl/30 rounded-full"
                         style={{ width: `${Math.max(count * 20, 4)}px` }}
                       />
                       <span className="font-semibold min-w-[20px] text-right">
@@ -339,37 +339,37 @@ function StudentsListModal({ level, students, onClose }: StudentsListModalProps)
   return (
     <Modal isOpen={true} onClose={onClose} title={`Élèves préparant ${level}`}>
       <div className="space-y-4">
-        <p className="text-gray-600">
+        <p className="text-slate-300">
           {students.length} élève{students.length > 1 ? 's' : ''} prépare{students.length > 1 ? 'nt' : ''} actuellement le niveau {level}
         </p>
 
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-slate-700/30">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                   Nom
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                   Niveau actuel
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                   Téléphone
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
               {students.map((student) => (
-                <tr key={student.id} className="hover:bg-gray-50">
+                <tr key={student.id} className="hover:bg-slate-700/30">
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="font-medium text-gray-900">
+                    <div className="font-medium text-white">
                       {student.first_name} {student.last_name}
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-400">
                     {student.email}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
@@ -377,7 +377,7 @@ function StudentsListModal({ level, students, onClose }: StudentsListModalProps)
                       {student.diving_level_display || 'Aucun'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-400">
                     {student.phone || '-'}
                   </td>
                 </tr>

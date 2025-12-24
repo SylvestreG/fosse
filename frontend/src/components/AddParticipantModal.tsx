@@ -101,15 +101,15 @@ ${formData.first_name},${formData.last_name},${formData.email},${formData.phone 
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-800/90 backdrop-blur-xl rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-slate-800/90 backdrop-blur-xl border-b border-slate-600 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Ajouter un participant</h2>
-              <p className="text-sm text-gray-600 mt-1">Session : {sessionName}</p>
+              <h2 className="text-2xl font-bold text-white">Ajouter un participant</h2>
+              <p className="text-sm text-slate-300 mt-1">Session : {sessionName}</p>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+            <button onClick={onClose} className="text-slate-500 hover:text-slate-300 text-2xl leading-none">×</button>
           </div>
           <div className="flex space-x-2 mt-4">
             <button type="button" onClick={() => setMode('select')} className={`px-4 py-2 rounded ${mode === 'select' ? 'bg-primary-600 text-white' : 'bg-gray-200'}`}>
@@ -128,26 +128,26 @@ ${formData.first_name},${formData.last_name},${formData.email},${formData.phone 
               placeholder="Rechercher par nom ou email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2 border border-slate-600 rounded-lg"
               autoFocus
             />
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {people.length === 0 && searchTerm.length > 1 && (
-                <p className="text-center text-gray-500 py-8">Aucun utilisateur trouvé</p>
+                <p className="text-center text-slate-400 py-8">Aucun utilisateur trouvé</p>
               )}
               {people.length === 0 && searchTerm.length <= 1 && (
-                <p className="text-center text-gray-500 py-8">Commencez à taper pour rechercher...</p>
+                <p className="text-center text-slate-400 py-8">Commencez à taper pour rechercher...</p>
               )}
               {people.map((person) => (
                 <div
                   key={person.id}
-                  className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
+                  className="border rounded-lg p-4 hover:bg-slate-700/30 cursor-pointer"
                   onClick={() => handleSelectPerson(person)}
                 >
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-semibold">{person.first_name} {person.last_name}</p>
-                      <p className="text-sm text-gray-600">{person.email}</p>
+                      <p className="text-sm text-slate-300">{person.email}</p>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {person.default_is_encadrant && <span className="text-xs px-2 py-1 bg-purple-100 rounded">Encadrant</span>}
@@ -162,28 +162,28 @@ ${formData.first_name},${formData.last_name},${formData.email},${formData.phone 
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-200 mb-2">
                 Prénom <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.first_name}
                 onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="Jean"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-200 mb-2">
                 Nom <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={formData.last_name}
                 onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="Dupont"
                 required
               />
@@ -191,33 +191,33 @@ ${formData.first_name},${formData.last_name},${formData.email},${formData.phone 
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-slate-200 mb-2">
               Email <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="jean.dupont@example.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Téléphone <span className="text-gray-400 text-xs">(optionnel)</span>
+            <label className="block text-sm font-medium text-slate-200 mb-2">
+              Téléphone <span className="text-slate-500 text-xs">(optionnel)</span>
             </label>
             <input
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="06 12 34 56 78"
             />
           </div>
 
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-600">
             <Button
               type="button"
               variant="secondary"

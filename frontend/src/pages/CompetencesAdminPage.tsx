@@ -167,8 +167,8 @@ export default function CompetencesAdminPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">🎯 Gestion des Compétences</h1>
-          <p className="text-gray-600 mt-1">Administration des domaines, modules et acquis</p>
+          <h1 className="text-3xl font-bold text-white">🎯 Gestion des Compétences</h1>
+          <p className="text-slate-300 mt-1">Administration des domaines, modules et acquis</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -199,7 +199,7 @@ export default function CompetencesAdminPage() {
       </div>
 
       {/* Tabs pour les niveaux */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-slate-600">
         <nav className="-mb-px flex space-x-1 overflow-x-auto pb-px">
           {LEVEL_ORDER.map((level) => {
             const studentCount = getStudentCountByLevel(level)
@@ -213,7 +213,7 @@ export default function CompetencesAdminPage() {
                   flex items-center gap-2
                   ${activeTab === level
                     ? 'border-blue-500 text-blue-600 bg-blue-50'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
                   }
                 `}
               >
@@ -364,11 +364,11 @@ interface ValidationStagesSectionProps {
 
 function ValidationStagesSection({ stages, onAdd, onEdit, onDelete }: ValidationStagesSectionProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">📊 Étapes de Validation</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-xl font-bold text-white">📊 Étapes de Validation</h2>
+          <p className="text-sm text-slate-400 mt-1">
             Configurez les différentes étapes de progression (ex: Vu en piscine → Acquis → Validé en mer)
           </p>
         </div>
@@ -379,13 +379,13 @@ function ValidationStagesSection({ stages, onAdd, onEdit, onDelete }: Validation
         {stages.map((stage, index) => (
           <div
             key={stage.id}
-            className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors group"
+            className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors group"
           >
             <div className="flex items-center gap-4">
               <span className="text-2xl">{stage.icon}</span>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900">{stage.name}</span>
+                  <span className="font-medium text-white">{stage.name}</span>
                   <span 
                     className="px-2 py-0.5 text-xs rounded"
                     style={{ backgroundColor: stage.color + '20', color: stage.color }}
@@ -399,7 +399,7 @@ function ValidationStagesSection({ stages, onAdd, onEdit, onDelete }: Validation
                   )}
                 </div>
                 {stage.description && (
-                  <p className="text-sm text-gray-500 mt-0.5">{stage.description}</p>
+                  <p className="text-sm text-slate-400 mt-0.5">{stage.description}</p>
                 )}
               </div>
             </div>
@@ -498,8 +498,8 @@ function HierarchySection({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">{LEVEL_NAMES[level] || level}</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="text-xl font-bold text-white">{LEVEL_NAMES[level] || level}</h2>
+          <p className="text-sm text-slate-400">
             {levelDomains.length} domaine{levelDomains.length > 1 ? 's' : ''} • 
             {levelDomains.reduce((sum, d) => sum + (d.modules?.length || 0), 0)} modules •
             {levelDomains.reduce((sum, d) => sum + (d.modules?.reduce((s, m) => s + (m.skills?.length || 0), 0) || 0), 0)} acquis
@@ -509,14 +509,14 @@ function HierarchySection({
       </div>
 
       {levelDomains.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <p className="text-gray-500 mb-4">Aucun domaine défini pour {level}</p>
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-12 text-center">
+          <p className="text-slate-400 mb-4">Aucun domaine défini pour {level}</p>
           <Button onClick={onAddDomain}>Créer le premier domaine</Button>
         </div>
       ) : (
         <div className="space-y-4">
           {levelDomains.map((domain) => (
-            <div key={domain.id} className="bg-white rounded-lg shadow overflow-hidden">
+            <div key={domain.id} className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
               {/* Domain header */}
               <div 
                 className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 cursor-pointer hover:from-blue-100 hover:to-cyan-100 transition-colors"
@@ -525,11 +525,11 @@ function HierarchySection({
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{expandedDomains.has(domain.id) ? '📂' : '📁'}</span>
                   <div>
-                    <span className="font-bold text-gray-900">{domain.name}</span>
+                    <span className="font-bold text-white">{domain.name}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-slate-400">
                     {domain.modules?.length || 0} module{(domain.modules?.length || 0) > 1 ? 's' : ''}
                   </span>
                   <button
@@ -559,7 +559,7 @@ function HierarchySection({
               {expandedDomains.has(domain.id) && domain.modules && (
                 <div className="border-t border-gray-100">
                   {domain.modules.length === 0 ? (
-                    <div className="p-4 text-center text-gray-500 text-sm">
+                    <div className="p-4 text-center text-slate-400 text-sm">
                       Aucun module dans ce domaine
                     </div>
                   ) : (
@@ -567,15 +567,15 @@ function HierarchySection({
                       <div key={module.id} className="border-b border-gray-50 last:border-b-0">
                         {/* Module header */}
                         <div 
-                          className="flex items-center justify-between p-3 pl-8 hover:bg-gray-50 cursor-pointer"
+                          className="flex items-center justify-between p-3 pl-8 hover:bg-slate-700/30 cursor-pointer"
                           onClick={() => toggleModule(module.id)}
                         >
                           <div className="flex items-center gap-2">
                             <span>{expandedModules.has(module.id) ? '📖' : '📕'}</span>
-                            <span className="font-medium text-gray-800">{module.name}</span>
+                            <span className="font-medium text-slate-100">{module.name}</span>
                           </div>
                           <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-slate-400">
                               {module.skills?.length || 0} acquis
                             </span>
                             <button
@@ -601,22 +601,22 @@ function HierarchySection({
 
                         {/* Skills */}
                         {expandedModules.has(module.id) && module.skills && (
-                          <div className="bg-gray-50 border-t border-gray-100">
+                          <div className="bg-slate-700/30 border-t border-gray-100">
                             {module.skills.length === 0 ? (
-                              <div className="p-3 pl-12 text-gray-500 text-sm">
+                              <div className="p-3 pl-12 text-slate-400 text-sm">
                                 Aucun acquis dans ce module
                               </div>
                             ) : (
                               module.skills.map((skill, index) => (
                                 <div
                                   key={skill.id}
-                                  className="flex items-center justify-between p-2 pl-12 hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                                  className="flex items-center justify-between p-2 pl-12 hover:bg-slate-700/50 border-b border-gray-100 last:border-b-0"
                                 >
                                   <div className="flex items-center gap-2">
                                     <span className="w-5 h-5 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs">
                                       {index + 1}
                                     </span>
-                                    <span className="text-sm text-gray-700">{skill.name}</span>
+                                    <span className="text-sm text-slate-200">{skill.name}</span>
                                     <span className="text-xs text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded">
                                       Min: {skill.min_validator_level}
                                     </span>
@@ -665,18 +665,18 @@ interface StudentsSectionProps {
 
 function StudentsSection({ level, students, onViewProgress }: StudentsSectionProps) {
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">👨‍🎓 Élèves préparant {level}</h2>
-          <p className="text-sm text-gray-500 mt-1">
+          <h2 className="text-xl font-bold text-white">👨‍🎓 Élèves préparant {level}</h2>
+          <p className="text-sm text-slate-400 mt-1">
             {students.length} élève{students.length > 1 ? 's' : ''} en préparation
           </p>
         </div>
       </div>
 
       {students.length === 0 ? (
-        <p className="text-center text-gray-500 py-8">
+        <p className="text-center text-slate-400 py-8">
           Aucun élève ne prépare actuellement le niveau {level}
         </p>
       ) : (
@@ -684,12 +684,12 @@ function StudentsSection({ level, students, onViewProgress }: StudentsSectionPro
           {students.map((student) => (
             <div
               key={student.id}
-              className="p-4 bg-gray-50 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors"
+              className="p-4 bg-slate-700/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors"
             >
-              <div className="font-medium text-gray-900">
+              <div className="font-medium text-white">
                 {student.first_name} {student.last_name}
               </div>
-              <div className="text-sm text-gray-500">{student.email}</div>
+              <div className="text-sm text-slate-400">{student.email}</div>
               {student.diving_level_display && (
                 <div className="text-xs text-blue-600 mt-1">
                   🤿 Niveau actuel: {student.diving_level_display}
@@ -861,7 +861,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-gray-500">Chargement des statistiques...</p>
+        <p className="mt-2 text-slate-400">Chargement des statistiques...</p>
       </div>
     )
   }
@@ -891,8 +891,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
       {/* Graphiques en grille */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Élèves par niveau préparé */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">👨‍🎓 Élèves par niveau préparé</h3>
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
+          <h3 className="text-lg font-bold text-white mb-4">👨‍🎓 Élèves par niveau préparé</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={studentsByLevelData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -908,8 +908,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         </div>
 
         {/* Répartition Encadrants / Élèves */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">👥 Répartition des membres</h3>
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
+          <h3 className="text-lg font-bold text-white mb-4">👥 Répartition des membres</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -933,8 +933,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         </div>
 
         {/* Niveaux actuels des membres */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">🤿 Niveaux actuels des membres</h3>
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
+          <h3 className="text-lg font-bold text-white mb-4">🤿 Niveaux actuels des membres</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={currentLevelData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" />
@@ -947,8 +947,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         </div>
 
         {/* Participations aux fosses - élèves vs encadrants */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">📅 Participations aux dernières fosses</h3>
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
+          <h3 className="text-lg font-bold text-white mb-4">📅 Participations aux dernières fosses</h3>
           {participationData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={participationData}>
@@ -961,11 +961,11 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                     if (active && payload && payload.length > 0 && payload[0]?.payload) {
                       const data = payload[0].payload
                       return (
-                        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-                          <p className="font-semibold text-gray-900 mb-2">📅 {data.fullName}</p>
+                        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-600 rounded-lg shadow-lg p-3">
+                          <p className="font-semibold text-white mb-2">📅 {data.fullName}</p>
                           <p className="text-green-600">👨‍🎓 Élèves : {data.eleves}</p>
                           <p className="text-blue-600">👨‍🏫 Encadrants : {data.encadrants}</p>
-                          <p className="text-gray-700 font-medium border-t mt-2 pt-2">Total : {data.eleves + data.encadrants}</p>
+                          <p className="text-slate-200 font-medium border-t mt-2 pt-2">Total : {data.eleves + data.encadrants}</p>
                         </div>
                       )
                     }
@@ -980,7 +980,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-gray-500">
+            <div className="h-[300px] flex items-center justify-center text-slate-400">
               Aucune donnée de participation disponible
             </div>
           )}
@@ -988,8 +988,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
       </div>
 
       {/* Progression des compétences par niveau */}
-      <div className="bg-white rounded-xl shadow p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">📈 Progression des compétences par niveau</h3>
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
+        <h3 className="text-lg font-bold text-white mb-4">📈 Progression des compétences par niveau</h3>
         <ResponsiveContainer width="100%" height={350}>
           <BarChart data={progressChartData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -1002,37 +1002,37 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
             <Bar dataKey="Non commencé" stackId="a" fill="#E5E7EB" />
           </BarChart>
         </ResponsiveContainer>
-        <p className="text-sm text-gray-500 mt-2 text-center">
+        <p className="text-sm text-slate-400 mt-2 text-center">
           Agrégation des compétences des élèves préparant chaque niveau
         </p>
       </div>
 
       {/* Tableau détaillé par niveau */}
-      <div className="bg-white rounded-xl shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-bold text-gray-900">📋 Détail par niveau</h3>
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-600">
+          <h3 className="text-lg font-bold text-white">📋 Détail par niveau</h3>
         </div>
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-slate-700/30">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Niveau</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Élèves en préparation</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Membres avec ce niveau</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Niveau</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Description</th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase">Élèves en préparation</th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase">Membres avec ce niveau</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
             {LEVEL_ORDER.map((level) => {
               const preparing = people.filter(p => p.preparing_level === level).length
               const current = people.filter(p => p.diving_level_display === level).length
               return (
-                <tr key={level} className="hover:bg-gray-50">
+                <tr key={level} className="hover:bg-slate-700/30">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
                       {level}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-600">
+                  <td className="px-6 py-4 text-slate-300">
                     {LEVEL_NAMES[level] || level}
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -1183,7 +1183,7 @@ function StageModal({ stage, onClose, onSuccess }: StageModalProps) {
             id="is_final"
             checked={formData.is_final}
             onChange={(e) => setFormData({ ...formData, is_final: e.target.checked })}
-            className="rounded border-gray-300"
+            className="rounded border-slate-600"
           />
           <label htmlFor="is_final" className="text-sm">
             Étape finale de validation (ex: Validé en mer)
@@ -1407,7 +1407,7 @@ function SkillModal({ skill, moduleId, onClose, onSuccess }: SkillModalProps) {
               <option key={l} value={l}>{l}</option>
             ))}
           </select>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             Niveau minimum requis pour valider cet acquis
           </p>
         </div>

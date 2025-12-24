@@ -97,7 +97,7 @@ export default function SummaryPage() {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <p className="text-xl text-gray-700">Chargement...</p>
+        <p className="text-xl text-slate-200">Chargement...</p>
       </div>
     )
   }
@@ -106,7 +106,7 @@ export default function SummaryPage() {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-red-600 mb-4">Session introuvable</h2>
-        <p className="text-gray-600 mb-4">Cette session n'existe pas ou vous n'avez pas accès.</p>
+        <p className="text-slate-300 mb-4">Cette session n'existe pas ou vous n'avez pas accès.</p>
         <Button onClick={() => navigate('/dashboard/sessions')}>
           ← Retour aux sessions
         </Button>
@@ -121,8 +121,8 @@ export default function SummaryPage() {
           <Button variant="secondary" onClick={() => navigate('/dashboard/sessions')}>
             ← Retour aux sessions
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900 mt-4">{session.name}</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-white mt-4">{session.name}</h1>
+          <p className="text-slate-300">
             {new Date(session.start_date).toLocaleDateString('fr-FR')} • {session.location}
           </p>
         </div>
@@ -164,10 +164,10 @@ export default function SummaryPage() {
       </div>
 
       {/* Section Bouteilles */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">📦 Bouteilles</h2>
-          <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+          <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
             Inclut +1 bloc de secours (Air)
           </span>
         </div>
@@ -196,10 +196,10 @@ export default function SummaryPage() {
       </div>
 
       {/* Section Matériel */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">🛠️ Matériel</h2>
-          <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+          <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
             Inclut +1 détendeur et +1 stab de secours
           </span>
         </div>
@@ -234,7 +234,7 @@ export default function SummaryPage() {
       </div>
 
       {summary && summary.stab_sizes && summary.stab_sizes.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">🦺 Répartition Tailles Stab</h2>
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             {summary.stab_sizes.map((size) => (
@@ -243,14 +243,14 @@ export default function SummaryPage() {
                 className={`text-center p-4 rounded-lg ${
                   size.size === 'Secours' 
                     ? 'bg-red-50 border-2 border-red-300' 
-                    : 'bg-gray-50'
+                    : 'bg-slate-700/30'
                 }`}
               >
-                <p className="text-2xl font-bold text-gray-900">{size.count}</p>
+                <p className="text-2xl font-bold text-white">{size.count}</p>
                 <p className={`text-sm ${
                   size.size === 'Secours' 
                     ? 'text-red-600 font-semibold' 
-                    : 'text-gray-600'
+                    : 'text-slate-300'
                 }`}>
                   {size.size === 'Secours' ? '🚨 Secours' : `Taille ${size.size}`}
                 </p>
@@ -261,17 +261,17 @@ export default function SummaryPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">🚗 Transport</h2>
           <div className="space-y-2">
-            <p className="text-3xl font-bold text-gray-900">{summary.vehicles_count}</p>
-            <p className="text-gray-600">Véhicules disponibles</p>
+            <p className="text-3xl font-bold text-white">{summary.vehicles_count}</p>
+            <p className="text-slate-300">Véhicules disponibles</p>
             <p className="text-2xl font-semibold text-blue-600">{summary.total_car_seats}</p>
-            <p className="text-gray-600">Places totales</p>
+            <p className="text-slate-300">Places totales</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">📊 Taux de Complétion</h2>
           <div className="relative pt-1">
             <div className="flex mb-2 items-center justify-between">
@@ -294,7 +294,7 @@ export default function SummaryPage() {
                 className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500"
               ></div>
             </div>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-300">
               {summary.submitted_count} réponses sur {summary.total_questionnaires} plongeurs
             </p>
           </div>
@@ -303,7 +303,7 @@ export default function SummaryPage() {
 
       {/* Section Encadrants */}
       {summary && summary.participants && summary.participants.filter(p => p.is_encadrant).length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">
             🏊 Encadrants ({summary.participants.filter(p => p.is_encadrant).length})
           </h2>
@@ -311,27 +311,27 @@ export default function SummaryPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-purple-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Nom
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Statut
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
                 {summary.participants.filter(p => p.is_encadrant).map((participant, idx) => (
                   <tr key={idx} className={participant.submitted ? 'bg-green-50' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-white">
                         {participant.first_name} {participant.last_name}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{participant.email}</div>
+                      <div className="text-sm text-slate-400">{participant.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {participant.submitted ? (
@@ -354,7 +354,7 @@ export default function SummaryPage() {
 
       {/* Section Élèves */}
       {summary && summary.participants && summary.participants.filter(p => !p.is_encadrant).length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">
             🤿 Élèves ({summary.participants.filter(p => !p.is_encadrant).length})
           </h2>
@@ -362,27 +362,27 @@ export default function SummaryPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-cyan-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Nom
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Statut
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
                 {summary.participants.filter(p => !p.is_encadrant).map((participant, idx) => (
                   <tr key={idx} className={participant.submitted ? 'bg-green-50' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-white">
                         {participant.first_name} {participant.last_name}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{participant.email}</div>
+                      <div className="text-sm text-slate-400">{participant.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {participant.submitted ? (
@@ -433,12 +433,12 @@ function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
-          {subtitle && <p className="text-sm text-gray-500 mt-1">{subtitle}</p>}
+          <p className="text-sm text-slate-300 mb-1">{title}</p>
+          <p className="text-3xl font-bold text-white">{value}</p>
+          {subtitle && <p className="text-sm text-slate-400 mt-1">{subtitle}</p>}
         </div>
         <div className={`text-4xl p-3 rounded-full ${colorClasses[color]}`}>{icon}</div>
       </div>

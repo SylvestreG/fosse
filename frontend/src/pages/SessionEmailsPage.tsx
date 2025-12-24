@@ -130,8 +130,8 @@ export default function SessionEmailsPage() {
           <Button variant="secondary" onClick={() => navigate('/dashboard/sessions')}>
             ← Retour aux sessions
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900 mt-4">📧 Emails - {session.name}</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-white mt-4">📧 Emails - {session.name}</h1>
+          <p className="text-slate-300">
             {pendingEmails.length} email(s) à envoyer • {sentEmails.length} envoyé(s)
           </p>
         </div>
@@ -163,8 +163,8 @@ export default function SessionEmailsPage() {
       )}
 
       {selectedEmails.size > 0 && (
-        <div className="bg-white rounded-lg shadow p-4 flex items-center justify-between">
-          <p className="text-gray-700">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 flex items-center justify-between">
+          <p className="text-slate-200">
             <strong>{selectedEmails.size}</strong> email(s) sélectionné(s)
           </p>
           <Button onClick={handleMarkAsSent}>
@@ -173,9 +173,9 @@ export default function SessionEmailsPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+          <thead className="bg-slate-700/30">
             <tr>
               <th className="px-6 py-3 text-left">
                 <input
@@ -185,13 +185,13 @@ export default function SessionEmailsPage() {
                   className="w-4 h-4 text-primary-600 rounded"
                 />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nom</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Nom</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Email</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Statut</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
             {emails.map((email) => (
               <tr key={email.id} className={email.status === 'sent' ? 'bg-green-50' : ''}>
                 <td className="px-6 py-4">
@@ -208,16 +208,16 @@ export default function SessionEmailsPage() {
                   )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-white">
                     {email.to_name}
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-900">{email.to_email}</span>
+                    <span className="text-sm text-white">{email.to_email}</span>
                     <button
                       onClick={() => handleCopyEmail(email)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-gray-400 hover:text-slate-300"
                       title="Copier l'email"
                     >
                       📋
@@ -230,7 +230,7 @@ export default function SessionEmailsPage() {
                       <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
                         ⏳ À envoyer
                       </span>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-slate-400 mt-1">
                         Expire le {new Date(email.expires_at).toLocaleDateString('fr-FR')}
                       </div>
                     </>
@@ -240,7 +240,7 @@ export default function SessionEmailsPage() {
                         ✅ Envoyé
                       </span>
                       {email.sent_at && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-slate-400 mt-1">
                           {new Date(email.sent_at).toLocaleString('fr-FR')}
                         </div>
                       )}
@@ -284,18 +284,18 @@ export default function SessionEmailsPage() {
       {/* Modal de prévisualisation */}
       {previewEmail && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-6 border-b border-gray-200">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-600">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Aperçu Email</h2>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <h2 className="text-2xl font-bold text-white">Aperçu Email</h2>
+                  <p className="text-sm text-slate-300 mt-1">
                     Destinataire : {previewEmail.to_name} ({previewEmail.to_email})
                   </p>
                 </div>
                 <button
                   onClick={() => setPreviewEmail(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-slate-300"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -322,8 +322,8 @@ export default function SessionEmailsPage() {
               </div>
             </div>
             <div className="p-6 overflow-y-auto flex-1">
-              <div className="mb-4 p-3 bg-gray-50 rounded">
-                <p className="text-sm text-gray-700">
+              <div className="mb-4 p-3 bg-slate-700/30 rounded">
+                <p className="text-sm text-slate-200">
                   <strong>Sujet :</strong> {previewEmail.subject}
                 </p>
               </div>
@@ -341,7 +341,7 @@ export default function SessionEmailsPage() {
                 </ol>
               </div>
               
-              <div className="border-2 border-primary-300 rounded-lg p-4 bg-white max-h-[500px] overflow-y-auto">
+              <div className="border-2 border-primary-300 rounded-lg p-4 bg-slate-800/50 backdrop-blur-xl max-h-[500px] overflow-y-auto">
                 <div 
                   className="prose max-w-none select-text"
                   dangerouslySetInnerHTML={{ __html: previewEmail.body }}
@@ -349,11 +349,11 @@ export default function SessionEmailsPage() {
                 />
               </div>
               
-              <p className="text-xs text-gray-500 mt-2 italic">
+              <p className="text-xs text-slate-400 mt-2 italic">
                 ℹ️ Le contenu ci-dessus est entièrement sélectionnable. Utilisez Ctrl+A (ou Cmd+A) pour tout sélectionner.
               </p>
             </div>
-            <div className="p-6 border-t border-gray-200 flex justify-end">
+            <div className="p-6 border-t border-slate-600 flex justify-end">
               <Button variant="secondary" onClick={() => setPreviewEmail(null)}>
                 Fermer
               </Button>

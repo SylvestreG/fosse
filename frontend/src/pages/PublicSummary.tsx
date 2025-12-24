@@ -28,10 +28,10 @@ export default function PublicSummary() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-700/30 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Chargement du récapitulatif...</p>
+          <p className="text-slate-300">Chargement du récapitulatif...</p>
         </div>
       </div>
     )
@@ -39,12 +39,12 @@ export default function PublicSummary() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-slate-700/30 flex items-center justify-center p-4">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow-lg p-8 max-w-md w-full text-center">
           <div className="text-6xl mb-4">❌</div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Lien invalide</h1>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <p className="text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-white mb-2">Lien invalide</h1>
+          <p className="text-slate-300 mb-4">{error}</p>
+          <p className="text-sm text-slate-400">
             Ce lien de récapitulatif a peut-être expiré (valide jusqu'au lendemain de la session).
           </p>
         </div>
@@ -57,11 +57,11 @@ export default function PublicSummary() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-slate-700/30 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">📊 Récapitulatif de Session</h1>
-          <p className="text-gray-600">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 mb-6">
+          <h1 className="text-3xl font-bold text-white mb-2">📊 Récapitulatif de Session</h1>
+          <p className="text-slate-300">
             Statistiques et liste des participants
           </p>
         </div>
@@ -86,7 +86,7 @@ export default function PublicSummary() {
         </div>
 
         {/* Bouteilles */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">📦 Bouteilles</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StatCard title="Bouteilles Totales" value={summary.total_bottles} icon="🫧" color="blue" subtitle="1 par personne + secours" />
@@ -96,7 +96,7 @@ export default function PublicSummary() {
         </div>
 
         {/* Matériel */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">🛠️ Matériel</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <StatCard title="Détendeurs" value={summary.regulators_count} icon="🫧" color="cyan" subtitle="Inclut secours" />
@@ -113,7 +113,7 @@ export default function PublicSummary() {
           {/* Stabs par taille */}
           {summary.stab_sizes.length > 0 && (
             <div className="border-t pt-4">
-              <h3 className="text-lg font-semibold mb-3 text-gray-700">📏 Stabs par taille</h3>
+              <h3 className="text-lg font-semibold mb-3 text-slate-200">📏 Stabs par taille</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 {summary.stab_sizes
                   .sort((a, b) => {
@@ -127,7 +127,7 @@ export default function PublicSummary() {
                       key={idx}
                       className="bg-orange-50 rounded-lg p-3 text-center border border-orange-200"
                     >
-                      <p className="text-sm font-medium text-gray-700">{stabSize.size}</p>
+                      <p className="text-sm font-medium text-slate-200">{stabSize.size}</p>
                       <p className="text-2xl font-bold text-orange-600 mt-1">{stabSize.count}</p>
                     </div>
                   ))}
@@ -138,29 +138,29 @@ export default function PublicSummary() {
 
         {/* Encadrants */}
         {summary.participants.filter((p) => p.is_encadrant).length > 0 && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">🏊 Encadrants ({summary.participants.filter((p) => p.is_encadrant).length})</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-purple-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Nom</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">Statut</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
                   {summary.participants
                     .filter((p) => p.is_encadrant)
                     .map((participant, idx) => (
                       <tr key={idx} className={participant.submitted ? 'bg-green-50' : ''}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-white">
                             {participant.first_name} {participant.last_name}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{participant.email}</div>
+                          <div className="text-sm text-slate-400">{participant.email}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           {participant.submitted ? (
@@ -183,29 +183,29 @@ export default function PublicSummary() {
 
         {/* Élèves */}
         {summary.participants.filter((p) => !p.is_encadrant).length > 0 && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">🤿 Élèves ({summary.participants.filter((p) => !p.is_encadrant).length})</h2>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-cyan-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Nom</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">Statut</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
                   {summary.participants
                     .filter((p) => !p.is_encadrant)
                     .map((participant, idx) => (
                       <tr key={idx} className={participant.submitted ? 'bg-green-50' : ''}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-white">
                             {participant.first_name} {participant.last_name}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-500">{participant.email}</div>
+                          <div className="text-sm text-slate-400">{participant.email}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           {participant.submitted ? (
@@ -246,7 +246,7 @@ function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
     green: 'bg-green-50 text-green-600',
     yellow: 'bg-yellow-50 text-yellow-600',
     orange: 'bg-orange-50 text-orange-600',
-    gray: 'bg-gray-50 text-gray-600',
+    gray: 'bg-slate-700/30 text-slate-300',
   }
 
   return (

@@ -63,7 +63,7 @@ export default function MyCompetencesPage() {
   if (!myPerson) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">Profil non trouvé. Contactez un administrateur.</p>
+        <p className="text-slate-400">Profil non trouvé. Contactez un administrateur.</p>
       </div>
     )
   }
@@ -75,9 +75,9 @@ export default function MyCompetencesPage() {
   if (!preparingLevel) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900">🎯 Mes Compétences</h1>
+        <h1 className="text-3xl font-bold text-white">🎯 Mes Compétences</h1>
         
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden">
           {/* Header avec illustration */}
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-8 text-white text-center">
             <div className="text-6xl mb-4">🤿</div>
@@ -89,7 +89,7 @@ export default function MyCompetencesPage() {
             {currentLevel ? (
               <>
                 <div className="mb-6">
-                  <span className="text-gray-500">Votre niveau actuel :</span>
+                  <span className="text-slate-400">Votre niveau actuel :</span>
                   <div className="text-3xl font-bold text-blue-600 mt-2">{currentLevel}</div>
                 </div>
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-md mx-auto">
@@ -109,7 +109,7 @@ export default function MyCompetencesPage() {
               </>
             ) : (
               <>
-          <p className="text-gray-500 text-lg mb-4">
+          <p className="text-slate-400 text-lg mb-4">
             Vous n'avez pas encore de niveau de plongée enregistré.
           </p>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
@@ -123,12 +123,12 @@ export default function MyCompetencesPage() {
         </div>
 
         {/* Info */}
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
           <div className="flex gap-3">
             <span className="text-2xl">📚</span>
             <div>
-              <h3 className="font-medium text-gray-900">À propos des compétences</h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <h3 className="font-medium text-white">À propos des compétences</h3>
+              <p className="text-sm text-slate-300 mt-1">
                 Lorsque vous préparez un niveau, vous aurez accès ici à la liste des compétences 
                 à acquérir et pourrez suivre votre progression. Les compétences sont validées 
                 par vos encadrants lors des sessions de fosse et en mer.
@@ -160,8 +160,8 @@ export default function MyCompetencesPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">🎯 Mes Compétences</h1>
-        <p className="text-gray-600 mt-1 text-sm sm:text-base">
+        <h1 className="text-2xl sm:text-3xl font-bold text-white">🎯 Mes Compétences</h1>
+        <p className="text-slate-300 mt-1 text-sm sm:text-base">
           Suivez votre progression vers le niveau {displayLevel}
         </p>
       </div>
@@ -190,7 +190,7 @@ export default function MyCompetencesPage() {
           </div>
           <div className="flex items-center justify-between sm:flex-col sm:text-right">
             <div className="text-4xl sm:text-5xl hidden sm:block sm:mb-2">🤿</div>
-            <div className="bg-white/20 rounded-lg px-3 py-2 sm:px-4">
+            <div className="bg-slate-800/50 backdrop-blur-xl/20 rounded-lg px-3 py-2 sm:px-4">
               <div className="text-2xl sm:text-3xl font-bold">{globalPercentage}%</div>
               <div className="text-xs sm:text-sm text-blue-100">
                 {globalStats.validated}/{globalStats.total} validés
@@ -211,7 +211,7 @@ export default function MyCompetencesPage() {
               <span>{globalStats.not_started} à faire</span>
             </span>
           </div>
-          <div className="h-2 sm:h-3 bg-white/20 rounded-full overflow-hidden">
+          <div className="h-2 sm:h-3 bg-slate-800/50 backdrop-blur-xl/20 rounded-full overflow-hidden">
             <div className="h-full flex">
               <div 
                 className="bg-green-400 transition-all" 
@@ -228,12 +228,12 @@ export default function MyCompetencesPage() {
 
       {/* Légende des étapes */}
       {stages.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-3 sm:p-4">
-          <h3 className="text-xs sm:text-sm font-medium text-gray-700 mb-2 sm:mb-3">Légende des étapes</h3>
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 sm:p-4">
+          <h3 className="text-xs sm:text-sm font-medium text-slate-200 mb-2 sm:mb-3">Légende des étapes</h3>
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <div className="flex items-center gap-1 sm:gap-1.5">
               <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gray-200 rounded-full"></span>
-              <span className="text-xs sm:text-sm text-gray-600">Non commencé</span>
+              <span className="text-xs sm:text-sm text-slate-300">Non commencé</span>
             </div>
             {stages.map((stage) => (
               <div key={stage.id} className="flex items-center gap-1 sm:gap-1.5">
@@ -241,7 +241,7 @@ export default function MyCompetencesPage() {
                   className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full" 
                   style={{ backgroundColor: stage.color }}
                 ></span>
-                <span className="text-xs sm:text-sm text-gray-600">
+                <span className="text-xs sm:text-sm text-slate-300">
                   {stage.icon} {stage.name}
                 </span>
               </div>
@@ -252,8 +252,8 @@ export default function MyCompetencesPage() {
 
       {/* Liste des compétences par domaine */}
       {!hierarchy || hierarchy.domains.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-6 sm:p-8 text-center">
-          <p className="text-gray-500 text-sm sm:text-base">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 sm:p-8 text-center">
+          <p className="text-slate-400 text-sm sm:text-base">
             Aucune compétence définie pour le niveau {displayLevel}.
           </p>
           <p className="text-gray-400 text-xs sm:text-sm mt-2">
@@ -263,18 +263,18 @@ export default function MyCompetencesPage() {
       ) : (
         <div className="space-y-4 sm:space-y-6">
           {hierarchy.domains.map((domain) => (
-            <div key={domain.id} className="bg-white rounded-lg shadow overflow-hidden">
+            <div key={domain.id} className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
               {/* Header du domaine */}
               <div className="px-3 sm:px-6 py-3 sm:py-4 border-b bg-gradient-to-r from-gray-50 to-gray-100">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
-                    <span className="text-base sm:text-lg font-bold text-gray-900">{domain.name}</span>
+                    <span className="text-base sm:text-lg font-bold text-white">{domain.name}</span>
                   </div>
                   <div className="flex items-center justify-between sm:flex-col sm:text-right">
-                    <span className="text-xl sm:text-2xl font-bold text-gray-900">
+                    <span className="text-xl sm:text-2xl font-bold text-white">
                       {Math.round(domain.progress.percentage)}%
                     </span>
-                    <span className="text-xs sm:text-sm text-gray-500">
+                    <span className="text-xs sm:text-sm text-slate-400">
                       {domain.progress.validated}/{domain.progress.total} validés
                     </span>
           </div>
@@ -300,12 +300,12 @@ export default function MyCompetencesPage() {
                 {domain.modules.map((module) => (
                   <div key={module.id}>
                     {/* Header du module */}
-                    <div className="px-3 sm:px-6 py-2 sm:py-3 bg-gray-50 flex items-center justify-between">
+                    <div className="px-3 sm:px-6 py-2 sm:py-3 bg-slate-700/30 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-base sm:text-lg">📖</span>
-                        <span className="font-medium text-gray-800 text-sm sm:text-base">{module.name}</span>
+                        <span className="font-medium text-slate-100 text-sm sm:text-base">{module.name}</span>
                       </div>
-                      <span className="text-xs sm:text-sm text-gray-500">
+                      <span className="text-xs sm:text-sm text-slate-400">
                         {module.progress.validated}/{module.progress.total}
                       </span>
                     </div>
@@ -321,7 +321,7 @@ export default function MyCompetencesPage() {
                             <span className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-semibold">
                               {index + 1}
                             </span>
-                            <span className="text-gray-700 text-sm sm:text-base">{skill.name}</span>
+                            <span className="text-slate-200 text-sm sm:text-base">{skill.name}</span>
                           </div>
                           
                           {/* Badge de validation */}
@@ -341,13 +341,13 @@ export default function MyCompetencesPage() {
                                   {skill.validation.validated_at} — {skill.validation.validated_by_name}
                                 </div>
                                 {skill.validation.notes && (
-                                  <div className="text-xs text-gray-500 italic mt-0.5 max-w-[200px] truncate">
+                                  <div className="text-xs text-slate-400 italic mt-0.5 max-w-[200px] truncate">
                                     "{skill.validation.notes}"
                                   </div>
                                 )}
                               </div>
                             ) : (
-                              <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm bg-gray-100 text-gray-500">
+                              <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm bg-slate-700/50 text-slate-400">
                                 ⏳ Non commencé
                               </span>
                             )}
