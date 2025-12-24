@@ -52,10 +52,16 @@ impl EmailService {
         let from_address = format!("{} <{}>", self.smtp_config.from_name, self.smtp_config.from_email);
         let to_address = format!("{} <{}>", to_name, to_email);
 
+        // Generate a unique Message-ID for better deliverability
+        let domain = self.smtp_config.from_email.split('@').nth(1).unwrap_or("localhost");
+        let message_id = format!("<{}.{}@{}>", uuid::Uuid::new_v4(), chrono::Utc::now().timestamp(), domain);
+
         let email = Message::builder()
             .from(from_address.parse().map_err(|e| AppError::Internal(format!("Invalid from address: {}", e)))?)
+            .reply_to(self.smtp_config.from_email.parse().map_err(|e| AppError::Internal(format!("Invalid reply-to address: {}", e)))?)
             .to(to_address.parse().map_err(|e| AppError::Internal(format!("Invalid to address: {}", e)))?)
             .subject(subject)
+            .message_id(Some(message_id))
             .header(ContentType::TEXT_HTML)
             .body(html_body.to_string())
             .map_err(|e| AppError::Internal(format!("Failed to build email: {}", e)))?;
