@@ -212,19 +212,19 @@ export default function CompetencesAdminPage() {
                   whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm transition-colors
                   flex items-center gap-2
                   ${activeTab === level
-                    ? 'border-blue-500 text-blue-600 bg-blue-50'
+                    ? 'border-cyan-500 text-cyan-400 bg-cyan-500/10'
                     : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
                   }
                 `}
               >
                 {level}
                 {activeTab === level && (
-                  <span className="px-1.5 py-0.5 text-xs rounded bg-blue-200 text-blue-800">
+                  <span className="px-1.5 py-0.5 text-xs rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
                     {domainCount} dom.
                   </span>
                 )}
                 {studentCount > 0 && (
-                  <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeTab === level ? 'bg-amber-200 text-amber-800' : 'bg-amber-100 text-amber-600'}`}>
+                  <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeTab === level ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-amber-500/10 text-amber-400'}`}>
                     👨‍🎓 {studentCount}
                   </span>
                 )}
@@ -379,7 +379,7 @@ function ValidationStagesSection({ stages, onAdd, onEdit, onDelete }: Validation
         {stages.map((stage, index) => (
           <div
             key={stage.id}
-            className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors group"
+            className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-slate-600 hover:border-cyan-500/50 transition-colors group"
           >
             <div className="flex items-center gap-4">
               <span className="text-2xl">{stage.icon}</span>
@@ -393,7 +393,7 @@ function ValidationStagesSection({ stages, onAdd, onEdit, onDelete }: Validation
                     {stage.code}
                   </span>
                   {stage.is_final && (
-                    <span className="px-2 py-0.5 text-xs rounded bg-green-100 text-green-700">
+                    <span className="px-2 py-0.5 text-xs rounded bg-green-500/20 text-green-400 border border-green-500/30">
                       ✓ Finale
                     </span>
                   )}
@@ -404,18 +404,18 @@ function ValidationStagesSection({ stages, onAdd, onEdit, onDelete }: Validation
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-400">#{index + 1}</span>
+              <span className="text-sm text-slate-400">#{index + 1}</span>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => onEdit(stage)}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                  className="p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/20 rounded"
                   title="Modifier"
                 >
                   ✏️
                 </button>
                 <button
                   onClick={() => onDelete(stage.id)}
-                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                  className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded"
                   title="Supprimer"
                 >
                   🗑️
@@ -519,13 +519,13 @@ function HierarchySection({
             <div key={domain.id} className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
               {/* Domain header */}
               <div 
-                className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 cursor-pointer hover:from-blue-100 hover:to-cyan-100 transition-colors"
+                className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 cursor-pointer hover:from-cyan-500/20 hover:to-blue-500/20 transition-colors"
                 onClick={() => toggleDomain(domain.id)}
               >
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{expandedDomains.has(domain.id) ? '📂' : '📁'}</span>
                   <div>
-                    <span className="font-bold text-white">{domain.name}</span>
+                    <span className="font-bold text-amber-400">{domain.name}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
@@ -534,20 +534,20 @@ function HierarchySection({
                   </span>
                   <button
                     onClick={() => onAddModule(domain.id)}
-                    className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    className="px-2 py-1 text-xs bg-cyan-500/20 text-cyan-300 rounded hover:bg-cyan-500/30 border border-cyan-500/30"
                   >
                     + Module
                   </button>
                   <button
                     onClick={() => onEditDomain(domain)}
-                    className="p-1 text-gray-400 hover:text-blue-600"
+                    className="p-1 text-slate-400 hover:text-cyan-400"
                     title="Modifier"
                   >
                     ✏️
                   </button>
                   <button
                     onClick={() => onDeleteDomain(domain.id)}
-                    className="p-1 text-gray-400 hover:text-red-600"
+                    className="p-1 text-slate-400 hover:text-red-400"
                     title="Supprimer"
                   >
                     🗑️
@@ -557,14 +557,14 @@ function HierarchySection({
 
               {/* Modules */}
               {expandedDomains.has(domain.id) && domain.modules && (
-                <div className="border-t border-gray-100">
+                <div className="border-t border-slate-700">
                   {domain.modules.length === 0 ? (
                     <div className="p-4 text-center text-slate-400 text-sm">
                       Aucun module dans ce domaine
                     </div>
                   ) : (
                     domain.modules.map((module) => (
-                      <div key={module.id} className="border-b border-gray-50 last:border-b-0">
+                      <div key={module.id} className="border-b border-slate-700/50 last:border-b-0">
                         {/* Module header */}
                         <div 
                           className="flex items-center justify-between p-3 pl-8 hover:bg-slate-700/30 cursor-pointer"
@@ -572,7 +572,7 @@ function HierarchySection({
                         >
                           <div className="flex items-center gap-2">
                             <span>{expandedModules.has(module.id) ? '📖' : '📕'}</span>
-                            <span className="font-medium text-slate-100">{module.name}</span>
+                            <span className="font-medium text-cyan-300">{module.name}</span>
                           </div>
                           <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                             <span className="text-xs text-slate-400">
@@ -580,19 +580,19 @@ function HierarchySection({
                             </span>
                             <button
                               onClick={() => onAddSkill(module.id, module.domain_id)}
-                              className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200"
+                              className="px-2 py-0.5 text-xs bg-green-500/20 text-green-300 rounded hover:bg-green-500/30 border border-green-500/30"
                             >
                               + Acquis
                             </button>
                             <button
                               onClick={() => onEditModule(module)}
-                              className="p-1 text-gray-400 hover:text-blue-600"
+                              className="p-1 text-slate-400 hover:text-cyan-400"
                             >
                               ✏️
                             </button>
                             <button
                               onClick={() => onDeleteModule(module.id)}
-                              className="p-1 text-gray-400 hover:text-red-600"
+                              className="p-1 text-slate-400 hover:text-red-400"
                             >
                               🗑️
                             </button>
@@ -601,7 +601,7 @@ function HierarchySection({
 
                         {/* Skills */}
                         {expandedModules.has(module.id) && module.skills && (
-                          <div className="bg-slate-700/30 border-t border-gray-100">
+                          <div className="bg-slate-700/30 border-t border-slate-600">
                             {module.skills.length === 0 ? (
                               <div className="p-3 pl-12 text-slate-400 text-sm">
                                 Aucun acquis dans ce module
@@ -610,27 +610,27 @@ function HierarchySection({
                               module.skills.map((skill, index) => (
                                 <div
                                   key={skill.id}
-                                  className="flex items-center justify-between p-2 pl-12 hover:bg-slate-700/50 border-b border-gray-100 last:border-b-0"
+                                  className="flex items-center justify-between p-2 pl-12 hover:bg-slate-700/50 border-b border-slate-600/50 last:border-b-0"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <span className="w-5 h-5 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs">
+                                    <span className="w-5 h-5 bg-cyan-500/20 text-cyan-400 rounded-full flex items-center justify-center text-xs border border-cyan-500/30">
                                       {index + 1}
                                     </span>
                                     <span className="text-sm text-slate-200">{skill.name}</span>
-                                    <span className="text-xs text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded">
+                                    <span className="text-xs text-slate-400 bg-slate-600/50 px-1.5 py-0.5 rounded border border-slate-500/50">
                                       Min: {skill.min_validator_level}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <button
                                       onClick={() => onEditSkill(skill)}
-                                      className="p-1 text-gray-400 hover:text-blue-600"
+                                      className="p-1 text-slate-400 hover:text-cyan-400"
                                     >
                                       ✏️
                                     </button>
                                     <button
                                       onClick={() => onDeleteSkill(skill.id)}
-                                      className="p-1 text-gray-400 hover:text-red-600"
+                                      className="p-1 text-slate-400 hover:text-red-400"
                                     >
                                       🗑️
                                     </button>
@@ -684,14 +684,14 @@ function StudentsSection({ level, students, onViewProgress }: StudentsSectionPro
           {students.map((student) => (
             <div
               key={student.id}
-              className="p-4 bg-slate-700/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors"
+              className="p-4 bg-slate-700/30 rounded-lg border border-slate-600 hover:border-cyan-500/50 transition-colors"
             >
               <div className="font-medium text-white">
                 {student.first_name} {student.last_name}
               </div>
               <div className="text-sm text-slate-400">{student.email}</div>
               {student.diving_level_display && (
-                <div className="text-xs text-blue-600 mt-1">
+                <div className="text-xs text-cyan-400 mt-1">
                   🤿 Niveau actuel: {student.diving_level_display}
                 </div>
               )}
@@ -1012,7 +1012,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         <div className="px-6 py-4 border-b border-slate-600">
           <h3 className="text-lg font-bold text-white">📋 Détail par niveau</h3>
         </div>
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-slate-700">
           <thead className="bg-slate-700/30">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Niveau</th>
@@ -1021,14 +1021,14 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
               <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase">Membres avec ce niveau</th>
             </tr>
           </thead>
-          <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
+          <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-slate-700">
             {LEVEL_ORDER.map((level) => {
               const preparing = people.filter(p => p.preparing_level === level).length
               const current = people.filter(p => p.diving_level_display === level).length
               return (
                 <tr key={level} className="hover:bg-slate-700/30">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
+                    <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full font-medium border border-cyan-500/30">
                       {level}
                     </span>
                   </td>
@@ -1037,20 +1037,20 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                   </td>
                   <td className="px-6 py-4 text-center">
                     {preparing > 0 ? (
-                      <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-sm">
+                      <span className="px-2 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm border border-amber-500/30">
                         {preparing} 👨‍🎓
                       </span>
                     ) : (
-                      <span className="text-gray-400">-</span>
+                      <span className="text-slate-500">-</span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-center">
                     {current > 0 ? (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                      <span className="px-2 py-1 bg-green-500/20 text-green-300 rounded-full text-sm border border-green-500/30">
                         {current} 🤿
                       </span>
                     ) : (
-                      <span className="text-gray-400">-</span>
+                      <span className="text-slate-500">-</span>
                     )}
                   </td>
                 </tr>
@@ -1108,71 +1108,71 @@ function StageModal({ stage, onClose, onSuccess }: StageModalProps) {
   return (
     <Modal isOpen={true} onClose={onClose} title={stage ? 'Modifier l\'étape' : 'Nouvelle étape'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded">{error}</div>}
+        {error && <div className="bg-red-500/20 text-red-400 border border-red-500/50 p-3 rounded">{error}</div>}
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Code *</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Code *</label>
             <input
               type="text"
               required
               value={formData.code}
               onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               placeholder="VU_PISCINE"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Icône</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Icône</label>
             <input
               type="text"
               value={formData.icon}
               onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               placeholder="👀"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Nom *</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Nom *</label>
           <input
             type="text"
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
             placeholder="Vu - en piscine"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Description</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
           <textarea
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
             rows={2}
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Couleur</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Couleur</label>
             <input
               type="color"
               value={formData.color}
               onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-              className="w-full h-10 px-1 py-1 border rounded"
+              className="w-full h-10 px-1 py-1 bg-slate-700/50 border border-slate-600 rounded"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Ordre</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Ordre</label>
             <input
               type="number"
               value={formData.sort_order ?? ''}
               onChange={(e) => setFormData({ ...formData, sort_order: e.target.value ? parseInt(e.target.value) : undefined })}
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
             />
           </div>
         </div>
@@ -1183,14 +1183,14 @@ function StageModal({ stage, onClose, onSuccess }: StageModalProps) {
             id="is_final"
             checked={formData.is_final}
             onChange={(e) => setFormData({ ...formData, is_final: e.target.checked })}
-            className="rounded border-slate-600"
+            className="rounded border-slate-600 accent-cyan-500"
           />
-          <label htmlFor="is_final" className="text-sm">
+          <label htmlFor="is_final" className="text-sm text-slate-300">
             Étape finale de validation (ex: Validé en mer)
           </label>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
           <Button type="button" variant="secondary" onClick={onClose}>Annuler</Button>
           <Button type="submit" disabled={loading}>
             {loading ? 'En cours...' : stage ? 'Modifier' : 'Créer'}
@@ -1240,14 +1240,14 @@ function DomainModal({ domain, defaultLevel, onClose, onSuccess }: DomainModalPr
   return (
     <Modal isOpen={true} onClose={onClose} title={domain ? 'Modifier le domaine' : 'Nouveau domaine'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded">{error}</div>}
+        {error && <div className="bg-red-500/20 text-red-400 border border-red-500/50 p-3 rounded">{error}</div>}
 
         <div>
-          <label className="block text-sm font-medium mb-1">Niveau *</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Niveau *</label>
           <select
             value={formData.diving_level}
             onChange={(e) => setFormData({ ...formData, diving_level: e.target.value })}
-            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
             required
           >
             {LEVEL_ORDER.map((l) => (
@@ -1257,18 +1257,18 @@ function DomainModal({ domain, defaultLevel, onClose, onSuccess }: DomainModalPr
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Nom *</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Nom *</label>
           <input
             type="text"
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
             placeholder="COMMUNES, PE40, PA20..."
           />
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
           <Button type="button" variant="secondary" onClick={onClose}>Annuler</Button>
           <Button type="submit" disabled={loading}>
             {loading ? 'En cours...' : domain ? 'Modifier' : 'Créer'}
@@ -1318,21 +1318,21 @@ function ModuleModal({ module, domainId, onClose, onSuccess }: ModuleModalProps)
   return (
     <Modal isOpen={true} onClose={onClose} title={module ? 'Modifier le module' : 'Nouveau module'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded">{error}</div>}
+        {error && <div className="bg-red-500/20 text-red-400 border border-red-500/50 p-3 rounded">{error}</div>}
 
         <div>
-          <label className="block text-sm font-medium mb-1">Nom *</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Nom *</label>
           <input
             type="text"
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
             placeholder="S'ÉQUIPER ET SE DÉSÉQUIPER..."
           />
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
           <Button type="button" variant="secondary" onClick={onClose}>Annuler</Button>
           <Button type="submit" disabled={loading}>
             {loading ? 'En cours...' : module ? 'Modifier' : 'Créer'}
@@ -1382,26 +1382,26 @@ function SkillModal({ skill, moduleId, onClose, onSuccess }: SkillModalProps) {
   return (
     <Modal isOpen={true} onClose={onClose} title={skill ? 'Modifier l\'acquis' : 'Nouvel acquis'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded">{error}</div>}
+        {error && <div className="bg-red-500/20 text-red-400 border border-red-500/50 p-3 rounded">{error}</div>}
 
         <div>
-          <label className="block text-sm font-medium mb-1">Nom *</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Nom *</label>
           <input
             type="text"
             required
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
             placeholder="Gréage et dégréage"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Niveau minimum du validateur</label>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Niveau minimum du validateur</label>
           <select
             value={formData.min_validator_level}
             onChange={(e) => setFormData({ ...formData, min_validator_level: e.target.value })}
-            className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
           >
             {MIN_VALIDATOR_LEVELS.map((l) => (
               <option key={l} value={l}>{l}</option>
@@ -1412,7 +1412,7 @@ function SkillModal({ skill, moduleId, onClose, onSuccess }: SkillModalProps) {
           </p>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
           <Button type="button" variant="secondary" onClick={onClose}>Annuler</Button>
           <Button type="submit" disabled={loading}>
             {loading ? 'En cours...' : skill ? 'Modifier' : 'Créer'}
