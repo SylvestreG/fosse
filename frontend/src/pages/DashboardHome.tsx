@@ -229,7 +229,7 @@ export default function DashboardHome() {
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50">
         <div className="px-4 sm:px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-white">📅 Prochains événements</h2>
-          <Link to="/dashboard/mes-sessions" className="text-sm text-cyan-400 hover:text-cyan-300">
+          <Link to="/dashboard/sessions" className="text-sm text-cyan-400 hover:text-cyan-300">
             Voir tout →
           </Link>
         </div>
@@ -237,7 +237,7 @@ export default function DashboardHome() {
         {upcomingSessions.length === 0 ? (
           <div className="p-6 sm:p-8 text-center">
             <p className="text-slate-400 mb-4">Aucun événement à venir</p>
-            <Button variant="secondary" onClick={() => navigate('/dashboard/mes-sessions')}>
+            <Button variant="secondary" onClick={() => navigate('/dashboard/sessions')}>
               Voir les sessions
             </Button>
           </div>
@@ -279,7 +279,7 @@ export default function DashboardHome() {
                     <Button 
                       size="sm" 
                       variant={isToday ? 'primary' : 'secondary'}
-                      onClick={() => navigate('/dashboard/mes-sessions')}
+                      onClick={() => navigate('/dashboard/sessions')}
                     >
                       {isToday ? "Je m'inscris" : 'Voir'}
                     </Button>
@@ -294,7 +294,7 @@ export default function DashboardHome() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Link 
-          to="/dashboard/mes-sessions" 
+          to="/dashboard/sessions" 
           className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-xl p-6 hover:from-cyan-500/30 hover:to-blue-500/30 transition-all group"
         >
           <div className="flex items-center gap-4">
