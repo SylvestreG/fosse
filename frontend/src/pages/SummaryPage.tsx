@@ -166,7 +166,7 @@ export default function SummaryPage() {
       {/* Section Bouteilles */}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">📦 Bouteilles</h2>
+          <h2 className="text-xl font-semibold text-white">📦 Bouteilles</h2>
           <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
             Inclut +1 bloc de secours (Air)
           </span>
@@ -198,7 +198,7 @@ export default function SummaryPage() {
       {/* Section Matériel */}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">🛠️ Matériel</h2>
+          <h2 className="text-xl font-semibold text-white">🛠️ Matériel</h2>
           <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
             Inclut +1 détendeur et +1 stab de secours
           </span>
@@ -235,21 +235,21 @@ export default function SummaryPage() {
 
       {summary && summary.stab_sizes && summary.stab_sizes.length > 0 && (
         <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">🦺 Répartition Tailles Stab</h2>
+          <h2 className="text-xl font-semibold mb-4 text-white">🦺 Répartition Tailles Stab</h2>
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             {summary.stab_sizes.map((size) => (
               <div 
                 key={size.size} 
                 className={`text-center p-4 rounded-lg ${
                   size.size === 'Secours' 
-                    ? 'bg-red-50 border-2 border-red-300' 
+                    ? 'bg-red-500/20 border-2 border-red-500/50' 
                     : 'bg-slate-700/30'
                 }`}
               >
                 <p className="text-2xl font-bold text-white">{size.count}</p>
                 <p className={`text-sm ${
                   size.size === 'Secours' 
-                    ? 'text-red-600 font-semibold' 
+                    ? 'text-red-400 font-semibold' 
                     : 'text-slate-300'
                 }`}>
                   {size.size === 'Secours' ? '🚨 Secours' : `Taille ${size.size}`}
@@ -262,36 +262,36 @@ export default function SummaryPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">🚗 Transport</h2>
+          <h2 className="text-xl font-semibold mb-4 text-white">🚗 Transport</h2>
           <div className="space-y-2">
             <p className="text-3xl font-bold text-white">{summary.vehicles_count}</p>
             <p className="text-slate-300">Véhicules disponibles</p>
-            <p className="text-2xl font-semibold text-blue-600">{summary.total_car_seats}</p>
+            <p className="text-2xl font-semibold text-cyan-400">{summary.total_car_seats}</p>
             <p className="text-slate-300">Places totales</p>
           </div>
         </div>
 
         <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">📊 Taux de Complétion</h2>
+          <h2 className="text-xl font-semibold mb-4 text-white">📊 Taux de Complétion</h2>
           <div className="relative pt-1">
             <div className="flex mb-2 items-center justify-between">
               <div>
-                <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">
+                <span className="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-cyan-300 bg-cyan-500/20 border border-cyan-500/30">
                   Progression
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-xs font-semibold inline-block text-blue-600">
+                <span className="text-xs font-semibold inline-block text-cyan-400">
                   {summary.total_questionnaires > 0 ? Math.round((summary.submitted_count / summary.total_questionnaires) * 100) : 0}%
                 </span>
               </div>
             </div>
-            <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-blue-200">
+            <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-slate-700">
               <div
                 style={{
                   width: summary.total_questionnaires > 0 ? `${(summary.submitted_count / summary.total_questionnaires) * 100}%` : '0%',
                 }}
-                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-500"
+                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-500"
               ></div>
             </div>
             <p className="text-sm text-slate-300">
@@ -304,12 +304,12 @@ export default function SummaryPage() {
       {/* Section Encadrants */}
       {summary && summary.participants && summary.participants.filter(p => p.is_encadrant).length > 0 && (
         <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">
+          <h2 className="text-xl font-semibold mb-4 text-white">
             🏊 Encadrants ({summary.participants.filter(p => p.is_encadrant).length})
           </h2>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-purple-50">
+            <table className="min-w-full divide-y divide-slate-700">
+              <thead className="bg-purple-500/10">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Nom
@@ -322,9 +322,9 @@ export default function SummaryPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
+              <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-slate-700">
                 {summary.participants.filter(p => p.is_encadrant).map((participant, idx) => (
-                  <tr key={idx} className={participant.submitted ? 'bg-green-50' : ''}>
+                  <tr key={idx} className={participant.submitted ? 'bg-green-500/10' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-white">
                         {participant.first_name} {participant.last_name}
@@ -335,11 +335,11 @@ export default function SummaryPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {participant.submitted ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
                           ✅ Soumis
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
                           ⏳ En attente
                         </span>
                       )}
@@ -355,12 +355,12 @@ export default function SummaryPage() {
       {/* Section Élèves */}
       {summary && summary.participants && summary.participants.filter(p => !p.is_encadrant).length > 0 && (
         <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">
+          <h2 className="text-xl font-semibold mb-4 text-white">
             🤿 Élèves ({summary.participants.filter(p => !p.is_encadrant).length})
           </h2>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-cyan-50">
+            <table className="min-w-full divide-y divide-slate-700">
+              <thead className="bg-cyan-500/10">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Nom
@@ -373,9 +373,9 @@ export default function SummaryPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
+              <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-slate-700">
                 {summary.participants.filter(p => !p.is_encadrant).map((participant, idx) => (
-                  <tr key={idx} className={participant.submitted ? 'bg-green-50' : ''}>
+                  <tr key={idx} className={participant.submitted ? 'bg-green-500/10' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-white">
                         {participant.first_name} {participant.last_name}
@@ -386,11 +386,11 @@ export default function SummaryPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {participant.submitted ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
                           ✅ Soumis
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
                           ⏳ En attente
                         </span>
                       )}
@@ -424,12 +424,13 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
   const colorClasses: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    purple: 'bg-purple-50 text-purple-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-    cyan: 'bg-cyan-50 text-cyan-600',
-    orange: 'bg-orange-50 text-orange-600',
+    blue: 'bg-blue-500/20 text-blue-400',
+    green: 'bg-green-500/20 text-green-400',
+    purple: 'bg-purple-500/20 text-purple-400',
+    yellow: 'bg-yellow-500/20 text-yellow-400',
+    cyan: 'bg-cyan-500/20 text-cyan-400',
+    orange: 'bg-orange-500/20 text-orange-400',
+    gray: 'bg-slate-500/20 text-slate-400',
   }
 
   return (
@@ -440,7 +441,7 @@ function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
           <p className="text-3xl font-bold text-white">{value}</p>
           {subtitle && <p className="text-sm text-slate-400 mt-1">{subtitle}</p>}
         </div>
-        <div className={`text-4xl p-3 rounded-full ${colorClasses[color]}`}>{icon}</div>
+        <div className={`text-4xl p-3 rounded-full ${colorClasses[color] || colorClasses.gray}`}>{icon}</div>
       </div>
     </div>
   )
