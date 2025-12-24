@@ -10,9 +10,10 @@ import {
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
 import * as pdfjsLib from 'pdfjs-dist'
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
+// Use bundled worker to avoid CSP issues
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
 
 const DIVING_LEVELS = ['N1', 'N2', 'N3', 'N4', 'E1', 'E2', 'E3', 'E4']
 
