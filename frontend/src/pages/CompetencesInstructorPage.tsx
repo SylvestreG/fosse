@@ -112,14 +112,14 @@ export default function CompetencesInstructorPage() {
                       whitespace-nowrap py-2 sm:py-3 px-3 sm:px-4 border-b-2 font-medium text-xs sm:text-sm transition-colors
                       flex items-center gap-1.5 sm:gap-2
                       ${activeTab === level
-                        ? 'border-blue-500 text-blue-600 bg-blue-50'
+                        ? 'border-cyan-500 text-cyan-400 bg-cyan-500/10'
                         : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
                       }
                     `}
                   >
                     {level}
                     {studentCount > 0 && (
-                      <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeTab === level ? 'bg-amber-200 text-amber-800' : 'bg-amber-100 text-amber-600'}`}>
+                      <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeTab === level ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-amber-500/10 text-amber-400'}`}>
                         {studentCount}
                       </span>
                     )}
@@ -150,20 +150,20 @@ export default function CompetencesInstructorPage() {
                   <div
                     key={student.id}
                     onClick={() => navigate(`/dashboard/competences/student/${student.id}`)}
-                    className="p-3 sm:p-4 bg-slate-700/30 rounded-lg border border-gray-100 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group active:bg-blue-50"
+                    className="p-3 sm:p-4 bg-slate-700/30 rounded-lg border border-slate-600 hover:border-cyan-500/50 hover:shadow-md transition-all cursor-pointer group active:bg-cyan-500/10"
                   >
-                    <div className="font-medium text-white group-hover:text-blue-600 transition-colors text-sm sm:text-base">
+                    <div className="font-medium text-white group-hover:text-cyan-400 transition-colors text-sm sm:text-base">
                       {student.first_name} {student.last_name}
                     </div>
                     <div className="text-xs sm:text-sm text-slate-400 truncate">{student.email}</div>
                     {student.diving_level_display && (
-                      <div className="text-xs text-blue-600 mt-1">
+                      <div className="text-xs text-cyan-400 mt-1">
                         🤿 {student.diving_level_display}
                       </div>
                     )}
                     <div className="mt-2 sm:mt-3 flex items-center justify-between">
-                      <span className="text-xs text-gray-400 hidden sm:inline">Cliquez pour valider</span>
-                      <span className="text-blue-500 group-hover:translate-x-1 transition-transform text-sm sm:text-base">Valider →</span>
+                      <span className="text-xs text-slate-500 hidden sm:inline">Cliquez pour valider</span>
+                      <span className="text-cyan-400 group-hover:translate-x-1 transition-transform text-sm sm:text-base">Valider →</span>
                     </div>
                   </div>
                 ))}
@@ -484,7 +484,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         <div className="px-6 py-4 border-b border-slate-600">
           <h3 className="text-lg font-bold text-white">📋 Détail par niveau</h3>
         </div>
-        <table className="min-w-full divide-y divide-gray-200">
+        <table className="min-w-full divide-y divide-slate-700">
           <thead className="bg-slate-700/30">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Niveau</th>
@@ -493,14 +493,14 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
               <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase">Membres avec ce niveau</th>
             </tr>
           </thead>
-          <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
+          <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-slate-700">
             {LEVEL_ORDER.map((level) => {
               const preparing = people.filter(p => p.preparing_level === level).length
               const current = people.filter(p => p.diving_level_display === level).length
               return (
                 <tr key={level} className="hover:bg-slate-700/30">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full font-medium">
+                    <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full font-medium border border-cyan-500/30">
                       {level}
                     </span>
                   </td>
@@ -509,20 +509,20 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                   </td>
                   <td className="px-6 py-4 text-center">
                     {preparing > 0 ? (
-                      <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-sm">
+                      <span className="px-2 py-1 bg-amber-500/20 text-amber-300 rounded-full text-sm border border-amber-500/30">
                         {preparing} 👨‍🎓
                       </span>
                     ) : (
-                      <span className="text-gray-400">-</span>
+                      <span className="text-slate-500">-</span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-center">
                     {current > 0 ? (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+                      <span className="px-2 py-1 bg-green-500/20 text-green-300 rounded-full text-sm border border-green-500/30">
                         {current} 🤿
                       </span>
                     ) : (
-                      <span className="text-gray-400">-</span>
+                      <span className="text-slate-500">-</span>
                     )}
                   </td>
                 </tr>
