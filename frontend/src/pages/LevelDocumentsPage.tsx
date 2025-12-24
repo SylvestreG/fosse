@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { 
   levelDocumentsApi, 
   skillValidationsApi,
@@ -9,9 +9,19 @@ import {
 } from '@/lib/api'
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
-import Modal from '@/components/Modal'
+import * as pdfjsLib from 'pdfjs-dist'
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`
 
 const DIVING_LEVELS = ['N1', 'N2', 'N3', 'N4', 'E1', 'E2', 'E3', 'E4']
+
+interface SkillToPlace {
+  id: string
+  name: string
+  moduleName: string
+  domainName: string
+}
 
 export default function LevelDocumentsPage() {
   const [documents, setDocuments] = useState<LevelDocumentInfo[]>([])
@@ -21,13 +31,21 @@ export default function LevelDocumentsPage() {
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-  const [showPositionModal, setShowPositionModal] = useState(false)
-  const [editingPosition, setEditingPosition] = useState<{
-    skillId: string
-    skillName: string
-    position: SkillPosition | null
-  } | null>(null)
   
+  // PDF viewer state
+  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [pdfDimensions, setPdfDimensions] = useState<{ width: number; height: number } | null>(null)
+  const [scale, setScale] = useState(1)
+  
+  // Placement mode
+  const [placementMode, setPlacementMode] = useState(false)
+  const [skillToPlace, setSkillToPlace] = useState<SkillToPlace | null>(null)
+  const [hoveredPosition, setHoveredPosition] = useState<{ x: number; y: number } | null>(null)
+  
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -38,8 +56,17 @@ export default function LevelDocumentsPage() {
     if (selectedLevel) {
       loadPositions(selectedLevel)
       loadHierarchy(selectedLevel)
+      loadPdfData(selectedLevel)
+    } else {
+      setPdfData(null)
     }
   }, [selectedLevel])
+
+  useEffect(() => {
+    if (pdfData) {
+      renderPdf()
+    }
+  }, [pdfData, currentPage, scale])
 
   const loadDocuments = async () => {
     try {
@@ -64,7 +91,6 @@ export default function LevelDocumentsPage() {
 
   const loadHierarchy = async (level: string) => {
     try {
-      // Use a dummy person ID to get the hierarchy structure
       const res = await skillValidationsApi.getMyCompetencies(level)
       setHierarchy(res.data)
     } catch (error) {
@@ -73,33 +99,137 @@ export default function LevelDocumentsPage() {
     }
   }
 
+  const loadPdfData = async (level: string) => {
+    try {
+      const res = await levelDocumentsApi.download(level)
+      setPdfData(res.data)
+    } catch (error) {
+      console.error('Error loading PDF:', error)
+      setPdfData(null)
+    }
+  }
+
+  const renderPdf = useCallback(async () => {
+    if (!pdfData || !canvasRef.current) return
+
+    try {
+      const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise
+      setTotalPages(pdf.numPages)
+      
+      const page = await pdf.getPage(currentPage)
+      const viewport = page.getViewport({ scale })
+      
+      const canvas = canvasRef.current
+      const context = canvas.getContext('2d')
+      if (!context) return
+
+      canvas.width = viewport.width
+      canvas.height = viewport.height
+      
+      setPdfDimensions({ 
+        width: page.getViewport({ scale: 1 }).width, 
+        height: page.getViewport({ scale: 1 }).height 
+      })
+
+      await page.render({
+        canvasContext: context,
+        viewport: viewport,
+        canvas: canvas,
+      } as any).promise
+
+      // Draw position markers
+      drawPositionMarkers(context, viewport)
+    } catch (error) {
+      console.error('Error rendering PDF:', error)
+    }
+  }, [pdfData, currentPage, scale, positions])
+
+  const drawPositionMarkers = (context: CanvasRenderingContext2D, viewport: { width: number; height: number; scale: number }) => {
+    const pagePositions = positions.filter(p => p.page === currentPage)
+    
+    pagePositions.forEach(pos => {
+      const x = pos.x * scale
+      // PDF coordinates are from bottom-left, canvas from top-left
+      const y = viewport.height - (pos.y * scale)
+      const width = pos.width * scale
+      const height = pos.height * scale
+
+      // Draw rectangle
+      context.strokeStyle = '#22d3ee' // cyan-400
+      context.lineWidth = 2
+      context.strokeRect(x, y - height, width, height)
+      
+      // Draw label background
+      context.fillStyle = 'rgba(34, 211, 238, 0.9)'
+      const labelText = pos.skill_name.substring(0, 20) + (pos.skill_name.length > 20 ? '...' : '')
+      context.font = '10px sans-serif'
+      const textWidth = context.measureText(labelText).width
+      context.fillRect(x, y - height - 16, textWidth + 6, 14)
+      
+      // Draw label text
+      context.fillStyle = '#0f172a'
+      context.fillText(labelText, x + 3, y - height - 5)
+    })
+  }
+
+  const handleCanvasClick = async (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!placementMode || !skillToPlace || !canvasRef.current || !pdfDimensions) return
+
+    const rect = canvasRef.current.getBoundingClientRect()
+    const canvasX = e.clientX - rect.left
+    const canvasY = e.clientY - rect.top
+    
+    // Convert to PDF coordinates (from bottom-left)
+    const pdfX = canvasX / scale
+    const pdfY = pdfDimensions.height - (canvasY / scale)
+
+    const position: SkillPosition = {
+      skill_id: skillToPlace.id,
+      page: currentPage,
+      x: Math.round(pdfX),
+      y: Math.round(pdfY),
+      width: 150,
+      height: 12,
+      font_size: 8,
+    }
+
+    try {
+      await levelDocumentsApi.setPosition(selectedLevel!, position)
+      setToast({ message: `Position définie pour "${skillToPlace.name}"`, type: 'success' })
+      loadPositions(selectedLevel!)
+      setPlacementMode(false)
+      setSkillToPlace(null)
+    } catch (error) {
+      console.error('Error saving position:', error)
+      setToast({ message: 'Erreur lors de la sauvegarde', type: 'error' })
+    }
+  }
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!placementMode || !canvasRef.current || !pdfDimensions) return
+
+    const rect = canvasRef.current.getBoundingClientRect()
+    const canvasX = e.clientX - rect.left
+    const canvasY = e.clientY - rect.top
+    
+    const pdfX = canvasX / scale
+    const pdfY = pdfDimensions.height - (canvasY / scale)
+
+    setHoveredPosition({ x: Math.round(pdfX), y: Math.round(pdfY) })
+  }
+
   const handleUpload = async (level: string, file: File) => {
     setUploading(true)
     try {
       await levelDocumentsApi.upload(level, file)
       setToast({ message: `Document uploadé pour ${level}`, type: 'success' })
       loadDocuments()
+      loadPdfData(level)
     } catch (error) {
       console.error('Error uploading:', error)
       setToast({ message: 'Erreur lors de l\'upload', type: 'error' })
     } finally {
       setUploading(false)
-    }
-  }
-
-  const handleDownload = async (level: string) => {
-    try {
-      const res = await levelDocumentsApi.download(level)
-      const blob = new Blob([res.data], { type: 'application/pdf' })
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `template_${level}.pdf`
-      a.click()
-      window.URL.revokeObjectURL(url)
-    } catch (error) {
-      console.error('Error downloading:', error)
-      setToast({ message: 'Erreur lors du téléchargement', type: 'error' })
     }
   }
 
@@ -113,25 +243,11 @@ export default function LevelDocumentsPage() {
       if (selectedLevel === level) {
         setSelectedLevel(null)
         setPositions([])
+        setPdfData(null)
       }
     } catch (error) {
       console.error('Error deleting:', error)
       setToast({ message: 'Erreur lors de la suppression', type: 'error' })
-    }
-  }
-
-  const handleSavePosition = async (position: SkillPosition) => {
-    if (!selectedLevel) return
-    
-    try {
-      await levelDocumentsApi.setPosition(selectedLevel, position)
-      setToast({ message: 'Position enregistrée', type: 'success' })
-      loadPositions(selectedLevel)
-      setShowPositionModal(false)
-      setEditingPosition(null)
-    } catch (error) {
-      console.error('Error saving position:', error)
-      setToast({ message: 'Erreur lors de la sauvegarde', type: 'error' })
     }
   }
 
@@ -148,8 +264,34 @@ export default function LevelDocumentsPage() {
     }
   }
 
+  const startPlacement = (skill: SkillToPlace) => {
+    setSkillToPlace(skill)
+    setPlacementMode(true)
+  }
+
+  const cancelPlacement = () => {
+    setPlacementMode(false)
+    setSkillToPlace(null)
+    setHoveredPosition(null)
+  }
+
   const getDocForLevel = (level: string) => documents.find(d => d.level === level)
   const getPositionForSkill = (skillId: string) => positions.find(p => p.skill_id === skillId)
+
+  // Flatten skills from hierarchy
+  const allSkills: SkillToPlace[] = hierarchy?.domains.flatMap(domain =>
+    domain.modules.flatMap(module =>
+      module.skills.map(skill => ({
+        id: skill.id,
+        name: skill.name,
+        moduleName: module.name,
+        domainName: domain.name,
+      }))
+    )
+  ) || []
+
+  const skillsWithoutPosition = allSkills.filter(s => !getPositionForSkill(s.id))
+  const skillsWithPosition = allSkills.filter(s => getPositionForSkill(s.id))
 
   if (loading) {
     return (
@@ -165,7 +307,7 @@ export default function LevelDocumentsPage() {
       <div>
         <h1 className="text-3xl font-bold text-white">📄 Documents de Compétences</h1>
         <p className="text-slate-400 mt-1">
-          Gérez les templates PDF par niveau et définissez les positions des acquis
+          Uploadez les templates PDF et cliquez sur le document pour placer chaque acquis
         </p>
       </div>
 
@@ -208,191 +350,246 @@ export default function LevelDocumentsPage() {
         </div>
       </div>
 
-      {/* Détails du niveau sélectionné */}
+      {/* Éditeur visuel */}
       {selectedLevel && (
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">
-              Niveau {selectedLevel}
-            </h2>
-            <div className="flex gap-2">
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept=".pdf"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) handleUpload(selectedLevel, file)
-                }}
-              />
-              <Button 
-                variant="secondary"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-              >
-                {uploading ? '...' : getDocForLevel(selectedLevel) ? '🔄 Remplacer' : '📤 Uploader'}
-              </Button>
-              {getDocForLevel(selectedLevel) && (
-                <>
-                  <Button variant="secondary" onClick={() => handleDownload(selectedLevel)}>
-                    📥 Télécharger
-                  </Button>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* PDF Viewer - 2 colonnes */}
+          <div className="xl:col-span-2 bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">
+                Aperçu - {selectedLevel}
+              </h2>
+              <div className="flex gap-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept=".pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) handleUpload(selectedLevel, file)
+                  }}
+                />
+                <Button 
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? '...' : getDocForLevel(selectedLevel) ? '🔄 Remplacer' : '📤 Uploader'}
+                </Button>
+                {getDocForLevel(selectedLevel) && (
                   <Button 
                     variant="secondary" 
+                    size="sm"
                     onClick={() => handleDelete(selectedLevel)}
                     className="text-red-400 hover:text-red-300"
                   >
                     🗑️
                   </Button>
-                </>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Liste des positions */}
-          {getDocForLevel(selectedLevel) && hierarchy && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium text-white">Positions des acquis</h3>
-              <p className="text-sm text-slate-400">
-                Définissez les coordonnées (en points PDF) où chaque acquis sera affiché sur le document.
-                Les coordonnées (0,0) sont en bas à gauche de la page.
-              </p>
-              
-              {hierarchy.domains.map(domain => (
-                <div key={domain.id} className="border border-slate-700 rounded-lg overflow-hidden">
-                  <div className="bg-slate-700/30 px-4 py-2">
-                    <span className="font-medium text-amber-400">{domain.name}</span>
+            {pdfData ? (
+              <>
+                {/* Mode placement indicator */}
+                {placementMode && skillToPlace && (
+                  <div className="mb-4 p-3 bg-cyan-500/20 border border-cyan-500/50 rounded-lg flex items-center justify-between">
+                    <div>
+                      <span className="text-cyan-300 font-medium">Mode placement actif</span>
+                      <p className="text-sm text-cyan-200/80">
+                        Cliquez sur le PDF pour placer : <strong>{skillToPlace.name}</strong>
+                      </p>
+                      {hoveredPosition && (
+                        <p className="text-xs text-cyan-300/60 mt-1">
+                          Position : X={hoveredPosition.x}, Y={hoveredPosition.y}
+                        </p>
+                      )}
+                    </div>
+                    <Button variant="secondary" size="sm" onClick={cancelPlacement}>
+                      ✕ Annuler
+                    </Button>
                   </div>
-                  <div className="divide-y divide-slate-700/50">
-                    {domain.modules.map(module => (
-                      <div key={module.id}>
-                        <div className="px-4 py-2 bg-slate-700/20">
-                          <span className="text-cyan-300 text-sm">{module.name}</span>
-                        </div>
-                        <table className="w-full">
-                          <thead>
-                            <tr className="text-xs text-slate-400 border-b border-slate-700/30">
-                              <th className="text-left p-2 pl-4">Acquis</th>
-                              <th className="text-center p-2 w-16">Page</th>
-                              <th className="text-center p-2 w-16">X</th>
-                              <th className="text-center p-2 w-16">Y</th>
-                              <th className="text-center p-2 w-16">L</th>
-                              <th className="text-center p-2 w-16">H</th>
-                              <th className="text-center p-2 w-20">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {module.skills.map((skill, idx) => {
-                              const pos = getPositionForSkill(skill.id)
-                              return (
-                                <tr key={skill.id} className="border-b border-slate-700/20 hover:bg-slate-700/20">
-                                  <td className="p-2 pl-4">
-                                    <div className="flex items-center gap-2">
-                                      <span className="w-5 h-5 bg-cyan-500/20 text-cyan-300 rounded-full flex items-center justify-center text-xs">
-                                        {idx + 1}
-                                      </span>
-                                      <span className="text-sm text-slate-200">{skill.name}</span>
-                                    </div>
-                                  </td>
-                                  {pos ? (
-                                    <>
-                                      <td className="text-center p-2 text-sm text-slate-300">{pos.page}</td>
-                                      <td className="text-center p-2 text-sm text-slate-300">{Math.round(pos.x)}</td>
-                                      <td className="text-center p-2 text-sm text-slate-300">{Math.round(pos.y)}</td>
-                                      <td className="text-center p-2 text-sm text-slate-300">{Math.round(pos.width)}</td>
-                                      <td className="text-center p-2 text-sm text-slate-300">{Math.round(pos.height)}</td>
-                                      <td className="text-center p-2">
-                                        <div className="flex justify-center gap-1">
-                                          <button
-                                            onClick={() => {
-                                              setEditingPosition({
-                                                skillId: skill.id,
-                                                skillName: skill.name,
-                                                position: {
-                                                  skill_id: skill.id,
-                                                  page: pos.page,
-                                                  x: pos.x,
-                                                  y: pos.y,
-                                                  width: pos.width,
-                                                  height: pos.height,
-                                                  font_size: pos.font_size,
-                                                }
-                                              })
-                                              setShowPositionModal(true)
-                                            }}
-                                            className="text-cyan-400 hover:text-cyan-300 text-sm"
-                                          >
-                                            ✏️
-                                          </button>
-                                          <button
-                                            onClick={() => handleDeletePosition(skill.id)}
-                                            className="text-red-400 hover:text-red-300 text-sm"
-                                          >
-                                            🗑️
-                                          </button>
-                                        </div>
-                                      </td>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <td colSpan={5} className="text-center p-2 text-slate-500 text-sm">
-                                        Non défini
-                                      </td>
-                                      <td className="text-center p-2">
-                                        <button
-                                          onClick={() => {
-                                            setEditingPosition({
-                                              skillId: skill.id,
-                                              skillName: skill.name,
-                                              position: null
-                                            })
-                                            setShowPositionModal(true)
-                                          }}
-                                          className="text-cyan-400 hover:text-cyan-300 text-sm"
-                                        >
-                                          ➕
-                                        </button>
-                                      </td>
-                                    </>
-                                  )}
-                                </tr>
-                              )
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    ))}
+                )}
+
+                {/* Controls */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage <= 1}
+                    >
+                      ←
+                    </Button>
+                    <span className="text-slate-300 text-sm">
+                      Page {currentPage} / {totalPages}
+                    </span>
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage >= totalPages}
+                    >
+                      →
+                    </Button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={() => setScale(s => Math.max(0.5, s - 0.25))}
+                    >
+                      -
+                    </Button>
+                    <span className="text-slate-300 text-sm w-16 text-center">
+                      {Math.round(scale * 100)}%
+                    </span>
+                    <Button 
+                      variant="secondary" 
+                      size="sm"
+                      onClick={() => setScale(s => Math.min(2, s + 0.25))}
+                    >
+                      +
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
 
-          {!getDocForLevel(selectedLevel) && (
-            <div className="text-center py-8 text-slate-400">
-              <p className="mb-4">Aucun document uploadé pour ce niveau</p>
-              <Button onClick={() => fileInputRef.current?.click()}>
-                📤 Uploader un PDF
-              </Button>
-            </div>
-          )}
+                {/* Canvas */}
+                <div 
+                  ref={containerRef}
+                  className={`overflow-auto max-h-[600px] border border-slate-600 rounded-lg bg-slate-900 ${
+                    placementMode ? 'cursor-crosshair' : ''
+                  }`}
+                >
+                  <canvas
+                    ref={canvasRef}
+                    onClick={handleCanvasClick}
+                    onMouseMove={handleCanvasMouseMove}
+                    onMouseLeave={() => setHoveredPosition(null)}
+                    className="mx-auto"
+                  />
+                </div>
+
+                {/* Legend */}
+                <div className="mt-4 flex items-center gap-4 text-sm text-slate-400">
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-cyan-400 rounded"></span>
+                    <span>Position définie</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12 text-slate-400 border-2 border-dashed border-slate-600 rounded-lg">
+                <p className="mb-4">Aucun document uploadé pour ce niveau</p>
+                <Button onClick={() => fileInputRef.current?.click()}>
+                  📤 Uploader un PDF
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Liste des acquis - 1 colonne */}
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6 max-h-[800px] overflow-y-auto">
+            <h2 className="text-lg font-semibold text-white mb-4">Acquis à placer</h2>
+            
+            {!pdfData ? (
+              <p className="text-slate-500 text-sm">Uploadez d'abord un PDF</p>
+            ) : (
+              <>
+                {/* Skills without position */}
+                {skillsWithoutPosition.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-medium text-amber-400 mb-2">
+                      ⏳ Non placés ({skillsWithoutPosition.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {skillsWithoutPosition.map(skill => (
+                        <div 
+                          key={skill.id}
+                          className={`p-3 rounded-lg border transition-all ${
+                            skillToPlace?.id === skill.id
+                              ? 'bg-cyan-500/20 border-cyan-500/50'
+                              : 'bg-slate-700/30 border-slate-600/50 hover:bg-slate-700/50'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-white font-medium truncate">{skill.name}</p>
+                              <p className="text-xs text-slate-500 truncate">{skill.domainName} › {skill.moduleName}</p>
+                            </div>
+                            <Button 
+                              variant="secondary" 
+                              size="sm"
+                              onClick={() => startPlacement(skill)}
+                              disabled={placementMode && skillToPlace?.id !== skill.id}
+                            >
+                              📍
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Skills with position */}
+                {skillsWithPosition.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-green-400 mb-2">
+                      ✓ Placés ({skillsWithPosition.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {skillsWithPosition.map(skill => {
+                        const pos = getPositionForSkill(skill.id)!
+                        return (
+                          <div 
+                            key={skill.id}
+                            className="p-3 rounded-lg border bg-green-500/10 border-green-500/30"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-white font-medium truncate">{skill.name}</p>
+                                <p className="text-xs text-slate-400">
+                                  Page {pos.page} • X:{Math.round(pos.x)} Y:{Math.round(pos.y)}
+                                </p>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button 
+                                  variant="secondary" 
+                                  size="sm"
+                                  onClick={() => startPlacement(skill)}
+                                  title="Repositionner"
+                                >
+                                  📍
+                                </Button>
+                                <Button 
+                                  variant="secondary" 
+                                  size="sm"
+                                  onClick={() => handleDeletePosition(skill.id)}
+                                  className="text-red-400 hover:text-red-300"
+                                  title="Supprimer"
+                                >
+                                  🗑️
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {allSkills.length === 0 && (
+                  <p className="text-slate-500 text-sm">Aucun acquis défini pour ce niveau</p>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      )}
-
-      {/* Modal d'édition de position */}
-      {showPositionModal && editingPosition && (
-        <PositionModal
-          skillName={editingPosition.skillName}
-          initialPosition={editingPosition.position}
-          skillId={editingPosition.skillId}
-          pageCount={getDocForLevel(selectedLevel!)?.page_count || 1}
-          onSave={handleSavePosition}
-          onClose={() => {
-            setShowPositionModal(false)
-            setEditingPosition(null)
-          }}
-        />
       )}
 
       {toast && (
@@ -401,133 +598,3 @@ export default function LevelDocumentsPage() {
     </div>
   )
 }
-
-// Modal pour éditer une position
-function PositionModal({
-  skillName,
-  initialPosition,
-  skillId,
-  pageCount,
-  onSave,
-  onClose,
-}: {
-  skillName: string
-  initialPosition: SkillPosition | null
-  skillId: string
-  pageCount: number
-  onSave: (position: SkillPosition) => void
-  onClose: () => void
-}) {
-  const [page, setPage] = useState(initialPosition?.page || 1)
-  const [x, setX] = useState(initialPosition?.x || 100)
-  const [y, setY] = useState(initialPosition?.y || 700)
-  const [width, setWidth] = useState(initialPosition?.width || 150)
-  const [height, setHeight] = useState(initialPosition?.height || 12)
-  const [fontSize, setFontSize] = useState(initialPosition?.font_size || 8)
-
-  return (
-    <Modal isOpen={true} onClose={onClose} title="Définir la position">
-      <div className="space-y-4">
-        <div>
-          <label className="text-sm text-slate-300 mb-1 block">Acquis</label>
-          <p className="text-white font-medium">{skillName}</p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm text-slate-300 mb-1 block">Page</label>
-            <select
-              value={page}
-              onChange={(e) => setPage(Number(e.target.value))}
-              className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
-            >
-              {Array.from({ length: pageCount }, (_, i) => i + 1).map(p => (
-                <option key={p} value={p}>Page {p}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="text-sm text-slate-300 mb-1 block">Taille police</label>
-            <input
-              type="number"
-              value={fontSize}
-              onChange={(e) => setFontSize(Number(e.target.value))}
-              className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
-              min={4}
-              max={24}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm text-slate-300 mb-1 block">X (depuis la gauche)</label>
-            <input
-              type="number"
-              value={x}
-              onChange={(e) => setX(Number(e.target.value))}
-              className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
-              min={0}
-            />
-          </div>
-          <div>
-            <label className="text-sm text-slate-300 mb-1 block">Y (depuis le bas)</label>
-            <input
-              type="number"
-              value={y}
-              onChange={(e) => setY(Number(e.target.value))}
-              className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
-              min={0}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="text-sm text-slate-300 mb-1 block">Largeur</label>
-            <input
-              type="number"
-              value={width}
-              onChange={(e) => setWidth(Number(e.target.value))}
-              className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
-              min={10}
-            />
-          </div>
-          <div>
-            <label className="text-sm text-slate-300 mb-1 block">Hauteur</label>
-            <input
-              type="number"
-              value={height}
-              onChange={(e) => setHeight(Number(e.target.value))}
-              className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
-              min={8}
-            />
-          </div>
-        </div>
-
-        <p className="text-xs text-slate-500">
-          Les coordonnées sont en points PDF (1 point = 1/72 de pouce).
-          Une page A4 fait environ 595 × 842 points.
-        </p>
-
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
-          <Button variant="secondary" onClick={onClose}>
-            Annuler
-          </Button>
-          <Button onClick={() => onSave({
-            skill_id: skillId,
-            page,
-            x,
-            y,
-            width,
-            height,
-            font_size: fontSize,
-          })}>
-            Enregistrer
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  )
-}
-
