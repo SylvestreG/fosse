@@ -10,10 +10,9 @@ import {
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
 import * as pdfjsLib from 'pdfjs-dist'
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 
-// Use bundled worker (requires nginx to serve .mjs with correct MIME type)
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
+// Disable worker to avoid MIME type issues - runs on main thread
+pdfjsLib.GlobalWorkerOptions.workerSrc = ''
 
 const DIVING_LEVELS = ['N1', 'N2', 'N3', 'N4', 'E1', 'E2', 'E3', 'E4']
 
