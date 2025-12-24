@@ -160,6 +160,15 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .route("/api/v1/permissions", get(list_permissions))
         .route("/api/v1/groups", get(list_groups))
         .route("/api/v1/groups/:id", get(get_group).put(update_group_permissions))
+        // Level documents (PDF templates pour les compétences)
+        .route("/api/v1/level-documents", get(list_level_documents))
+        .route("/api/v1/level-documents/:level", get(get_level_document).delete(delete_level_document))
+        .route("/api/v1/level-documents/:level/upload", post(upload_level_document))
+        .route("/api/v1/level-documents/:level/download", get(download_level_document))
+        .route("/api/v1/level-documents/:level/page/:page", get(get_document_page_info))
+        .route("/api/v1/level-documents/:level/positions", get(list_skill_positions).post(set_skill_position).put(batch_update_positions))
+        .route("/api/v1/level-documents/:level/positions/:skill_id", axum::routing::delete(delete_skill_position))
+        .route("/api/v1/level-documents/:level/generate/:person_id", get(generate_filled_document))
         .layer(middleware::from_fn_with_state(
             acl_state.clone(),
             acl_auth_middleware,

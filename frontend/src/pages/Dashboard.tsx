@@ -16,6 +16,7 @@ import CompetencesInstructorPage from './CompetencesInstructorPage'
 import StudentCompetencesPage from './StudentCompetencesPage'
 import MyCompetencesPage from './MyCompetencesPage'
 import GroupsPage from './GroupsPage'
+import LevelDocumentsPage from './LevelDocumentsPage'
 import { useAuthStore } from '@/lib/auth'
 
 export default function Dashboard() {
@@ -70,6 +71,9 @@ export default function Dashboard() {
             
             {/* Groupes - admin seulement */}
             {isAdmin && <Route path="/groups" element={<GroupsPage />} />}
+            
+            {/* Documents de compétences - admin seulement */}
+            {isAdmin && <Route path="/level-documents" element={<LevelDocumentsPage />} />}
             
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/dashboard" />} />

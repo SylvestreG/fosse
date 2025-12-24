@@ -3,18 +3,25 @@ import {
   peopleApi, 
   skillValidationsApi, 
   validationStagesApi,
+  levelDocumentsApi,
   Person, 
   CompetencyHierarchy,
   ValidationStage,
+  LevelDocumentInfo,
 } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth'
+import Button from '@/components/Button'
+import Toast from '@/components/Toast'
 
 export default function MyCompetencesPage() {
   const { email, impersonating } = useAuthStore()
   const [myPerson, setMyPerson] = useState<Person | null>(null)
   const [hierarchy, setHierarchy] = useState<CompetencyHierarchy | null>(null)
   const [stages, setStages] = useState<ValidationStage[]>([])
+  const [levelDocument, setLevelDocument] = useState<LevelDocumentInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [downloading, setDownloading] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   // Si on impersonnifie, utiliser l'email de la personne impersonnifiée
   const targetEmail = impersonating?.user_email || email
@@ -42,6 +49,14 @@ export default function MyCompetencesPage() {
             try {
               const hierarchyRes = await skillValidationsApi.getMyCompetencies(levelToLoad)
               setHierarchy(hierarchyRes.data)
+              
+              // Check if a document template exists for this level
+              try {
+                const docRes = await levelDocumentsApi.get(levelToLoad)
+                setLevelDocument(docRes.data)
+              } catch {
+                setLevelDocument(null)
+              }
             } catch (error) {
               console.error('Error loading competencies:', error)
               setHierarchy(null)
@@ -157,13 +172,45 @@ export default function MyCompetencesPage() {
     ? Math.round((globalStats.validated / globalStats.total) * 100) 
     : 0
 
+  const handleDownloadDocument = async () => {
+    if (!myPerson || !preparingLevel) return
+    
+    setDownloading(true)
+    try {
+      const res = await levelDocumentsApi.generateFilled(preparingLevel, myPerson.id)
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Competences_${preparingLevel}_${myPerson.last_name}_${myPerson.first_name}.pdf`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error downloading:', error)
+      setToast({ message: 'Erreur lors du téléchargement', type: 'error' })
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white">🎯 Mes Compétences</h1>
-        <p className="text-slate-300 mt-1 text-sm sm:text-base">
-          Suivez votre progression vers le niveau {displayLevel}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">🎯 Mes Compétences</h1>
+          <p className="text-slate-300 mt-1 text-sm sm:text-base">
+            Suivez votre progression vers le niveau {displayLevel}
+          </p>
+        </div>
+        {levelDocument && (
+          <Button 
+            variant="secondary" 
+            onClick={handleDownloadDocument}
+            disabled={downloading}
+          >
+            {downloading ? '...' : '📥 Télécharger PDF'}
+          </Button>
+        )}
       </div>
 
       {/* Carte de niveau avec progression globale */}
@@ -364,12 +411,12 @@ export default function MyCompetencesPage() {
       )}
 
       {/* Info sur l'évaluation */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 sm:p-4">
+      <div className="bg-amber-500/20 border border-amber-500/50 rounded-lg p-3 sm:p-4">
         <div className="flex gap-2 sm:gap-3">
           <span className="text-xl sm:text-2xl flex-shrink-0">💡</span>
           <div>
-            <h3 className="font-medium text-amber-900 text-sm sm:text-base">Comment ça marche ?</h3>
-            <p className="text-xs sm:text-sm text-amber-800 mt-1">
+            <h3 className="font-medium text-amber-300 text-sm sm:text-base">Comment ça marche ?</h3>
+            <p className="text-xs sm:text-sm text-amber-200/80 mt-1">
               Ces compétences sont validées par vos encadrants lors des sessions de fosse et en mer.
               Chaque acquis passe par plusieurs étapes de validation avant d'être définitivement validé.
               Une fois toutes les compétences validées, vous pourrez passer votre niveau !
@@ -377,6 +424,10 @@ export default function MyCompetencesPage() {
           </div>
         </div>
       </div>
+
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
     </div>
   )
 }

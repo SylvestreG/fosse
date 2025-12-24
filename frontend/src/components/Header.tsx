@@ -87,6 +87,9 @@ export default function Header() {
                   <Link to="/dashboard/groups" className={navLinkClass('/dashboard/groups')}>
                     Groupes
                   </Link>
+                  <Link to="/dashboard/level-documents" className={navLinkClass('/dashboard/level-documents')}>
+                    Documents
+                  </Link>
                   <Link to="/dashboard/emails" className={navLinkClass('/dashboard/emails')}>
                     Emails
                   </Link>
@@ -193,6 +196,13 @@ export default function Header() {
                   onClick={closeMobileMenu}
                 >
                   📁 Groupes
+                </Link>
+                <Link 
+                  to="/dashboard/level-documents" 
+                  className={mobileNavLinkClass('/dashboard/level-documents')}
+                  onClick={closeMobileMenu}
+                >
+                  📄 Documents
                 </Link>
                 <Link 
                   to="/dashboard/emails" 

@@ -12,4 +12,6 @@ pub mod competency_domains;
 pub mod competency_modules;
 pub mod competency_skills;
 pub mod skill_validations;
+pub mod level_documents;
+pub mod skill_document_positions;
 

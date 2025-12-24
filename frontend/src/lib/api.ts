@@ -521,5 +521,68 @@ export const groupsApi = {
     api.put<Group>(`/groups/${id}`, { permissions }),
 }
 
+// Level Documents (PDF templates pour les compétences)
+export interface LevelDocumentInfo {
+  id: string
+  level: string
+  file_name: string
+  page_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface SkillPosition {
+  skill_id: string
+  page: number
+  x: number
+  y: number
+  width: number
+  height: number
+  font_size: number
+}
+
+export interface SkillPositionWithInfo extends SkillPosition {
+  id: string
+  skill_name: string
+  skill_number: number
+  module_name: string
+  domain_name: string
+}
+
+export interface PageInfo {
+  page: number
+  width: number
+  height: number
+}
+
+export const levelDocumentsApi = {
+  list: () => api.get<LevelDocumentInfo[]>('/level-documents'),
+  get: (level: string) => api.get<LevelDocumentInfo>(`/level-documents/${level}`),
+  upload: (level: string, file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return api.post<LevelDocumentInfo>(`/level-documents/${level}/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+  download: (level: string) => 
+    api.get(`/level-documents/${level}/download`, { responseType: 'blob' }),
+  delete: (level: string) => api.delete(`/level-documents/${level}`),
+  getPageInfo: (level: string, page: number) => 
+    api.get<PageInfo>(`/level-documents/${level}/page/${page}`),
+  // Positions des acquis
+  listPositions: (level: string) => 
+    api.get<SkillPositionWithInfo[]>(`/level-documents/${level}/positions`),
+  setPosition: (level: string, position: SkillPosition) => 
+    api.post(`/level-documents/${level}/positions`, position),
+  batchUpdatePositions: (level: string, positions: SkillPosition[]) => 
+    api.put(`/level-documents/${level}/positions`, positions),
+  deletePosition: (level: string, skillId: string) => 
+    api.delete(`/level-documents/${level}/positions/${skillId}`),
+  // Génération de PDF rempli
+  generateFilled: (level: string, personId: string) => 
+    api.get(`/level-documents/${level}/generate/${personId}`, { responseType: 'blob' }),
+}
+
 export default api
 

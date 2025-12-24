@@ -20,6 +20,7 @@ mod m20240101_000017_create_competencies;
 mod m20240101_000018_create_groups_acl;
 mod m20240101_000019_create_competency_hierarchy;
 mod m20240101_000020_add_password_auth;
+mod m20240101_000021_create_level_documents;
 
 pub struct Migrator;
 
@@ -47,6 +48,7 @@ impl MigratorTrait for Migrator {
         Box::new(m20240101_000018_create_groups_acl::Migration),
         Box::new(m20240101_000019_create_competency_hierarchy::Migration),
         Box::new(m20240101_000020_add_password_auth::Migration),
+        Box::new(m20240101_000021_create_level_documents::Migration),
         ]
     }
 }
