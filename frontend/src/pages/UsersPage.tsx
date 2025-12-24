@@ -115,7 +115,7 @@ export default function UsersPage() {
           placeholder="Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-3 sm:px-4 py-2 border border-slate-600 rounded-lg text-sm sm:text-base"
+          className="w-full px-3 sm:px-4 py-2 bg-slate-800/50 backdrop-blur-xl border border-slate-600 rounded-lg text-sm sm:text-base text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
         />
         
         <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -162,7 +162,7 @@ export default function UsersPage() {
                 setFilterPreparingLevel('')
                 setFilterEncadrant('')
               }}
-              className="px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg border border-red-200"
+              className="px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg border border-red-500/50"
             >
               ✕ Reset filtres
             </button>
@@ -199,7 +199,7 @@ export default function UsersPage() {
                 </div>
                 {person.preparing_level && (
                   <div>
-                    <span className="text-xs text-amber-700">
+                    <span className="text-xs text-amber-400">
                       🎯 Prépare: <span className="font-medium">{person.preparing_level}</span>
                     </span>
                   </div>
@@ -208,9 +208,9 @@ export default function UsersPage() {
             )}
             
             <div className="mt-2 sm:mt-3 flex flex-wrap gap-1">
-              {person.default_is_encadrant && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-purple-100 text-purple-800 rounded">Encadrant</span>}
-              {person.default_wants_nitrox && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-yellow-100 text-yellow-800 rounded">Nitrox</span>}
-              {person.default_wants_stab && person.default_stab_size && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-blue-100 text-blue-800 rounded">Stab {person.default_stab_size}</span>}
+              {person.default_is_encadrant && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-purple-500/30 text-purple-300 border border-purple-500/50 rounded">Encadrant</span>}
+              {person.default_wants_nitrox && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-yellow-500/30 text-yellow-300 border border-yellow-500/50 rounded">Nitrox</span>}
+              {person.default_wants_stab && person.default_stab_size && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 rounded">Stab {person.default_stab_size}</span>}
             </div>
 
             <div className="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2">
@@ -356,60 +356,60 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && <div className="bg-red-50 text-red-600 p-3 rounded">{error}</div>}
+          {error && <div className="bg-red-500/20 text-red-400 border border-red-500/50 p-3 rounded">{error}</div>}
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Prénom *</label>
-              <input type="text" required value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-3 py-2 border rounded" />
+              <label className="block text-sm font-medium text-slate-300 mb-1">Prénom *</label>
+              <input type="text" required value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Nom *</label>
-              <input type="text" required value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-3 py-2 border rounded" />
+              <label className="block text-sm font-medium text-slate-300 mb-1">Nom *</label>
+              <input type="text" required value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Email *</label>
-            <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 border rounded" />
+            <label className="block text-sm font-medium text-slate-300 mb-1">Email *</label>
+            <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Téléphone</label>
-            <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 border rounded" />
+            <label className="block text-sm font-medium text-slate-300 mb-1">Téléphone</label>
+            <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
           </div>
 
-          <div className="border-t pt-4">
-            <h3 className="font-semibold mb-3">Préférences par défaut</h3>
+          <div className="border-t border-slate-700 pt-4">
+            <h3 className="font-semibold mb-3 text-white">Préférences par défaut</h3>
             
             <div className="grid grid-cols-2 gap-3">
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" checked={formData.default_is_encadrant} onChange={(e) => setFormData({ ...formData, default_is_encadrant: e.target.checked, default_wants_nitrox: e.target.checked ? formData.default_wants_nitrox : false, default_wants_2nd_reg: e.target.checked ? formData.default_wants_2nd_reg : false })} />
+              <label className="flex items-center space-x-2 text-slate-300">
+                <input type="checkbox" checked={formData.default_is_encadrant} onChange={(e) => setFormData({ ...formData, default_is_encadrant: e.target.checked, default_wants_nitrox: e.target.checked ? formData.default_wants_nitrox : false, default_wants_2nd_reg: e.target.checked ? formData.default_wants_2nd_reg : false })} className="w-4 h-4 accent-cyan-500" />
                 <span>Encadrant</span>
               </label>
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" checked={formData.default_wants_regulator} onChange={(e) => setFormData({ ...formData, default_wants_regulator: e.target.checked })} />
+              <label className="flex items-center space-x-2 text-slate-300">
+                <input type="checkbox" checked={formData.default_wants_regulator} onChange={(e) => setFormData({ ...formData, default_wants_regulator: e.target.checked })} className="w-4 h-4 accent-cyan-500" />
                 <span>Détendeur</span>
               </label>
               {formData.default_is_encadrant && (
                 <>
-                  <label className="flex items-center space-x-2">
-                    <input type="checkbox" checked={formData.default_wants_nitrox} onChange={(e) => setFormData({ ...formData, default_wants_nitrox: e.target.checked })} />
+                  <label className="flex items-center space-x-2 text-slate-300">
+                    <input type="checkbox" checked={formData.default_wants_nitrox} onChange={(e) => setFormData({ ...formData, default_wants_nitrox: e.target.checked })} className="w-4 h-4 accent-cyan-500" />
                     <span>Nitrox</span>
                   </label>
-                  <label className="flex items-center space-x-2">
-                    <input type="checkbox" checked={formData.default_wants_2nd_reg} onChange={(e) => setFormData({ ...formData, default_wants_2nd_reg: e.target.checked })} />
+                  <label className="flex items-center space-x-2 text-slate-300">
+                    <input type="checkbox" checked={formData.default_wants_2nd_reg} onChange={(e) => setFormData({ ...formData, default_wants_2nd_reg: e.target.checked })} className="w-4 h-4 accent-cyan-500" />
                     <span>2ème détendeur</span>
                   </label>
                 </>
               )}
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" checked={formData.default_wants_stab} onChange={(e) => setFormData({ ...formData, default_wants_stab: e.target.checked })} />
+              <label className="flex items-center space-x-2 text-slate-300">
+                <input type="checkbox" checked={formData.default_wants_stab} onChange={(e) => setFormData({ ...formData, default_wants_stab: e.target.checked })} className="w-4 h-4 accent-cyan-500" />
                 <span>Stab</span>
               </label>
               {formData.default_wants_stab && (
                 <div>
-                  <select value={formData.default_stab_size} onChange={(e) => setFormData({ ...formData, default_stab_size: e.target.value })} className="w-full px-3 py-2 border rounded">
+                  <select value={formData.default_stab_size} onChange={(e) => setFormData({ ...formData, default_stab_size: e.target.value })} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
                     <option value="XS">XS</option>
                     <option value="S">S</option>
                     <option value="M">M</option>
@@ -421,7 +421,7 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
             <Button type="button" variant="secondary" onClick={onClose}>Annuler</Button>
             <Button type="submit" disabled={loading}>{loading ? 'En cours...' : person ? 'Modifier' : 'Créer'}</Button>
           </div>
@@ -548,7 +548,7 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
   return (
     <Modal isOpen={true} onClose={onClose} title={`Niveau de plongée - ${person.first_name} ${person.last_name}`}>
       <form onSubmit={handleSubmit} className="space-y-6">
-        {error && <div className="bg-red-50 text-red-600 p-3 rounded">{error}</div>}
+        {error && <div className="bg-red-500/20 text-red-400 border border-red-500/50 p-3 rounded">{error}</div>}
         
         {/* Niveaux complets */}
         <div>
@@ -558,21 +558,21 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {levelHierarchy.map((level) => (
-              <label key={level} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-slate-700/30 cursor-pointer">
+              <label key={level} className="flex items-center space-x-2 p-3 border border-slate-600 rounded-lg hover:bg-slate-700/30 cursor-pointer">
                 <input 
                   type="checkbox" 
                   checked={completeLevels[level as keyof typeof completeLevels]} 
                   onChange={(e) => handleLevelChange(level, e.target.checked)}
-                  className="w-4 h-4"
+                  className="w-4 h-4 accent-cyan-500"
                 />
-                <span className="font-medium">{level}</span>
+                <span className="font-medium text-white">{level}</span>
               </label>
             ))}
           </div>
         </div>
 
         {/* Niveau en préparation */}
-        <div className="border-t pt-4">
+        <div className="border-t border-slate-700 pt-4">
           <h3 className="font-semibold text-lg mb-3 text-white">🎯 Niveau en préparation (optionnel)</h3>
           <p className="text-sm text-slate-300 mb-3">
             Sélectionnez le niveau que cette personne prépare actuellement
@@ -580,7 +580,7 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
           <select
             value={preparingLevel}
             onChange={(e) => setPreparingLevel(e.target.value)}
-            className="w-full px-4 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
           >
             {getPreparingOptions().map((option) => (
               <option key={option.value} value={option.value}>
@@ -591,13 +591,13 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
         </div>
 
         {/* Aperçu du résultat */}
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-          <h4 className="font-semibold text-blue-900 mb-2">📊 Aperçu du résultat</h4>
-          <p className="text-sm text-blue-800">
+        <div className="bg-cyan-500/10 p-4 rounded-lg border border-cyan-500/30">
+          <h4 className="font-semibold text-cyan-300 mb-2">📊 Aperçu du résultat</h4>
+          <p className="text-sm text-slate-200">
             <strong>Niveau validé :</strong> {getHighestLevel() || 'Aucun'}
           </p>
           {preparingLevel && (
-            <p className="text-sm text-amber-700 mt-1">
+            <p className="text-sm text-amber-400 mt-1">
               <strong>🎯 Prépare :</strong> {preparingLevel}
             </p>
           )}
@@ -606,7 +606,7 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
             const isInstructor = highest && levelHierarchy.indexOf(highest) >= levelHierarchy.indexOf('E2')
             if (isInstructor) {
               return (
-                <p className="text-sm text-green-700 mt-1">
+                <p className="text-sm text-green-400 mt-1">
                   ✅ <strong>Encadrant</strong> (E2 ou supérieur)
                 </p>
               )
@@ -615,7 +615,7 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
           })()}
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
           <Button type="button" variant="secondary" onClick={onClose}>
             Annuler
           </Button>
