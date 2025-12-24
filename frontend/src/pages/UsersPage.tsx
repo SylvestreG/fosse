@@ -180,7 +180,7 @@ export default function UsersPage() {
         {filteredPeople.map((person) => (
           <div key={person.id} className="bg-slate-800/50 backdrop-blur-xl p-3 sm:p-4 rounded-lg shadow">
             <div className="flex justify-between items-start mb-2 gap-2">
-              <h3 className="text-sm sm:text-lg font-semibold">{person.first_name} {person.last_name}</h3>
+              <h3 className="text-sm sm:text-lg font-semibold text-white">{person.first_name} {person.last_name}</h3>
               {person.is_instructor && (
                 <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full font-semibold flex-shrink-0">
                   👨‍🏫<span className="hidden sm:inline"> Encadrant</span>
@@ -193,7 +193,7 @@ export default function UsersPage() {
             {person.diving_level_display && (
               <div className="mt-2 space-y-1">
                 <div>
-                  <span className="text-xs sm:text-sm font-medium text-blue-700">
+                  <span className="text-xs sm:text-sm font-medium text-cyan-400">
                     🤿 {person.diving_level_display}
                   </span>
                 </div>
