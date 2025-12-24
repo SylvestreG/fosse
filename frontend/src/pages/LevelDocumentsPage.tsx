@@ -102,7 +102,9 @@ export default function LevelDocumentsPage() {
   const loadPdfData = async (level: string) => {
     try {
       const res = await levelDocumentsApi.download(level)
-      setPdfData(res.data)
+      // Convert Blob to ArrayBuffer for PDF.js
+      const arrayBuffer = await res.data.arrayBuffer()
+      setPdfData(arrayBuffer)
     } catch (error) {
       console.error('Error loading PDF:', error)
       setPdfData(null)
