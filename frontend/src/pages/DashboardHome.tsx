@@ -142,7 +142,7 @@ export default function DashboardHome() {
             </div>
           </div>
           <Button 
-            onClick={() => navigate('/dashboard/mon-profil')}
+            onClick={() => navigate('/dashboard/profile')}
             className="shrink-0"
           >
             Compléter mon profil
@@ -337,7 +337,7 @@ export default function DashboardHome() {
         )}
 
         <Link 
-          to="/dashboard/mon-profil" 
+          to="/dashboard/profile" 
           className="bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-xl p-6 hover:from-amber-500/30 hover:to-orange-500/30 transition-all group"
         >
           <div className="flex items-center gap-4">
