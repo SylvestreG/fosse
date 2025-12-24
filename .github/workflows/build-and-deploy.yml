@@ -10,7 +10,28 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  # Detect which parts changed
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          backend:
+            - 'backend/**'
+            - 'Cargo.lock'
+          frontend:
+            - 'frontend/**'
+
+  # Build backend only if changed
+  build-backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     
     services:
@@ -31,20 +52,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
-    
     - name: Setup Rust
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: stable
     
     - name: Cache Cargo dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/bin/
@@ -53,14 +67,6 @@ jobs:
           ~/.cargo/git/db/
           backend/target/
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    
-    - name: Install frontend dependencies
-      working-directory: ./frontend
-      run: npm ci
-    
-    - name: Build frontend
-      working-directory: ./frontend
-      run: npm run build
     
     - name: Create config.json for tests
       working-directory: ./backend
@@ -89,6 +95,14 @@ jobs:
           "magic_link": {
             "base_url": "http://localhost:8080",
             "expiration_hours": 72
+          },
+          "smtp": {
+            "host": "localhost",
+            "port": 587,
+            "username": "test",
+            "password": "test",
+            "from_email": "test@example.com",
+            "from_name": "Test"
           }
         }
         EOFCONFIG
@@ -107,6 +121,30 @@ jobs:
         name: fosse-backend
         path: backend/target/release/fosse-backend
         retention-days: 7
+
+  # Build frontend only if changed
+  build-frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Build frontend
+      working-directory: ./frontend
+      run: npm run build
     
     - name: Upload frontend dist
       uses: actions/upload-artifact@v4
@@ -115,14 +153,31 @@ jobs:
         path: frontend/dist/
         retention-days: 7
 
+  # Deploy only what changed
   deploy:
-    needs: build
+    needs: [changes, build-backend, build-frontend]
+    # Run if on main AND at least one build ran (or was skipped but changes detected)
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' && 
+      github.event_name == 'push' &&
+      (needs.build-backend.result == 'success' || needs.build-frontend.result == 'success')
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
-    - name: Download artifacts
+    - name: Download backend artifact
+      if: needs.build-backend.result == 'success'
       uses: actions/download-artifact@v4
+      with:
+        name: fosse-backend
+        path: fosse-backend
+    
+    - name: Download frontend artifact
+      if: needs.build-frontend.result == 'success'
+      uses: actions/download-artifact@v4
+      with:
+        name: frontend-dist
+        path: frontend-dist
     
     - name: List downloaded artifacts (debug)
       run: |
@@ -130,6 +185,7 @@ jobs:
         ls -laR
     
     - name: Copy backend to server
+      if: needs.build-backend.result == 'success'
       uses: appleboy/scp-action@v0.1.4
       with:
         host: ${{ secrets.SERVER_HOST }}
@@ -141,6 +197,7 @@ jobs:
         strip_components: 1
     
     - name: Copy frontend to server
+      if: needs.build-frontend.result == 'success'
       uses: appleboy/scp-action@v0.1.4
       with:
         host: ${{ secrets.SERVER_HOST }}
@@ -153,47 +210,51 @@ jobs:
     
     - name: Deploy and restart service
       uses: appleboy/ssh-action@v1.0.0
+      env:
+        DEPLOY_BACKEND: ${{ needs.build-backend.result == 'success' }}
+        DEPLOY_FRONTEND: ${{ needs.build-frontend.result == 'success' }}
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: ${{ secrets.SSH_PORT }}
+        envs: DEPLOY_BACKEND,DEPLOY_FRONTEND
         script: |
-          echo "=== Checking files on server ==="
-          ls -laR /tmp/fosse-deploy/
+          echo "=== Deploy status ==="
+          echo "Backend: $DEPLOY_BACKEND"
+          echo "Frontend: $DEPLOY_FRONTEND"
           
-          # Stop service
-          sudo systemctl stop fosse || true
+          ls -laR /tmp/fosse-deploy/ 2>/dev/null || echo "No files to deploy yet"
+          
+          # Stop service only if deploying backend
+          if [ "$DEPLOY_BACKEND" = "true" ]; then
+            sudo systemctl stop fosse || true
+          fi
           
           # Deploy backend binary
-          if [ -f /tmp/fosse-deploy/fosse-backend ]; then
+          if [ "$DEPLOY_BACKEND" = "true" ] && [ -f /tmp/fosse-deploy/fosse-backend ]; then
             sudo cp /tmp/fosse-deploy/fosse-backend /opt/fosse/bin/fosse-backend
             sudo chmod +x /opt/fosse/bin/fosse-backend
             sudo chown fosse:fosse /opt/fosse/bin/fosse-backend
             echo "✅ Backend deployed"
-          else
-            echo "❌ Backend binary not found"
-            exit 1
           fi
           
           # Deploy frontend
-          if [ -d /tmp/fosse-deploy/frontend ]; then
+          if [ "$DEPLOY_FRONTEND" = "true" ] && [ -d /tmp/fosse-deploy/frontend ]; then
             sudo rm -rf /opt/fosse/frontend/*
             sudo cp -r /tmp/fosse-deploy/frontend/* /opt/fosse/frontend/
             sudo chown -R fosse:fosse /opt/fosse/frontend
             echo "✅ Frontend deployed"
-          else
-            echo "❌ Frontend files not found"
-            exit 1
           fi
           
           # Clean tmp
           rm -rf /tmp/fosse-deploy
           
-          # Start service
-          sudo systemctl start fosse
-          
-          # Wait and check status
-          sleep 3
-          sudo systemctl status fosse --no-pager
-
+          # Start/restart service if backend was deployed
+          if [ "$DEPLOY_BACKEND" = "true" ]; then
+            sudo systemctl start fosse
+            sleep 3
+            sudo systemctl status fosse --no-pager
+          else
+            echo "✅ Frontend-only deploy, no service restart needed"
+          fi
