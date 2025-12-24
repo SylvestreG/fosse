@@ -15,13 +15,15 @@ interface AuthState {
   isAdmin: boolean
   canValidateCompetencies: boolean
   impersonating: ImpersonationInfo | null
+  mustChangePassword: boolean
   // Getter: retourne true si admin ET pas en train d'impersonnifier
   isAdminView: () => boolean
   // Getter: retourne true si peut valider des compétences (encadrant ou admin)
   canValidate: () => boolean
-  setAuth: (token: string, email: string, name: string, isAdmin: boolean, canValidateCompetencies: boolean, impersonating?: ImpersonationInfo | null) => void
+  setAuth: (token: string, email: string, name: string, isAdmin: boolean, canValidateCompetencies: boolean, impersonating?: ImpersonationInfo | null, mustChangePassword?: boolean) => void
   setImpersonation: (token: string, impersonating: ImpersonationInfo, canValidateCompetencies: boolean) => void
   stopImpersonation: (token: string, canValidateCompetencies: boolean) => void
+  clearMustChangePassword: () => void
   logout: () => void
 }
 
@@ -35,6 +37,7 @@ export const useAuthStore = create<AuthState>()(
       isAdmin: false,
       canValidateCompetencies: false,
       impersonating: null,
+      mustChangePassword: false,
       // Quand on impersonnifie, on voit l'interface comme l'utilisateur (pas admin)
       isAdminView: () => {
         const state = get()
@@ -46,9 +49,9 @@ export const useAuthStore = create<AuthState>()(
         const state = get()
         return state.canValidateCompetencies
       },
-      setAuth: (token, email, name, isAdmin, canValidateCompetencies, impersonating = null) => {
+      setAuth: (token, email, name, isAdmin, canValidateCompetencies, impersonating = null, mustChangePassword = false) => {
         localStorage.setItem('auth_token', token)
-        set({ token, email, name, isAuthenticated: true, isAdmin, canValidateCompetencies, impersonating })
+        set({ token, email, name, isAuthenticated: true, isAdmin, canValidateCompetencies, impersonating, mustChangePassword })
       },
       setImpersonation: (token, impersonating, canValidateCompetencies) => {
         localStorage.setItem('auth_token', token)
@@ -58,9 +61,12 @@ export const useAuthStore = create<AuthState>()(
         localStorage.setItem('auth_token', token)
         set({ token, impersonating: null, canValidateCompetencies })
       },
+      clearMustChangePassword: () => {
+        set({ mustChangePassword: false })
+      },
       logout: () => {
         localStorage.removeItem('auth_token')
-        set({ token: null, email: null, name: null, isAuthenticated: false, isAdmin: false, canValidateCompetencies: false, impersonating: null })
+        set({ token: null, email: null, name: null, isAuthenticated: false, isAdmin: false, canValidateCompetencies: false, impersonating: null, mustChangePassword: false })
       },
     }),
     {

@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::handlers::import::ImportState;
-use crate::handlers::auth::AuthState;
+use crate::handlers::auth::{AuthState, PasswordAuthState};
 use crate::handlers::*;
 use crate::middleware::acl::{acl_auth_middleware, AclState};
 use crate::services::{AuthService, EmailService};
@@ -29,6 +29,7 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
 
     let email_service = Arc::new(EmailService::new(
         config.magic_link.base_url.clone(),
+        config.smtp.clone(),
     ));
 
     let import_state = Arc::new(ImportState {
@@ -64,6 +65,28 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .route("/api/v1/auth/google/callback", post(google_callback))
         .route("/api/v1/auth/google/id-token", post(google_id_token_callback))
         .with_state(auth_state.clone());
+
+    // Password authentication state
+    let password_auth_state = PasswordAuthState {
+        auth_service: auth_service.clone(),
+        email_service: email_service.clone(),
+        db: db.clone(),
+    };
+
+    // Public routes - email/password authentication
+    let password_auth_routes = Router::new()
+        .route("/api/v1/auth/request-password", post(request_temp_password))
+        .route("/api/v1/auth/login", post(email_login))
+        .with_state(password_auth_state.clone());
+
+    // Protected route for changing password
+    let change_password_route = Router::new()
+        .route("/api/v1/auth/change-password", post(change_password))
+        .layer(middleware::from_fn_with_state(
+            acl_state.clone(),
+            acl_auth_middleware,
+        ))
+        .with_state(password_auth_state);
 
     // Impersonation routes (admin only, need auth + DB)
     let impersonation_routes = Router::new()
@@ -176,6 +199,8 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
     let api_routes = Router::new()
         .merge(auth_config_route)
         .merge(auth_callback_route)
+        .merge(password_auth_routes)
+        .merge(change_password_route)
         .merge(impersonation_routes)
         .merge(questionnaire_public_routes)
         .merge(questionnaire_auth_routes)
@@ -215,5 +240,3 @@ async fn spa_handler() -> impl IntoResponse {
         Err(_) => (StatusCode::NOT_FOUND, "404 Not Found").into_response(),
     }
 }
-
-

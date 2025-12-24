@@ -158,6 +158,10 @@ impl ImportService {
                 default_stab_size: Set(None),
                 diving_level: Set(None),
                 group_id: Set(None),
+                password_hash: Set(None),
+                temp_password: Set(None),
+                temp_password_expires_at: Set(None),
+                must_change_password: Set(false),
                 created_at: Set(now),
                 updated_at: Set(now),
             };

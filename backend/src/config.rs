@@ -9,6 +9,7 @@ pub struct Config {
     pub google_oauth: GoogleOAuthConfig,
     pub jwt: JwtConfig,
     pub magic_link: MagicLinkConfig,
+    pub smtp: SmtpConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,6 +45,16 @@ pub struct JwtConfig {
 pub struct MagicLinkConfig {
     pub base_url: String,
     pub expiration_hours: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SmtpConfig {
+    pub host: String,
+    pub port: u16,
+    pub username: String,
+    pub password: String,
+    pub from_email: String,
+    pub from_name: String,
 }
 
 impl Config {

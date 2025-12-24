@@ -1,8 +1,13 @@
 use crate::config::{GoogleOAuthConfig, JwtConfig};
 use crate::errors::{AppError, AppResult};
 use crate::models::{AuthResponse, Claims, GoogleTokenResponse, GoogleUserInfo, ImpersonationInfo, ImpersonateResponse};
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use rand::Rng;
 
 pub struct AuthService {
     google_config: GoogleOAuthConfig,
@@ -210,4 +215,73 @@ impl AuthService {
     pub fn get_client_id(&self) -> &str {
         &self.google_config.client_id
     }
+
+    // ===== Password Authentication Methods =====
+
+    /// Generate a random temporary password (6 alphanumeric characters)
+    pub fn generate_temp_password() -> String {
+        let mut rng = rand::thread_rng();
+        const CHARSET: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Avoid confusing chars (0/O, 1/I/L)
+        (0..6)
+            .map(|_| {
+                let idx = rng.gen_range(0..CHARSET.len());
+                CHARSET[idx] as char
+            })
+            .collect()
+    }
+
+    /// Hash a password using Argon2
+    pub fn hash_password(password: &str) -> AppResult<String> {
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+        
+        argon2
+            .hash_password(password.as_bytes(), &salt)
+            .map(|hash| hash.to_string())
+            .map_err(|e| AppError::Internal(format!("Failed to hash password: {}", e)))
+    }
+
+    /// Verify a password against a hash
+    pub fn verify_password(password: &str, hash: &str) -> AppResult<bool> {
+        let parsed_hash = PasswordHash::new(hash)
+            .map_err(|e| AppError::Internal(format!("Invalid password hash: {}", e)))?;
+        
+        Ok(Argon2::default()
+            .verify_password(password.as_bytes(), &parsed_hash)
+            .is_ok())
+    }
+
+    /// Generate auth response with must_change_password flag
+    pub fn generate_auth_response_with_password_status(
+        &self, 
+        email: &str, 
+        name: &str, 
+        is_admin: bool, 
+        can_validate_competencies: bool,
+        must_change_password: bool,
+    ) -> AppResult<AuthResponseWithPasswordStatus> {
+        let token = self.generate_token(email, name, is_admin, None)?;
+
+        Ok(AuthResponseWithPasswordStatus {
+            token,
+            email: email.to_string(),
+            name: name.to_string(),
+            is_admin,
+            can_validate_competencies,
+            impersonating: None,
+            must_change_password,
+        })
+    }
+}
+
+/// Extended auth response that includes password change requirement
+#[derive(Debug, serde::Serialize)]
+pub struct AuthResponseWithPasswordStatus {
+    pub token: String,
+    pub email: String,
+    pub name: String,
+    pub is_admin: bool,
+    pub can_validate_competencies: bool,
+    pub impersonating: Option<ImpersonationInfo>,
+    pub must_change_password: bool,
 }

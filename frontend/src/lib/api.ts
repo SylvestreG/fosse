@@ -156,6 +156,7 @@ export interface AuthResponseData {
   is_admin: boolean
   can_validate_competencies: boolean
   impersonating?: ImpersonationInfo
+  must_change_password?: boolean
 }
 
 export const authApi = {
@@ -169,6 +170,13 @@ export const authApi = {
     api.post<{ token: string; impersonating: ImpersonationInfo; can_validate_competencies: boolean }>('/auth/impersonate', { user_id: userId }),
   stopImpersonation: () =>
     api.post<AuthResponseData>('/auth/stop-impersonation'),
+  // Email/Password authentication
+  requestPassword: (email: string) =>
+    api.post<{ success: boolean; message: string }>('/auth/request-password', { email }),
+  login: (email: string, password: string) =>
+    api.post<AuthResponseData>('/auth/login', { email, password }),
+  changePassword: (newPassword: string) =>
+    api.post<{ success: boolean; message: string }>('/auth/change-password', { new_password: newPassword }),
 }
 
 export interface ParticipantInfo {

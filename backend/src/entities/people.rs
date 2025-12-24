@@ -19,6 +19,13 @@ pub struct Model {
     pub default_stab_size: Option<String>,
     pub diving_level: Option<String>,
     pub group_id: Option<Uuid>,
+    #[serde(skip_serializing)]
+    pub password_hash: Option<String>,
+    #[serde(skip_serializing)]
+    pub temp_password: Option<String>,
+    #[serde(skip_serializing)]
+    pub temp_password_expires_at: Option<DateTime>,
+    pub must_change_password: bool,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

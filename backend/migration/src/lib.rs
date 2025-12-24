@@ -19,6 +19,7 @@ mod m20240101_000016_add_diving_level;
 mod m20240101_000017_create_competencies;
 mod m20240101_000018_create_groups_acl;
 mod m20240101_000019_create_competency_hierarchy;
+mod m20240101_000020_add_password_auth;
 
 pub struct Migrator;
 
@@ -45,6 +46,7 @@ impl MigratorTrait for Migrator {
         Box::new(m20240101_000017_create_competencies::Migration),
         Box::new(m20240101_000018_create_groups_acl::Migration),
         Box::new(m20240101_000019_create_competency_hierarchy::Migration),
+        Box::new(m20240101_000020_add_password_auth::Migration),
         ]
     }
 }

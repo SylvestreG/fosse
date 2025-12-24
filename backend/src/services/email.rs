@@ -1,6 +1,10 @@
+use crate::config::SmtpConfig;
 use crate::entities::{email_jobs, prelude::*, questionnaires};
 use crate::errors::{AppError, AppResult};
 use chrono::{Duration, Utc};
+use lettre::message::header::ContentType;
+use lettre::transport::smtp::authentication::Credentials;
+use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 use sea_orm::*;
 use std::fs;
 use uuid::Uuid;
@@ -8,14 +12,173 @@ use uuid::Uuid;
 pub struct EmailService {
     magic_link_base_url: String,
     template_path: String,
+    smtp_config: SmtpConfig,
 }
 
 impl EmailService {
-    pub fn new(magic_link_base_url: String) -> Self {
+    pub fn new(magic_link_base_url: String, smtp_config: SmtpConfig) -> Self {
         Self {
             magic_link_base_url,
             template_path: "email_template.html".to_string(),
+            smtp_config,
         }
+    }
+
+    /// Create SMTP transport for OVH
+    fn create_smtp_transport(&self) -> AppResult<AsyncSmtpTransport<Tokio1Executor>> {
+        let creds = Credentials::new(
+            self.smtp_config.username.clone(),
+            self.smtp_config.password.clone(),
+        );
+
+        // OVH uses port 465 with implicit TLS
+        let transport = AsyncSmtpTransport::<Tokio1Executor>::relay(&self.smtp_config.host)
+            .map_err(|e| AppError::Internal(format!("Failed to create SMTP transport: {}", e)))?
+            .port(self.smtp_config.port)
+            .credentials(creds)
+            .build();
+
+        Ok(transport)
+    }
+
+    /// Send a single email via SMTP
+    pub async fn send_email(
+        &self,
+        to_email: &str,
+        to_name: &str,
+        subject: &str,
+        html_body: &str,
+    ) -> AppResult<()> {
+        let from_address = format!("{} <{}>", self.smtp_config.from_name, self.smtp_config.from_email);
+        let to_address = format!("{} <{}>", to_name, to_email);
+
+        let email = Message::builder()
+            .from(from_address.parse().map_err(|e| AppError::Internal(format!("Invalid from address: {}", e)))?)
+            .to(to_address.parse().map_err(|e| AppError::Internal(format!("Invalid to address: {}", e)))?)
+            .subject(subject)
+            .header(ContentType::TEXT_HTML)
+            .body(html_body.to_string())
+            .map_err(|e| AppError::Internal(format!("Failed to build email: {}", e)))?;
+
+        let transport = self.create_smtp_transport()?;
+
+        transport
+            .send(email)
+            .await
+            .map_err(|e| AppError::Internal(format!("Failed to send email: {}", e)))?;
+
+        tracing::info!("Email sent successfully to {}", to_email);
+        Ok(())
+    }
+
+    /// Send a specific email job and mark it as sent
+    #[allow(dead_code)]
+    pub async fn send_email_job(
+        &self,
+        db: &DatabaseConnection,
+        email_job_id: Uuid,
+    ) -> AppResult<()> {
+        // Get the email job with person info
+        let email_job = EmailJobs::find_by_id(email_job_id)
+            .one(db)
+            .await
+            .map_err(|e| AppError::Database(e))?
+            .ok_or(AppError::NotFound("Email job not found".to_string()))?;
+
+        let person = People::find_by_id(email_job.person_id)
+            .one(db)
+            .await
+            .map_err(|e| AppError::Database(e))?
+            .ok_or(AppError::NotFound("Person not found".to_string()))?;
+
+        let subject = email_job.email_subject.as_deref().unwrap_or("Questionnaire");
+        let body = email_job.email_body.as_deref().unwrap_or("");
+        let to_name = format!("{} {}", person.first_name, person.last_name);
+
+        // Send the email
+        self.send_email(&person.email, &to_name, subject, body).await?;
+
+        // Mark as sent
+        Self::mark_as_sent(db, email_job_id).await?;
+
+        Ok(())
+    }
+
+    /// Send all pending emails for a session
+    #[allow(dead_code)]
+    pub async fn send_pending_emails_for_session(
+        &self,
+        db: &DatabaseConnection,
+        session_id: Uuid,
+    ) -> AppResult<(usize, Vec<String>)> {
+        let email_jobs = EmailJobs::find()
+            .filter(email_jobs::Column::SessionId.eq(session_id))
+            .filter(email_jobs::Column::Status.eq("generated"))
+            .find_also_related(People)
+            .all(db)
+            .await
+            .map_err(|e| AppError::Database(e))?;
+
+        let mut sent_count = 0;
+        let mut errors = Vec::new();
+
+        for (job, person_opt) in email_jobs {
+            let person = match person_opt {
+                Some(p) => p,
+                None => {
+                    errors.push(format!("Person not found for job {}", job.id));
+                    continue;
+                }
+            };
+
+            let subject = job.email_subject.as_deref().unwrap_or("Questionnaire");
+            let body = job.email_body.as_deref().unwrap_or("");
+            let to_name = format!("{} {}", person.first_name, person.last_name);
+
+            match self.send_email(&person.email, &to_name, subject, body).await {
+                Ok(_) => {
+                    if let Err(e) = Self::mark_as_sent(db, job.id).await {
+                        errors.push(format!("Failed to mark email {} as sent: {}", job.id, e));
+                    } else {
+                        sent_count += 1;
+                    }
+                }
+                Err(e) => {
+                    // Mark as failed with error message
+                    let _ = Self::mark_as_failed(db, job.id, &e.to_string()).await;
+                    errors.push(format!("Failed to send to {}: {}", person.email, e));
+                }
+            }
+        }
+
+        Ok((sent_count, errors))
+    }
+
+    /// Mark an email job as failed
+    #[allow(dead_code)]
+    pub async fn mark_as_failed(
+        db: &DatabaseConnection,
+        email_job_id: Uuid,
+        error_message: &str,
+    ) -> AppResult<()> {
+        let email_job = EmailJobs::find_by_id(email_job_id)
+            .one(db)
+            .await
+            .map_err(|e| AppError::Database(e))?
+            .ok_or(AppError::NotFound("Email job not found".to_string()))?;
+
+        let mut active: email_jobs::ActiveModel = email_job.into();
+        active.status = Set("failed".to_string());
+        active.error_message = Set(Some(error_message.to_string()));
+        active.retry_count = Set(active.retry_count.unwrap() + 1);
+        active.updated_at = Set(Utc::now().naive_utc());
+
+        active
+            .update(db)
+            .await
+            .map_err(|e| AppError::Database(e))?;
+
+        Ok(())
     }
     
     fn load_template(&self) -> Result<String, std::io::Error> {

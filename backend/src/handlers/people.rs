@@ -196,6 +196,10 @@ pub async fn create_person(
         default_stab_size: Set(payload.default_stab_size),
         diving_level: Set(payload.diving_level),
         group_id: Set(payload.group_id),
+        password_hash: Set(None),
+        temp_password: Set(None),
+        temp_password_expires_at: Set(None),
+        must_change_password: Set(false),
         created_at: Set(now),
         updated_at: Set(now),
     };
