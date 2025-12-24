@@ -58,7 +58,7 @@ export default function Header() {
             </button>
             
             <Link to="/dashboard" className="text-2xl font-bold text-primary-600">
-              Fosse
+              USI
             </Link>
             
             {/* Desktop navigation */}

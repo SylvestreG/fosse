@@ -43,7 +43,7 @@ export default function LoginAdmin() {
     }
   }, [navigate, setAuth])
 
-  // Initialize Google One Tap
+  // Initialize Google One Tap and always render button
   useEffect(() => {
     if (isAuthenticated || code) return
 
@@ -54,11 +54,13 @@ export default function LoginAdmin() {
         
         await initializeGoogleOneTap(clientId, handleIdToken)
         
-        showGoogleOneTap(() => {
-          if (googleButtonRef.current) {
-            renderGoogleButton('google-signin-button')
-          }
-        })
+        // Always render the button (in addition to One Tap popup)
+        if (googleButtonRef.current) {
+          renderGoogleButton('google-signin-button')
+        }
+        
+        // Also show One Tap prompt
+        showGoogleOneTap()
       } catch (error) {
         console.error('Failed to init One Tap:', error)
       }
@@ -156,8 +158,8 @@ export default function LoginAdmin() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-            FOSSE
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+            USI - Commission Technique
           </h1>
           <p className="text-slate-400 mt-1">Gestion de plongée</p>
         </div>

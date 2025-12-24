@@ -30,7 +30,7 @@
     "username": "your-email@yourdomain.com",
     "password": "YOUR_SMTP_PASSWORD",
     "from_email": "your-email@yourdomain.com",
-    "from_name": "FOSSE - Gestion Plongée"
+    "from_name": "USI - Commission Technique"
   }
 }
 

@@ -298,7 +298,7 @@ pub async fn request_temp_password(
     <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
         <h1 style="color: #1e3a5f; margin-bottom: 24px; font-size: 24px;">Bonjour {person_name}</h1>
         
-        <p style="color: #4a5568; line-height: 1.6;">Voici votre mot de passe temporaire pour vous connecter à FOSSE :</p>
+        <p style="color: #4a5568; line-height: 1.6;">Voici votre mot de passe temporaire pour vous connecter à USI - Commission Technique :</p>
         
         <div style="background: #f0f4f8; border-radius: 8px; padding: 20px; text-align: center; margin: 24px 0;">
             <span style="font-size: 32px; font-weight: bold; letter-spacing: 4px; color: #1e3a5f; font-family: monospace;">{temp_password}</span>
@@ -322,7 +322,7 @@ pub async fn request_temp_password(
     if let Err(e) = state.email_service.send_email(
         &email,
         &person_name,
-        "FOSSE - Votre mot de passe temporaire",
+        "USI Commission Technique - Votre mot de passe temporaire",
         &email_body,
     ).await {
         tracing::error!("Failed to send temp password email: {:?}", e);
