@@ -259,7 +259,7 @@ export default function LoginAdmin() {
             </div>
 
             {/* Divider */}
-            <div className="relative my-6">
+            <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-600" />
               </div>
@@ -272,14 +272,14 @@ export default function LoginAdmin() {
             <div 
               id="google-signin-button" 
               ref={googleButtonRef}
-              className="flex justify-center min-h-[44px]"
+              className="hidden"
             />
             
-            {/* Fallback Google button if API doesn't render */}
+            {/* Google button */}
             <button
               type="button"
               onClick={handleGoogleFallback}
-              className="w-full py-3 px-4 bg-white hover:bg-gray-100 text-gray-700 font-medium rounded-xl transition-all duration-200 flex items-center justify-center gap-3 border border-gray-300"
+              className="w-full py-3 px-4 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-all duration-200 flex items-center justify-center gap-3 shadow-md"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
