@@ -118,7 +118,7 @@ export default function GroupsPage() {
   })).filter(cat => cat.permissions.length > 0)
 
   if (loading) {
-    return <div className="text-center py-12">Chargement...</div>
+    return <div className="text-center py-12 text-slate-400">Chargement...</div>
   }
 
   return (
@@ -141,7 +141,7 @@ export default function GroupsPage() {
                   onClick={() => handleSelectGroup(group)}
                   className={`w-full text-left p-3 rounded-lg transition-colors ${
                     selectedGroup?.id === group.id
-                      ? 'bg-blue-100 border-2 border-blue-500'
+                      ? 'bg-cyan-500/20 border-2 border-cyan-500/50'
                       : 'bg-slate-700/30 border-2 border-transparent hover:bg-slate-700/50'
                   }`}
                 >
@@ -150,7 +150,7 @@ export default function GroupsPage() {
                     {group.permissions.length} permission{group.permissions.length > 1 ? 's' : ''}
                   </div>
                   {group.description && (
-                    <div className="text-xs text-gray-400 mt-1">{group.description}</div>
+                    <div className="text-xs text-slate-500 mt-1">{group.description}</div>
                   )}
                 </button>
               ))}
@@ -162,7 +162,7 @@ export default function GroupsPage() {
         <div className="lg:col-span-3">
           {selectedGroup ? (
             <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow">
-              <div className="p-4 border-b flex justify-between items-center">
+              <div className="p-4 border-b border-slate-700 flex justify-between items-center">
                 <div>
                   <h2 className="text-xl font-bold text-white">
                     Permissions: {selectedGroup.name}
@@ -185,7 +185,7 @@ export default function GroupsPage() {
                   const someSelected = category.permissions.some(p => editedPermissions.has(p.key))
                   
                   return (
-                    <div key={category.key} className="border rounded-lg overflow-hidden">
+                    <div key={category.key} className="border border-slate-700 rounded-lg overflow-hidden">
                       <div className="bg-slate-700/30 px-4 py-3 flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <span className="text-xl">{category.icon}</span>
@@ -198,14 +198,14 @@ export default function GroupsPage() {
                           <button
                             onClick={() => handleSelectAll(category.key)}
                             disabled={allSelected}
-                            className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50"
+                            className="text-xs px-2 py-1 bg-cyan-500/20 text-cyan-300 rounded hover:bg-cyan-500/30 border border-cyan-500/30 disabled:opacity-50"
                           >
                             Tout
                           </button>
                           <button
                             onClick={() => handleDeselectAll(category.key)}
                             disabled={!someSelected}
-                            className="text-xs px-2 py-1 bg-slate-700/50 text-slate-200 rounded hover:bg-gray-200 disabled:opacity-50"
+                            className="text-xs px-2 py-1 bg-slate-700/50 text-slate-300 rounded hover:bg-slate-600/50 disabled:opacity-50"
                           >
                             Aucun
                           </button>
@@ -217,21 +217,21 @@ export default function GroupsPage() {
                             key={perm.key}
                             className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
                               editedPermissions.has(perm.key)
-                                ? 'bg-green-50 hover:bg-green-100'
-                                : 'bg-slate-700/30 hover:bg-slate-700/50'
+                                ? 'bg-green-500/20 hover:bg-green-500/30 border border-green-500/30'
+                                : 'bg-slate-700/30 hover:bg-slate-700/50 border border-transparent'
                             }`}
                           >
                             <input
                               type="checkbox"
                               checked={editedPermissions.has(perm.key)}
                               onChange={() => handleTogglePermission(perm.key)}
-                              className="w-4 h-4 rounded"
+                              className="w-4 h-4 rounded accent-cyan-500"
                             />
                             <div>
                               <div className="text-sm font-medium text-white">
                                 {perm.description}
                               </div>
-                              <div className="text-xs text-gray-400 font-mono">
+                              <div className="text-xs text-slate-500 font-mono">
                                 {perm.key}
                               </div>
                             </div>
