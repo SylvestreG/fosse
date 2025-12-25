@@ -118,7 +118,9 @@ export default function LevelDocumentsPage() {
     if (!pdfData || !canvasRef.current) return
 
     try {
-      const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise
+      // Make a copy of the ArrayBuffer since PDF.js detaches it after use
+      const dataCopy = pdfData.slice(0)
+      const pdf = await pdfjsLib.getDocument({ data: dataCopy }).promise
       setTotalPages(pdf.numPages)
       
       const page = await pdf.getPage(currentPage)
