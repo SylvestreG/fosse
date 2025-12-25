@@ -9,8 +9,13 @@ import {
 } from '@/lib/api'
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
-// Use legacy build that works without web worker
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
+import * as pdfjsLib from 'pdfjs-dist'
+// @ts-ignore - import worker as raw text
+import pdfjsWorkerText from 'pdfjs-dist/build/pdf.worker.min.mjs?raw'
+
+// Create blob URL for worker to avoid MIME type issues
+const workerBlob = new Blob([pdfjsWorkerText], { type: 'application/javascript' })
+pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(workerBlob)
 
 const DIVING_LEVELS = ['N1', 'N2', 'N3', 'N4', 'E1', 'E2', 'E3', 'E4']
 
