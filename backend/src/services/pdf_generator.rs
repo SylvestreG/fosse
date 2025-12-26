@@ -146,48 +146,76 @@ fn add_freetext_annotations(
     let mut annotation_refs: Vec<Object> = Vec::new();
     
     for pos in texts {
-        // Créer le texte complet
-        let full_text = if let Some(ref line2) = pos.line2 {
-            format!("{}\n{}", pos.line1, line2)
+        let font_size = pos.font_size;
+        let da_string = format!("/Helv {} Tf 0 g", font_size as i32);
+        
+        if let Some(ref line2) = pos.line2 {
+            // Mode 2 lignes : créer 2 annotations distinctes
+            let half_height = pos.height / 2.0;
+            
+            // Ligne 1 (date) - partie haute
+            let rect1 = Object::Array(vec![
+                Object::Real(pos.x),
+                Object::Real(pos.y + half_height),
+                Object::Real(pos.x + pos.width),
+                Object::Real(pos.y + pos.height),
+            ]);
+            
+            let mut annot1 = Dictionary::new();
+            annot1.set("Type", Object::Name(b"Annot".to_vec()));
+            annot1.set("Subtype", Object::Name(b"FreeText".to_vec()));
+            annot1.set("Rect", rect1);
+            annot1.set("Contents", Object::String(pos.line1.as_bytes().to_vec(), lopdf::StringFormat::Literal));
+            annot1.set("DA", Object::String(da_string.as_bytes().to_vec(), lopdf::StringFormat::Literal));
+            annot1.set("Q", Object::Integer(0));
+            annot1.set("Border", Object::Array(vec![Object::Integer(0), Object::Integer(0), Object::Integer(0)]));
+            annot1.set("F", Object::Integer(4));
+            
+            let annot1_id = doc.add_object(annot1);
+            annotation_refs.push(Object::Reference(annot1_id));
+            
+            // Ligne 2 (nom + niveau) - partie basse
+            let rect2 = Object::Array(vec![
+                Object::Real(pos.x),
+                Object::Real(pos.y),
+                Object::Real(pos.x + pos.width),
+                Object::Real(pos.y + half_height),
+            ]);
+            
+            let mut annot2 = Dictionary::new();
+            annot2.set("Type", Object::Name(b"Annot".to_vec()));
+            annot2.set("Subtype", Object::Name(b"FreeText".to_vec()));
+            annot2.set("Rect", rect2);
+            annot2.set("Contents", Object::String(line2.as_bytes().to_vec(), lopdf::StringFormat::Literal));
+            annot2.set("DA", Object::String(da_string.as_bytes().to_vec(), lopdf::StringFormat::Literal));
+            annot2.set("Q", Object::Integer(0));
+            annot2.set("Border", Object::Array(vec![Object::Integer(0), Object::Integer(0), Object::Integer(0)]));
+            annot2.set("F", Object::Integer(4));
+            
+            let annot2_id = doc.add_object(annot2);
+            annotation_refs.push(Object::Reference(annot2_id));
         } else {
-            pos.line1.clone()
-        };
-        
-        // Calculer le rectangle de l'annotation
-        // rect = [x1, y1, x2, y2] (bottom-left to top-right)
-        let rect = Object::Array(vec![
-            Object::Real(pos.x),
-            Object::Real(pos.y),
-            Object::Real(pos.x + pos.width),
-            Object::Real(pos.y + pos.height),
-        ]);
-        
-        // Créer l'annotation FreeText
-        let mut annot_dict = Dictionary::new();
-        annot_dict.set("Type", Object::Name(b"Annot".to_vec()));
-        annot_dict.set("Subtype", Object::Name(b"FreeText".to_vec()));
-        annot_dict.set("Rect", rect);
-        annot_dict.set("Contents", Object::String(full_text.as_bytes().to_vec(), lopdf::StringFormat::Literal));
-        
-        // Style de l'annotation
-        annot_dict.set("DA", Object::String(b"/Helv 8 Tf 0 g".to_vec(), lopdf::StringFormat::Literal));
-        annot_dict.set("Q", Object::Integer(0)); // Left aligned
-        
-        // Pas de bordure
-        annot_dict.set("Border", Object::Array(vec![
-            Object::Integer(0),
-            Object::Integer(0),
-            Object::Integer(0),
-        ]));
-        
-        // Couleur de fond transparente
-        // annot_dict.set("C", Object::Array(vec![])); // No color = transparent
-        
-        // Flags: Print (bit 3) = l'annotation doit être imprimée
-        annot_dict.set("F", Object::Integer(4));
-        
-        let annot_id = doc.add_object(annot_dict);
-        annotation_refs.push(Object::Reference(annot_id));
+            // Mode 1 ligne : une seule annotation
+            let rect = Object::Array(vec![
+                Object::Real(pos.x),
+                Object::Real(pos.y),
+                Object::Real(pos.x + pos.width),
+                Object::Real(pos.y + pos.height),
+            ]);
+            
+            let mut annot_dict = Dictionary::new();
+            annot_dict.set("Type", Object::Name(b"Annot".to_vec()));
+            annot_dict.set("Subtype", Object::Name(b"FreeText".to_vec()));
+            annot_dict.set("Rect", rect);
+            annot_dict.set("Contents", Object::String(pos.line1.as_bytes().to_vec(), lopdf::StringFormat::Literal));
+            annot_dict.set("DA", Object::String(da_string.as_bytes().to_vec(), lopdf::StringFormat::Literal));
+            annot_dict.set("Q", Object::Integer(0));
+            annot_dict.set("Border", Object::Array(vec![Object::Integer(0), Object::Integer(0), Object::Integer(0)]));
+            annot_dict.set("F", Object::Integer(4));
+            
+            let annot_id = doc.add_object(annot_dict);
+            annotation_refs.push(Object::Reference(annot_id));
+        }
     }
     
     // D'abord, lire les annotations existantes
