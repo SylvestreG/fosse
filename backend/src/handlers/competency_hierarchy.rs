@@ -1048,9 +1048,15 @@ pub async fn get_my_competencies(
     State(db): State<Arc<DatabaseConnection>>,
     Query(query): Query<MyCompetenciesQuery>,
 ) -> Result<Json<CompetencyHierarchyResponse>, AppError> {
-    // Get current user's person record
+    // Use impersonated user's email if impersonating, otherwise use own email
+    let target_email = auth.claims.impersonating
+        .as_ref()
+        .map(|imp| imp.user_email.as_str())
+        .unwrap_or(&auth.claims.email);
+    
+    // Get target user's person record
     let person = People::find()
-        .filter(people::Column::Email.eq(&auth.claims.email))
+        .filter(people::Column::Email.eq(target_email))
         .one(db.as_ref())
         .await
         .map_err(|_| AppError::Database(DbErr::Custom("Query failed".to_string())))?
