@@ -12,6 +12,7 @@ use crate::errors::AppError;
 pub struct PdfGenerator;
 
 #[derive(Clone)]
+#[allow(dead_code)]
 struct TextPosition {
     x: f32,
     y: f32,
