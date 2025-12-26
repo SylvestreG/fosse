@@ -359,7 +359,7 @@ fn get_page_dimensions_from_doc(doc: &Document, page_id: ObjectId) -> Result<(f3
     }
 }
 
-/// Convertit UTF-8 en WinAnsi et échappe pour PDF
+/// Convertit UTF-8 en WinAnsi et échappe pour PDF (avec octales pour accents)
 fn escape_pdf_string(s: &str) -> String {
     let mut result = String::new();
     for c in s.chars() {
@@ -368,7 +368,9 @@ fn escape_pdf_string(s: &str) -> String {
             b'\\' => result.push_str("\\\\"),
             b'(' => result.push_str("\\("),
             b')' => result.push_str("\\)"),
-            _ => result.push(byte as char),
+            // Pour les bytes > 127, utiliser l'escape octale PDF
+            b if b > 127 => result.push_str(&format!("\\{:03o}", b)),
+            b => result.push(b as char),
         }
     }
     result
