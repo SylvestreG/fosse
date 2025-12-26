@@ -1216,6 +1216,7 @@ async fn get_competency_hierarchy_for_person(
                 skills_with_validation.push(CompetencySkillWithValidation {
                     id: skill.id,
                     name: skill.name,
+                    description: skill.description,
                     sort_order: skill.sort_order,
                     min_validator_level: skill.min_validator_level,
                     validation: validation_info,

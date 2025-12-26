@@ -214,6 +214,7 @@ pub struct CompetencyModuleWithProgress {
 pub struct CompetencySkillWithValidation {
     pub id: uuid::Uuid,
     pub name: String,
+    pub description: Option<String>,
     pub sort_order: i32,
     pub min_validator_level: String,
     pub validation: Option<SkillValidationInfo>,
