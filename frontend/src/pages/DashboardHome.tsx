@@ -308,7 +308,7 @@ export default function DashboardHome() {
 
         {person?.preparing_level && (
           <Link 
-            to="/dashboard/mes-competences" 
+            to="/dashboard/competences" 
             className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl p-6 hover:from-green-500/30 hover:to-emerald-500/30 transition-all group"
           >
             <div className="flex items-center gap-4">
