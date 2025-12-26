@@ -235,88 +235,97 @@ fn add_text_overlay(
     let invoke_stream = Stream::new(Dictionary::new(), invoke_content);
     let invoke_id = doc.add_object(Object::Stream(invoke_stream));
     
-    // Lire les infos de la page (resources existantes)
-    let existing_resources_id = {
+    // Lire les infos existantes de la page
+    let (existing_resources, existing_contents) = {
         let page = doc.get_object(page_id)
             .map_err(|e| AppError::Internal(format!("Failed to get page: {}", e)))?
             .as_dict()
             .map_err(|e| AppError::Internal(format!("Page is not a dict: {}", e)))?;
         
-        page.get(b"Resources").ok().and_then(|r| r.as_reference().ok())
+        let resources = page.get(b"Resources").ok().cloned();
+        let contents = page.get(b"Contents").ok().cloned();
+        (resources, contents)
     };
     
-    // Créer un XObjects dict avec notre overlay
-    let mut new_xobjects = Dictionary::new();
-    new_xobjects.set(xobject_name.clone(), Object::Reference(form_id));
-    let new_xobjects_id = doc.add_object(new_xobjects);
+    // Créer un NOUVEAU dictionnaire de resources qui inclut l'existant + notre XObject
+    let mut new_resources = Dictionary::new();
     
-    // Mettre à jour les resources de la page
-    if let Some(res_id) = existing_resources_id {
-        // Récupérer les resources existantes
-        let existing_res = doc.get_object(res_id)
-            .map_err(|e| AppError::Internal(format!("Failed to get resources: {}", e)))?
-            .as_dict()
-            .map_err(|_| AppError::Internal("Resources is not a dict".to_string()))?
-            .clone();
-        
-        let mut updated_res = existing_res;
-        
-        // Fusionner les XObjects existants avec le nôtre
-        if let Ok(existing_xobj) = updated_res.get(b"XObject") {
-            if let Ok(existing_xobj_id) = existing_xobj.as_reference() {
-                // Ajouter notre overlay aux XObjects existants
-                let existing_xobj_dict = doc.get_object(existing_xobj_id)
-                    .map_err(|e| AppError::Internal(format!("Failed to get XObjects: {}", e)))?
-                    .as_dict()
-                    .map_err(|_| AppError::Internal("XObjects is not a dict".to_string()))?
-                    .clone();
-                
-                let mut merged_xobj = existing_xobj_dict;
-                merged_xobj.set(xobject_name, Object::Reference(form_id));
-                doc.objects.insert(existing_xobj_id, Object::Dictionary(merged_xobj));
+    // Copier les références existantes si elles existent
+    if let Some(ref existing_res) = existing_resources {
+        if let Ok(existing_res_id) = existing_res.as_reference() {
+            if let Ok(existing_res_dict) = doc.get_object(existing_res_id) {
+                if let Ok(dict) = existing_res_dict.as_dict() {
+                    // Copier toutes les entrées existantes
+                    for (key, value) in dict.iter() {
+                        if key != b"XObject" {
+                            new_resources.set(key.clone(), value.clone());
+                        }
+                    }
+                    
+                    // Pour XObject, on doit fusionner
+                    if let Ok(existing_xobj) = dict.get(b"XObject") {
+                        let mut new_xobjects = Dictionary::new();
+                        
+                        // Copier les XObjects existants
+                        if let Ok(existing_xobj_id) = existing_xobj.as_reference() {
+                            if let Ok(existing_xobj_dict) = doc.get_object(existing_xobj_id) {
+                                if let Ok(xobj_dict) = existing_xobj_dict.as_dict() {
+                                    for (key, value) in xobj_dict.iter() {
+                                        new_xobjects.set(key.clone(), value.clone());
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Ajouter notre overlay
+                        new_xobjects.set(xobject_name.clone(), Object::Reference(form_id));
+                        let new_xobjects_id = doc.add_object(new_xobjects);
+                        new_resources.set("XObject", Object::Reference(new_xobjects_id));
+                    } else {
+                        // Pas de XObject existant, créer le nôtre
+                        let mut new_xobjects = Dictionary::new();
+                        new_xobjects.set(xobject_name.clone(), Object::Reference(form_id));
+                        let new_xobjects_id = doc.add_object(new_xobjects);
+                        new_resources.set("XObject", Object::Reference(new_xobjects_id));
+                    }
+                }
             }
-        } else {
-            // Pas de XObjects existants, ajouter le nôtre
-            updated_res.set("XObject", Object::Reference(new_xobjects_id));
-            doc.objects.insert(res_id, Object::Dictionary(updated_res));
         }
     } else {
-        // Pas de resources, on en crée
-        let mut new_res = Dictionary::new();
-        new_res.set("XObject", Object::Reference(new_xobjects_id));
-        let new_res_id = doc.add_object(new_res);
-        
-        // Mettre à jour la page avec les nouvelles resources
-        let page_obj = doc.get_object_mut(page_id)
-            .map_err(|e| AppError::Internal(format!("Failed to get page: {}", e)))?;
-        if let Object::Dictionary(ref mut page_dict) = page_obj {
-            page_dict.set("Resources", Object::Reference(new_res_id));
-        }
+        // Pas de resources existantes, juste créer XObject
+        let mut new_xobjects = Dictionary::new();
+        new_xobjects.set(xobject_name.clone(), Object::Reference(form_id));
+        let new_xobjects_id = doc.add_object(new_xobjects);
+        new_resources.set("XObject", Object::Reference(new_xobjects_id));
     }
     
-    // Ajouter notre stream d'invocation à Contents
+    let new_resources_id = doc.add_object(new_resources);
+    
+    // Créer le nouveau Contents array
+    let new_contents = if let Some(contents) = existing_contents {
+        match contents {
+            Object::Array(mut arr) => {
+                arr.push(Object::Reference(invoke_id));
+                Object::Array(arr)
+            }
+            Object::Reference(ref_id) => {
+                Object::Array(vec![
+                    Object::Reference(ref_id),
+                    Object::Reference(invoke_id),
+                ])
+            }
+            _ => Object::Reference(invoke_id),
+        }
+    } else {
+        Object::Reference(invoke_id)
+    };
+    
+    // Mettre à jour la page avec les nouvelles références
     let page_obj = doc.get_object_mut(page_id)
         .map_err(|e| AppError::Internal(format!("Failed to get page: {}", e)))?;
     
     if let Object::Dictionary(ref mut page_dict) = page_obj {
-        let new_contents = if let Ok(contents) = page_dict.get(b"Contents") {
-            match contents.clone() {
-                Object::Array(mut arr) => {
-                    arr.push(Object::Reference(invoke_id));
-                    Object::Array(arr)
-                }
-                Object::Reference(ref_id) => {
-                    Object::Array(vec![
-                        Object::Reference(ref_id),
-                        Object::Reference(invoke_id),
-                    ])
-                }
-                _ => Object::Reference(invoke_id),
-            }
-        } else {
-            Object::Reference(invoke_id)
-        };
-        
+        page_dict.set("Resources", Object::Reference(new_resources_id));
         page_dict.set("Contents", new_contents);
     }
     
