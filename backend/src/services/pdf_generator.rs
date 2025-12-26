@@ -1,7 +1,6 @@
-use lopdf::{Document, Object, Stream, Dictionary, ObjectId};
+use lopdf::{Document, Object, Dictionary, ObjectId};
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 use uuid::Uuid;
-use std::io::Write;
 
 use crate::entities::{
     level_documents, skill_document_positions, skill_validations,
@@ -20,7 +19,7 @@ struct TextPosition {
     width: f32,
     height: f32,
     line1: String,
-    line2: Option<String>,  // None si tout tient sur une ligne
+    line2: Option<String>,
     font_size: f32,
 }
 
@@ -78,7 +77,6 @@ impl PdfGenerator {
                     .await?
                 {
                     let name = format!("{} {}", validator.first_name, validator.last_name);
-                    // Extraire le niveau le plus élevé si plusieurs niveaux
                     let level = validator.diving_level
                         .as_ref()
                         .map(|levels| get_highest_level(levels))
@@ -92,11 +90,9 @@ impl PdfGenerator {
                 let date_str = validation.validated_at.format("%d/%m/%Y").to_string();
                 
                 // Déterminer si on peut afficher sur 2 lignes
-                // On considère qu'il faut au moins 2.5x la taille de police pour 2 lignes
                 let can_use_two_lines = position.height >= position.font_size * 2.5;
                 
                 let (line1, line2) = if can_use_two_lines {
-                    // 2 lignes : date sur la première, nom + niveau sur la seconde
                     let second_line = if validator_level.is_empty() {
                         validator_name
                     } else {
@@ -104,7 +100,6 @@ impl PdfGenerator {
                     };
                     (date_str, Some(second_line))
                 } else {
-                    // 1 seule ligne : tout condensé
                     (format!("{} - {}", date_str, validator_name), None)
                 };
                 
@@ -123,9 +118,9 @@ impl PdfGenerator {
             }
         }
         
-        // Ajouter les textes à chaque page
+        // Ajouter les annotations à chaque page
         for (page_num, texts) in texts_by_page {
-            add_text_overlay(&mut doc, page_num, &texts)?;
+            add_freetext_annotations(&mut doc, page_num, &texts)?;
         }
         
         // Sauvegarder le PDF modifié
@@ -137,209 +132,115 @@ impl PdfGenerator {
     }
 }
 
-/// Ajoute un overlay de texte à une page PDF sans modifier le contenu existant
-fn add_text_overlay(
+/// Ajoute des annotations FreeText à une page PDF (ne modifie pas le contenu existant)
+fn add_freetext_annotations(
     doc: &mut Document,
     page_num: u32,
     texts: &[TextPosition],
 ) -> Result<(), AppError> {
-    // Récupérer les pages
     let pages = doc.get_pages();
     let page_id = *pages.get(&page_num)
         .ok_or_else(|| AppError::Validation(format!("Page {} not found", page_num)))?;
     
-    // Créer une police Helvetica avec un nom unique pour éviter les conflits
-    let font_name = b"OverlayFont".to_vec();
-    let font_dict = Dictionary::from_iter(vec![
-        ("Type", Object::Name(b"Font".to_vec())),
-        ("Subtype", Object::Name(b"Type1".to_vec())),
-        ("BaseFont", Object::Name(b"Helvetica".to_vec())),
-    ]);
-    let font_id = doc.add_object(font_dict);
-    
-    // Créer le dictionnaire des polices pour l'overlay
-    let mut overlay_fonts = Dictionary::new();
-    overlay_fonts.set(font_name.clone(), Object::Reference(font_id));
-    let overlay_fonts_id = doc.add_object(overlay_fonts);
-    
-    // Créer le dictionnaire des ressources pour l'overlay
-    let mut overlay_resources = Dictionary::new();
-    overlay_resources.set("Font", Object::Reference(overlay_fonts_id));
-    let overlay_resources_id = doc.add_object(overlay_resources);
-    
-    // Créer le contenu du Form XObject
-    let mut form_content = Vec::new();
+    // Créer les annotations
+    let mut annotation_refs: Vec<Object> = Vec::new();
     
     for pos in texts {
-        if let Some(ref line2) = pos.line2 {
-            // Mode 2 lignes : centrer les deux lignes dans la zone
-            let line_spacing = pos.font_size * 1.2;
-            let total_height = pos.font_size * 2.0 + (line_spacing - pos.font_size);
-            let start_y = pos.y + (pos.height / 2.0) + (total_height / 2.0) - pos.font_size;
-            
-            // Ligne 1 (date) - en haut
-            let escaped_line1 = escape_pdf_string(&pos.line1);
-            write!(form_content, "BT ").unwrap();
-            write!(form_content, "/OverlayFont {} Tf ", pos.font_size).unwrap();
-            write!(form_content, "{:.2} {:.2} Td ", pos.x, start_y).unwrap();
-            write!(form_content, "({}) Tj ", escaped_line1).unwrap();
-            writeln!(form_content, "ET").unwrap();
-            
-            // Ligne 2 (nom + niveau) - en bas
-            let escaped_line2 = escape_pdf_string(line2);
-            let y2 = start_y - line_spacing;
-            write!(form_content, "BT ").unwrap();
-            write!(form_content, "/OverlayFont {} Tf ", pos.font_size).unwrap();
-            write!(form_content, "{:.2} {:.2} Td ", pos.x, y2).unwrap();
-            write!(form_content, "({}) Tj ", escaped_line2).unwrap();
-            writeln!(form_content, "ET").unwrap();
+        // Créer le texte complet
+        let full_text = if let Some(ref line2) = pos.line2 {
+            format!("{}\n{}", pos.line1, line2)
         } else {
-            // Mode 1 ligne : centrer verticalement
-            let escaped_text = escape_pdf_string(&pos.line1);
-            let centered_y = pos.y + (pos.height / 2.0) - (pos.font_size / 3.0);
-            
-            write!(form_content, "BT ").unwrap();
-            write!(form_content, "/OverlayFont {} Tf ", pos.font_size).unwrap();
-            write!(form_content, "{:.2} {:.2} Td ", pos.x, centered_y).unwrap();
-            write!(form_content, "({}) Tj ", escaped_text).unwrap();
-            writeln!(form_content, "ET").unwrap();
-        }
+            pos.line1.clone()
+        };
+        
+        // Calculer le rectangle de l'annotation
+        // rect = [x1, y1, x2, y2] (bottom-left to top-right)
+        let rect = Object::Array(vec![
+            Object::Real(pos.x),
+            Object::Real(pos.y),
+            Object::Real(pos.x + pos.width),
+            Object::Real(pos.y + pos.height),
+        ]);
+        
+        // Créer l'annotation FreeText
+        let mut annot_dict = Dictionary::new();
+        annot_dict.set("Type", Object::Name(b"Annot".to_vec()));
+        annot_dict.set("Subtype", Object::Name(b"FreeText".to_vec()));
+        annot_dict.set("Rect", rect);
+        annot_dict.set("Contents", Object::String(full_text.as_bytes().to_vec(), lopdf::StringFormat::Literal));
+        
+        // Style de l'annotation
+        annot_dict.set("DA", Object::String(b"/Helv 8 Tf 0 g".to_vec(), lopdf::StringFormat::Literal));
+        annot_dict.set("Q", Object::Integer(0)); // Left aligned
+        
+        // Pas de bordure
+        annot_dict.set("Border", Object::Array(vec![
+            Object::Integer(0),
+            Object::Integer(0),
+            Object::Integer(0),
+        ]));
+        
+        // Couleur de fond transparente
+        // annot_dict.set("C", Object::Array(vec![])); // No color = transparent
+        
+        // Flags: Print (bit 3) = l'annotation doit être imprimée
+        annot_dict.set("F", Object::Integer(4));
+        
+        let annot_id = doc.add_object(annot_dict);
+        annotation_refs.push(Object::Reference(annot_id));
     }
     
-    // Obtenir les dimensions de la page pour le BBox du Form
-    let (page_width, page_height) = get_page_dimensions_from_doc(doc, page_id)?;
-    
-    // Créer le Form XObject
-    let mut form_dict = Dictionary::new();
-    form_dict.set("Type", Object::Name(b"XObject".to_vec()));
-    form_dict.set("Subtype", Object::Name(b"Form".to_vec()));
-    form_dict.set("FormType", Object::Integer(1));
-    form_dict.set("BBox", Object::Array(vec![
-        Object::Real(0.0),
-        Object::Real(0.0),
-        Object::Real(page_width),
-        Object::Real(page_height),
-    ]));
-    form_dict.set("Resources", Object::Reference(overlay_resources_id));
-    
-    let form_stream = Stream::new(form_dict, form_content);
-    let form_id = doc.add_object(Object::Stream(form_stream));
-    
-    // Créer le stream d'invocation (ce qu'on ajoute à la page)
-    let xobject_name = b"ValidationOverlay".to_vec();
-    let mut invoke_content = Vec::new();
-    writeln!(invoke_content, "q").unwrap();
-    writeln!(invoke_content, "/ValidationOverlay Do").unwrap();
-    writeln!(invoke_content, "Q").unwrap();
-    
-    let invoke_stream = Stream::new(Dictionary::new(), invoke_content);
-    let invoke_id = doc.add_object(Object::Stream(invoke_stream));
-    
-    // Lire les infos existantes de la page
-    let (existing_resources, existing_contents) = {
+    // D'abord, lire les annotations existantes
+    let existing_annots = {
         let page = doc.get_object(page_id)
             .map_err(|e| AppError::Internal(format!("Failed to get page: {}", e)))?
             .as_dict()
             .map_err(|e| AppError::Internal(format!("Page is not a dict: {}", e)))?;
-        
-        let resources = page.get(b"Resources").ok().cloned();
-        let contents = page.get(b"Contents").ok().cloned();
-        (resources, contents)
+        page.get(b"Annots").ok().cloned()
     };
     
-    // Créer un NOUVEAU dictionnaire de resources qui inclut l'existant + notre XObject
-    let mut new_resources = Dictionary::new();
-    
-    // Copier les références existantes si elles existent
-    if let Some(ref existing_res) = existing_resources {
-        if let Ok(existing_res_id) = existing_res.as_reference() {
-            if let Ok(existing_res_dict) = doc.get_object(existing_res_id) {
-                if let Ok(dict) = existing_res_dict.as_dict() {
-                    // Copier toutes les entrées existantes
-                    for (key, value) in dict.iter() {
-                        if key != b"XObject" {
-                            new_resources.set(key.clone(), value.clone());
-                        }
-                    }
-                    
-                    // Pour XObject, on doit fusionner
-                    if let Ok(existing_xobj) = dict.get(b"XObject") {
-                        let mut new_xobjects = Dictionary::new();
-                        
-                        // Copier les XObjects existants
-                        if let Ok(existing_xobj_id) = existing_xobj.as_reference() {
-                            if let Ok(existing_xobj_dict) = doc.get_object(existing_xobj_id) {
-                                if let Ok(xobj_dict) = existing_xobj_dict.as_dict() {
-                                    for (key, value) in xobj_dict.iter() {
-                                        new_xobjects.set(key.clone(), value.clone());
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Ajouter notre overlay
-                        new_xobjects.set(xobject_name.clone(), Object::Reference(form_id));
-                        let new_xobjects_id = doc.add_object(new_xobjects);
-                        new_resources.set("XObject", Object::Reference(new_xobjects_id));
-                    } else {
-                        // Pas de XObject existant, créer le nôtre
-                        let mut new_xobjects = Dictionary::new();
-                        new_xobjects.set(xobject_name.clone(), Object::Reference(form_id));
-                        let new_xobjects_id = doc.add_object(new_xobjects);
-                        new_resources.set("XObject", Object::Reference(new_xobjects_id));
-                    }
-                }
+    // Résoudre les références si nécessaire
+    let existing_array = if let Some(Object::Reference(ref_id)) = existing_annots {
+        doc.get_object(ref_id).ok().and_then(|o| {
+            if let Object::Array(arr) = o {
+                Some(arr.clone())
+            } else {
+                None
             }
-        }
+        })
+    } else if let Some(Object::Array(arr)) = existing_annots {
+        Some(arr)
     } else {
-        // Pas de resources existantes, juste créer XObject
-        let mut new_xobjects = Dictionary::new();
-        new_xobjects.set(xobject_name.clone(), Object::Reference(form_id));
-        let new_xobjects_id = doc.add_object(new_xobjects);
-        new_resources.set("XObject", Object::Reference(new_xobjects_id));
-    }
-    
-    let new_resources_id = doc.add_object(new_resources);
-    
-    // Créer le nouveau Contents array
-    let new_contents = if let Some(contents) = existing_contents {
-        match contents {
-            Object::Array(mut arr) => {
-                arr.push(Object::Reference(invoke_id));
-                Object::Array(arr)
-            }
-            Object::Reference(ref_id) => {
-                Object::Array(vec![
-                    Object::Reference(ref_id),
-                    Object::Reference(invoke_id),
-                ])
-            }
-            _ => Object::Reference(invoke_id),
-        }
-    } else {
-        Object::Reference(invoke_id)
+        None
     };
     
-    // Mettre à jour la page avec les nouvelles références
+    // Créer le nouveau tableau d'annotations
+    let new_annots = if let Some(mut arr) = existing_array {
+        arr.extend(annotation_refs);
+        Object::Array(arr)
+    } else {
+        Object::Array(annotation_refs)
+    };
+    
+    // Mettre à jour la page
     let page_obj = doc.get_object_mut(page_id)
         .map_err(|e| AppError::Internal(format!("Failed to get page: {}", e)))?;
     
     if let Object::Dictionary(ref mut page_dict) = page_obj {
-        page_dict.set("Resources", Object::Reference(new_resources_id));
-        page_dict.set("Contents", new_contents);
+        page_dict.set("Annots", new_annots);
     }
     
     Ok(())
 }
 
 /// Obtient les dimensions d'une page à partir du document
+#[allow(dead_code)]
 fn get_page_dimensions_from_doc(doc: &Document, page_id: ObjectId) -> Result<(f32, f32), AppError> {
     let page = doc.get_object(page_id)
         .map_err(|e| AppError::Internal(format!("Failed to get page: {}", e)))?
         .as_dict()
         .map_err(|e| AppError::Internal(format!("Page is not a dict: {}", e)))?;
     
-    // Essayer MediaBox ou CropBox
     let media_box = page.get(b"MediaBox")
         .or_else(|_| page.get(b"CropBox"))
         .map_err(|_| AppError::Internal("No MediaBox or CropBox found".to_string()))?
@@ -356,6 +257,7 @@ fn get_page_dimensions_from_doc(doc: &Document, page_id: ObjectId) -> Result<(f3
 }
 
 /// Échappe les caractères spéciaux pour une chaîne PDF
+#[allow(dead_code)]
 fn escape_pdf_string(s: &str) -> String {
     s.replace('\\', "\\\\")
         .replace('(', "\\(")
