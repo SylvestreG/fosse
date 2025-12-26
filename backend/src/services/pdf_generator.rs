@@ -268,9 +268,13 @@ fn create_styled_annotation(
     writeln!(content, "/F1 {} Tf", font_size).unwrap();
     
     if let Some(l2) = line2 {
-        // 2 lignes
-        let text_y1 = h - padding - font_size * 0.85;
-        let text_y2 = padding + font_size * 0.15;
+        // 2 lignes centrées verticalement comme un bloc
+        let line_spacing = font_size * 1.25; // Espacement entre les baselines
+        let center_y = h / 2.0;
+        
+        // Centrer le bloc de texte verticalement
+        let text_y1 = center_y + line_spacing / 2.0 - font_size * 0.1;
+        let text_y2 = text_y1 - line_spacing;
         
         writeln!(content, "{:.2} {:.2} Td", padding, text_y1).unwrap();
         writeln!(content, "({}) Tj", escape_pdf_string(line1)).unwrap();
