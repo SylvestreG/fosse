@@ -143,11 +143,12 @@ fn add_freetext_annotations(
     let page_id = *pages.get(&page_num)
         .ok_or_else(|| AppError::Validation(format!("Page {} not found", page_num)))?;
     
-    // Créer une police Helvetica-Bold pour l'overlay
+    // Créer une police Helvetica-Oblique avec encodage WinAnsi pour les accents
     let font_dict = Dictionary::from_iter(vec![
         ("Type", Object::Name(b"Font".to_vec())),
         ("Subtype", Object::Name(b"Type1".to_vec())),
         ("BaseFont", Object::Name(b"Helvetica-Oblique".to_vec())),
+        ("Encoding", Object::Name(b"WinAnsiEncoding".to_vec())),
     ]);
     let font_id = doc.add_object(font_dict);
     
@@ -358,11 +359,68 @@ fn get_page_dimensions_from_doc(doc: &Document, page_id: ObjectId) -> Result<(f3
     }
 }
 
-/// Échappe les caractères spéciaux pour une chaîne PDF
+/// Convertit UTF-8 en WinAnsi et échappe pour PDF
 fn escape_pdf_string(s: &str) -> String {
-    s.replace('\\', "\\\\")
-        .replace('(', "\\(")
-        .replace(')', "\\)")
+    let mut result = String::new();
+    for c in s.chars() {
+        let byte = utf8_to_winansi(c);
+        match byte {
+            b'\\' => result.push_str("\\\\"),
+            b'(' => result.push_str("\\("),
+            b')' => result.push_str("\\)"),
+            _ => result.push(byte as char),
+        }
+    }
+    result
+}
+
+/// Convertit un caractère UTF-8 en byte WinAnsi (Windows-1252)
+fn utf8_to_winansi(c: char) -> u8 {
+    match c {
+        // ASCII standard (0-127)
+        c if c.is_ascii() => c as u8,
+        // Caractères accentués français courants
+        'é' => 233,
+        'è' => 232,
+        'ê' => 234,
+        'ë' => 235,
+        'à' => 224,
+        'â' => 226,
+        'ä' => 228,
+        'ù' => 249,
+        'û' => 251,
+        'ü' => 252,
+        'î' => 238,
+        'ï' => 239,
+        'ô' => 244,
+        'ö' => 246,
+        'ç' => 231,
+        'É' => 201,
+        'È' => 200,
+        'Ê' => 202,
+        'Ë' => 203,
+        'À' => 192,
+        'Â' => 194,
+        'Ä' => 196,
+        'Ù' => 217,
+        'Û' => 219,
+        'Ü' => 220,
+        'Î' => 206,
+        'Ï' => 207,
+        'Ô' => 212,
+        'Ö' => 214,
+        'Ç' => 199,
+        'œ' => 156,
+        'Œ' => 140,
+        'æ' => 230,
+        'Æ' => 198,
+        'ñ' => 241,
+        'Ñ' => 209,
+        '°' => 176,
+        '€' => 128,
+        // Caractère non supporté -> ?
+        _ => b'?',
+    }
 }
 
 /// Extrait le niveau le plus élevé d'une chaîne de niveaux séparés par des virgules
