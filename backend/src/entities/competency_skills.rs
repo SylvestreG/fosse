@@ -8,6 +8,8 @@ pub struct Model {
     pub id: Uuid,
     pub module_id: Uuid,
     pub name: String,
+    /// Description optionnelle pour aider les encadrants lors de la validation
+    pub description: Option<String>,
     pub sort_order: i32,
     /// Niveau minimum requis pour valider cette compétence (ex: "E2", "MF1", "N4")
     pub min_validator_level: String,

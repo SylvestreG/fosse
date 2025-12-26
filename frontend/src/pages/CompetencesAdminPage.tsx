@@ -612,14 +612,21 @@ function HierarchySection({
                                   key={skill.id}
                                   className="flex items-center justify-between p-2 pl-12 hover:bg-slate-700/50 border-b border-slate-600/50 last:border-b-0"
                                 >
-                                  <div className="flex items-center gap-2">
-                                    <span className="w-5 h-5 bg-cyan-500/20 text-cyan-400 rounded-full flex items-center justify-center text-xs border border-cyan-500/30">
-                                      {index + 1}
-                                    </span>
-                                    <span className="text-sm text-slate-200">{skill.name}</span>
-                                    <span className="text-xs text-slate-400 bg-slate-600/50 px-1.5 py-0.5 rounded border border-slate-500/50">
-                                      Min: {skill.min_validator_level}
-                                    </span>
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <span className="w-5 h-5 bg-cyan-500/20 text-cyan-400 rounded-full flex items-center justify-center text-xs border border-cyan-500/30">
+                                        {index + 1}
+                                      </span>
+                                      <span className="text-sm text-slate-200">{skill.name}</span>
+                                      <span className="text-xs text-slate-400 bg-slate-600/50 px-1.5 py-0.5 rounded border border-slate-500/50">
+                                        Min: {skill.min_validator_level}
+                                      </span>
+                                    </div>
+                                    {skill.description && (
+                                      <p className="text-xs text-slate-400 ml-7 mt-1 italic">
+                                        💡 {skill.description}
+                                      </p>
+                                    )}
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <button
@@ -1354,6 +1361,7 @@ function SkillModal({ skill, moduleId, onClose, onSuccess }: SkillModalProps) {
   const [formData, setFormData] = useState({
     module_id: skill?.module_id || moduleId,
     name: skill?.name || '',
+    description: skill?.description || '',
     sort_order: skill?.sort_order ?? undefined,
     min_validator_level: skill?.min_validator_level || 'E2',
   })
@@ -1394,6 +1402,22 @@ function SkillModal({ skill, moduleId, onClose, onSuccess }: SkillModalProps) {
             className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
             placeholder="Gréage et dégréage"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1">
+            Description <span className="text-slate-500">(optionnelle)</span>
+          </label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            placeholder="Aide pour les encadrants lors de la validation..."
+            rows={3}
+          />
+          <p className="text-xs text-slate-400 mt-1">
+            Aide affichée aux encadrants lors de la validation de cet acquis
+          </p>
         </div>
 
         <div>

@@ -390,6 +390,7 @@ pub async fn list_competency_modules(
                         id: s.id,
                         module_id: s.module_id,
                         name: s.name,
+                        description: s.description,
                         sort_order: s.sort_order,
                         min_validator_level: s.min_validator_level,
                     })
@@ -550,6 +551,7 @@ pub async fn list_competency_skills(
             id: s.id,
             module_id: s.module_id,
             name: s.name,
+            description: s.description,
             sort_order: s.sort_order,
             min_validator_level: s.min_validator_level,
         })
@@ -587,6 +589,7 @@ pub async fn create_competency_skill(
         id: Set(Uuid::new_v4()),
         module_id: Set(payload.module_id),
         name: Set(payload.name),
+        description: Set(payload.description),
         sort_order: Set(payload.sort_order.unwrap_or(max_order + 1)),
         min_validator_level: Set(payload.min_validator_level.unwrap_or_else(|| "E2".to_string())),
         created_at: Set(now),
@@ -601,6 +604,7 @@ pub async fn create_competency_skill(
         id: skill.id,
         module_id: skill.module_id,
         name: skill.name,
+        description: skill.description,
         sort_order: skill.sort_order,
         min_validator_level: skill.min_validator_level,
     }))
@@ -629,6 +633,9 @@ pub async fn update_competency_skill(
     if let Some(name) = payload.name {
         skill.name = Set(name);
     }
+    if let Some(description) = payload.description {
+        skill.description = Set(Some(description));
+    }
     if let Some(sort_order) = payload.sort_order {
         skill.sort_order = Set(sort_order);
     }
@@ -645,6 +652,7 @@ pub async fn update_competency_skill(
         id: updated.id,
         module_id: updated.module_id,
         name: updated.name,
+        description: updated.description,
         sort_order: updated.sort_order,
         min_validator_level: updated.min_validator_level,
     }))

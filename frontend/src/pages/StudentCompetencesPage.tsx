@@ -511,14 +511,21 @@ export default function StudentCompetencesPage() {
                                 key={skill.id}
                                 className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 pl-8 sm:pl-14 border-b border-slate-700/50 last:border-b-0 hover:bg-slate-700/50 gap-2"
                               >
-                                <div className="flex items-start sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                                  <span className="w-5 h-5 sm:w-6 sm:h-6 bg-cyan-500/20 text-cyan-300 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
-                                    {index + 1}
-                                  </span>
-                                  <span className="text-xs sm:text-sm text-slate-200">{skill.name}</span>
-                                  <span className="text-xs text-slate-400 bg-slate-700/50 px-1 sm:px-1.5 py-0.5 rounded hidden sm:inline">
-                                    Min: {skill.min_validator_level}
-                                  </span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                                    <span className="w-5 h-5 sm:w-6 sm:h-6 bg-cyan-500/20 text-cyan-300 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
+                                      {index + 1}
+                                    </span>
+                                    <span className="text-xs sm:text-sm text-slate-200">{skill.name}</span>
+                                    <span className="text-xs text-slate-400 bg-slate-700/50 px-1 sm:px-1.5 py-0.5 rounded hidden sm:inline">
+                                      Min: {skill.min_validator_level}
+                                    </span>
+                                  </div>
+                                  {skill.description && (
+                                    <p className="text-xs text-amber-400/80 ml-7 sm:ml-8 mt-1 italic">
+                                      💡 {skill.description}
+                                    </p>
+                                  )}
                                 </div>
                                 
                                 <div className="flex items-center gap-2 ml-7 sm:ml-0 flex-wrap sm:flex-nowrap">

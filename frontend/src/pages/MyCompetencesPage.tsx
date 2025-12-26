@@ -364,11 +364,18 @@ export default function MyCompetencesPage() {
                           key={skill.id}
                           className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 sm:py-3 border-b border-gray-50 last:border-b-0 gap-2"
                         >
-                          <div className="flex items-start sm:items-center gap-2 sm:gap-3">
-                            <span className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-semibold">
-                              {index + 1}
-                            </span>
-                            <span className="text-slate-200 text-sm sm:text-base">{skill.name}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                              <span className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-semibold">
+                                {index + 1}
+                              </span>
+                              <span className="text-slate-200 text-sm sm:text-base">{skill.name}</span>
+                            </div>
+                            {skill.description && (
+                              <p className="text-xs text-slate-400 ml-7 sm:ml-8 mt-1 italic">
+                                💡 {skill.description}
+                              </p>
+                            )}
                           </div>
                           
                           {/* Badge de validation */}

@@ -380,6 +380,7 @@ export interface CompetencySkill {
   id: string
   module_id: string
   name: string
+  description?: string
   sort_order: number
   min_validator_level: string
 }
@@ -422,6 +423,7 @@ export interface SkillValidationInfo {
 export interface CompetencySkillWithValidation {
   id: string
   name: string
+  description?: string
   sort_order: number
   min_validator_level: string
   validation?: SkillValidationInfo
@@ -480,7 +482,7 @@ export const competencyModulesApi = {
 export const competencySkillsApi = {
   list: (moduleId?: string) =>
     api.get<CompetencySkill[]>('/competency-skills', { params: { module_id: moduleId } }),
-  create: (data: { module_id: string; name: string; sort_order?: number; min_validator_level?: string }) =>
+  create: (data: { module_id: string; name: string; description?: string; sort_order?: number; min_validator_level?: string }) =>
     api.post<CompetencySkill>('/competency-skills', data),
   update: (id: string, data: Partial<Omit<CompetencySkill, 'id'>>) =>
     api.put<CompetencySkill>(`/competency-skills/${id}`, data),

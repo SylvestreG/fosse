@@ -116,6 +116,8 @@ pub struct CompetencySkillResponse {
     pub id: uuid::Uuid,
     pub module_id: uuid::Uuid,
     pub name: String,
+    /// Description optionnelle pour aider les encadrants lors de la validation
+    pub description: Option<String>,
     pub sort_order: i32,
     pub min_validator_level: String,
 }
@@ -125,6 +127,8 @@ pub struct CreateCompetencySkillRequest {
     pub module_id: uuid::Uuid,
     #[validate(length(min = 1, max = 255))]
     pub name: String,
+    /// Description optionnelle pour aider les encadrants
+    pub description: Option<String>,
     pub sort_order: Option<i32>,
     #[validate(length(min = 1, max = 10))]
     pub min_validator_level: Option<String>, // Default: "E2"
@@ -135,6 +139,8 @@ pub struct UpdateCompetencySkillRequest {
     pub module_id: Option<uuid::Uuid>,
     #[validate(length(min = 1, max = 255))]
     pub name: Option<String>,
+    /// Description optionnelle pour aider les encadrants
+    pub description: Option<String>,
     pub sort_order: Option<i32>,
     #[validate(length(min = 1, max = 10))]
     pub min_validator_level: Option<String>,
