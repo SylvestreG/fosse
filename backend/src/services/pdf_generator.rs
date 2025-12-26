@@ -17,7 +17,8 @@ struct TextPosition {
     y: f32,
     width: f32,
     height: f32,
-    text: String,
+    line1: String,
+    line2: Option<String>,  // None si tout tient sur une ligne
     font_size: f32,
 }
 
@@ -69,21 +70,37 @@ impl PdfGenerator {
         
         for position in positions {
             if let Some(validation) = validation_map.get(&position.skill_id) {
-                // Récupérer le nom du validateur
-                let validator_name = if let Some(validator) = people::Entity::find_by_id(validation.validated_by_id)
+                // Récupérer le validateur avec son niveau
+                let (validator_name, validator_level) = if let Some(validator) = people::Entity::find_by_id(validation.validated_by_id)
                     .one(db)
                     .await?
                 {
-                    format!("{} {}", validator.first_name, validator.last_name)
+                    let name = format!("{} {}", validator.first_name, validator.last_name);
+                    let level = validator.diving_level.clone().unwrap_or_default();
+                    (name, level)
                 } else {
-                    "?".to_string()
+                    ("?".to_string(), String::new())
                 };
                 
                 // Formater la date
                 let date_str = validation.validated_at.format("%d/%m/%Y").to_string();
                 
-                // Texte à afficher
-                let text = format!("{} - {}", date_str, validator_name);
+                // Déterminer si on peut afficher sur 2 lignes
+                // On considère qu'il faut au moins 2.5x la taille de police pour 2 lignes
+                let can_use_two_lines = position.height >= position.font_size * 2.5;
+                
+                let (line1, line2) = if can_use_two_lines {
+                    // 2 lignes : date sur la première, nom + niveau sur la seconde
+                    let second_line = if validator_level.is_empty() {
+                        validator_name
+                    } else {
+                        format!("{} ({})", validator_name, validator_level)
+                    };
+                    (date_str, Some(second_line))
+                } else {
+                    // 1 seule ligne : tout condensé
+                    (format!("{} - {}", date_str, validator_name), None)
+                };
                 
                 texts_by_page
                     .entry(position.page as u32)
@@ -93,7 +110,8 @@ impl PdfGenerator {
                         y: position.y,
                         width: position.width,
                         height: position.height,
-                        text,
+                        line1,
+                        line2,
                         font_size: position.font_size,
                     });
             }
@@ -147,16 +165,39 @@ fn add_text_overlay(
     let mut form_content = Vec::new();
     
     for pos in texts {
-        let escaped_text = escape_pdf_string(&pos.text);
-        // Centrer le texte verticalement dans la zone
-        // y est la coordonnée du bas de la zone, on ajoute height/2 pour centrer
-        let centered_y = pos.y + (pos.height / 2.0) - (pos.font_size / 3.0);
-        
-        write!(form_content, "BT ").unwrap();
-        write!(form_content, "/OverlayFont {} Tf ", pos.font_size).unwrap();
-        write!(form_content, "{:.2} {:.2} Td ", pos.x, centered_y).unwrap();
-        write!(form_content, "({}) Tj ", escaped_text).unwrap();
-        writeln!(form_content, "ET").unwrap();
+        if let Some(ref line2) = pos.line2 {
+            // Mode 2 lignes : centrer les deux lignes dans la zone
+            let line_spacing = pos.font_size * 1.2;
+            let total_height = pos.font_size * 2.0 + (line_spacing - pos.font_size);
+            let start_y = pos.y + (pos.height / 2.0) + (total_height / 2.0) - pos.font_size;
+            
+            // Ligne 1 (date) - en haut
+            let escaped_line1 = escape_pdf_string(&pos.line1);
+            write!(form_content, "BT ").unwrap();
+            write!(form_content, "/OverlayFont {} Tf ", pos.font_size).unwrap();
+            write!(form_content, "{:.2} {:.2} Td ", pos.x, start_y).unwrap();
+            write!(form_content, "({}) Tj ", escaped_line1).unwrap();
+            writeln!(form_content, "ET").unwrap();
+            
+            // Ligne 2 (nom + niveau) - en bas
+            let escaped_line2 = escape_pdf_string(line2);
+            let y2 = start_y - line_spacing;
+            write!(form_content, "BT ").unwrap();
+            write!(form_content, "/OverlayFont {} Tf ", pos.font_size).unwrap();
+            write!(form_content, "{:.2} {:.2} Td ", pos.x, y2).unwrap();
+            write!(form_content, "({}) Tj ", escaped_line2).unwrap();
+            writeln!(form_content, "ET").unwrap();
+        } else {
+            // Mode 1 ligne : centrer verticalement
+            let escaped_text = escape_pdf_string(&pos.line1);
+            let centered_y = pos.y + (pos.height / 2.0) - (pos.font_size / 3.0);
+            
+            write!(form_content, "BT ").unwrap();
+            write!(form_content, "/OverlayFont {} Tf ", pos.font_size).unwrap();
+            write!(form_content, "{:.2} {:.2} Td ", pos.x, centered_y).unwrap();
+            write!(form_content, "({}) Tj ", escaped_text).unwrap();
+            writeln!(form_content, "ET").unwrap();
+        }
     }
     
     // Obtenir les dimensions de la page pour le BBox du Form
