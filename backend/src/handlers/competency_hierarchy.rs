@@ -12,7 +12,7 @@ use crate::models::{
     CreateCompetencySkillRequest, CreateSkillValidationRequest, CreateValidationStageRequest,
     Permission, ProgressStats, SkillValidationInfo, SkillValidationResponse,
     UpdateCompetencyDomainRequest, UpdateCompetencyModuleRequest, UpdateCompetencySkillRequest,
-    UpdateSkillValidationRequest, UpdateValidationStageRequest, ValidationStageResponse,
+    UpdateSkillValidationRequest, UpdateValidationStageRequest, ValidationLogEntry, ValidationStageResponse,
 };
 use crate::models::diving_level::DivingLevel;
 use axum::{
@@ -1037,6 +1037,106 @@ pub async fn delete_skill_validation(
     })?;
 
     Ok(Json(serde_json::json!({ "message": "Validation supprimée" })))
+}
+
+/// Get all validation logs (admin only)
+pub async fn get_validation_logs(
+    Extension(auth): Extension<AuthUser>,
+    State(db): State<Arc<DatabaseConnection>>,
+) -> Result<Json<Vec<ValidationLogEntry>>, AppError> {
+    // Only real admins can view validation logs
+    if !auth.claims.is_admin || auth.claims.impersonating.is_some() {
+        return Err(AppError::Forbidden(
+            "Seuls les administrateurs peuvent voir les logs de validation".to_string()
+        ));
+    }
+
+    // Load all validations ordered by date desc
+    let validations = SkillValidations::find()
+        .order_by_desc(skill_validations::Column::ValidatedAt)
+        .order_by_desc(skill_validations::Column::CreatedAt)
+        .all(db.as_ref())
+        .await
+        .map_err(|e| AppError::Database(DbErr::Custom(format!("Query failed: {}", e))))?;
+
+    // Preload all people for efficiency
+    let people_map: HashMap<Uuid, people::Model> = People::find()
+        .all(db.as_ref())
+        .await
+        .map_err(|e| AppError::Database(DbErr::Custom(format!("Query failed: {}", e))))?
+        .into_iter()
+        .map(|p| (p.id, p))
+        .collect();
+
+    // Preload all skills with their modules and domains
+    let skills: Vec<competency_skills::Model> = CompetencySkills::find()
+        .all(db.as_ref())
+        .await
+        .map_err(|e| AppError::Database(DbErr::Custom(format!("Query failed: {}", e))))?;
+
+    let modules: Vec<competency_modules::Model> = CompetencyModules::find()
+        .all(db.as_ref())
+        .await
+        .map_err(|e| AppError::Database(DbErr::Custom(format!("Query failed: {}", e))))?;
+
+    let domains: Vec<competency_domains::Model> = CompetencyDomains::find()
+        .all(db.as_ref())
+        .await
+        .map_err(|e| AppError::Database(DbErr::Custom(format!("Query failed: {}", e))))?;
+
+    let stages: Vec<validation_stages::Model> = ValidationStages::find()
+        .all(db.as_ref())
+        .await
+        .map_err(|e| AppError::Database(DbErr::Custom(format!("Query failed: {}", e))))?;
+
+    // Create lookup maps
+    let skills_map: HashMap<Uuid, &competency_skills::Model> = skills.iter().map(|s| (s.id, s)).collect();
+    let modules_map: HashMap<Uuid, &competency_modules::Model> = modules.iter().map(|m| (m.id, m)).collect();
+    let domains_map: HashMap<Uuid, &competency_domains::Model> = domains.iter().map(|d| (d.id, d)).collect();
+    let stages_map: HashMap<Uuid, &validation_stages::Model> = stages.iter().map(|s| (s.id, s)).collect();
+
+    let mut response: Vec<ValidationLogEntry> = Vec::new();
+
+    for validation in validations {
+        let student = people_map.get(&validation.person_id);
+        let instructor = people_map.get(&validation.validated_by_id);
+        let skill = skills_map.get(&validation.skill_id);
+        let stage = stages_map.get(&validation.stage_id);
+
+        // Get module and domain from skill
+        let (module_name, domain_name, diving_level) = if let Some(sk) = skill {
+            if let Some(module) = modules_map.get(&sk.module_id) {
+                if let Some(domain) = domains_map.get(&module.domain_id) {
+                    (module.name.clone(), domain.name.clone(), domain.diving_level.clone())
+                } else {
+                    (module.name.clone(), "?".to_string(), "?".to_string())
+                }
+            } else {
+                ("?".to_string(), "?".to_string(), "?".to_string())
+            }
+        } else {
+            ("?".to_string(), "?".to_string(), "?".to_string())
+        };
+
+        response.push(ValidationLogEntry {
+            id: validation.id,
+            validated_at: validation.validated_at.to_string(),
+            student_name: student.map(|p| format!("{} {}", p.first_name, p.last_name)).unwrap_or_else(|| "?".to_string()),
+            student_email: student.map(|p| p.email.clone()).unwrap_or_else(|| "?".to_string()),
+            instructor_name: instructor.map(|p| format!("{} {}", p.first_name, p.last_name)).unwrap_or_else(|| "?".to_string()),
+            instructor_email: instructor.map(|p| p.email.clone()).unwrap_or_else(|| "?".to_string()),
+            skill_name: skill.map(|s| s.name.clone()).unwrap_or_else(|| "?".to_string()),
+            module_name,
+            domain_name,
+            diving_level,
+            stage_name: stage.map(|s| s.name.clone()).unwrap_or_else(|| "?".to_string()),
+            stage_color: stage.map(|s| s.color.clone()).unwrap_or_else(|| "#888888".to_string()),
+            is_final: stage.map(|s| s.is_final).unwrap_or(false),
+            notes: validation.notes,
+        });
+    }
+
+    Ok(Json(response))
 }
 
 // ============================================================================

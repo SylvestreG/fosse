@@ -181,6 +181,25 @@ pub struct UpdateSkillValidationRequest {
     pub notes: Option<String>,
 }
 
+/// Log entry for validation history (admin view)
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ValidationLogEntry {
+    pub id: uuid::Uuid,
+    pub validated_at: String,
+    pub student_name: String,
+    pub student_email: String,
+    pub instructor_name: String,
+    pub instructor_email: String,
+    pub skill_name: String,
+    pub module_name: String,
+    pub domain_name: String,
+    pub diving_level: String,
+    pub stage_name: String,
+    pub stage_color: String,
+    pub is_final: bool,
+    pub notes: Option<String>,
+}
+
 // ============================================================================
 // RESPONSE WITH FULL HIERARCHY (for user view)
 // ============================================================================

@@ -429,6 +429,23 @@ export interface CompetencySkillWithValidation {
   validation?: SkillValidationInfo
 }
 
+export interface ValidationLogEntry {
+  id: string
+  validated_at: string
+  student_name: string
+  student_email: string
+  instructor_name: string
+  instructor_email: string
+  skill_name: string
+  module_name: string
+  domain_name: string
+  diving_level: string
+  stage_name: string
+  stage_color: string
+  is_final: boolean
+  notes?: string
+}
+
 export interface CompetencyModuleWithProgress {
   id: string
   name: string
@@ -502,6 +519,8 @@ export const skillValidationsApi = {
     api.get<CompetencyHierarchy>('/my-competencies', { params: { diving_level: divingLevel } }),
   getPersonCompetencies: (personId: string, divingLevel: string) =>
     api.get<CompetencyHierarchy>(`/person-competencies/${personId}`, { params: { diving_level: divingLevel } }),
+  // Admin logs
+  getLogs: () => api.get<ValidationLogEntry[]>('/skill-validations/logs'),
 }
 
 export const competenciesApi = {

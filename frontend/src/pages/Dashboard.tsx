@@ -17,6 +17,7 @@ import StudentCompetencesPage from './StudentCompetencesPage'
 import MyCompetencesPage from './MyCompetencesPage'
 import GroupsPage from './GroupsPage'
 import LevelDocumentsPage from './LevelDocumentsPage'
+import ValidationLogsPage from './ValidationLogsPage'
 import { useAuthStore } from '@/lib/auth'
 
 export default function Dashboard() {
@@ -74,6 +75,9 @@ export default function Dashboard() {
             
             {/* Documents de compétences - admin seulement */}
             {isAdmin && <Route path="/level-documents" element={<LevelDocumentsPage />} />}
+            
+            {/* Logs des validations - admin seulement */}
+            {isAdmin && <Route path="/validation-logs" element={<ValidationLogsPage />} />}
             
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/dashboard" />} />

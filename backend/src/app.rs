@@ -153,6 +153,7 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         // Skill validations (progression des élèves)
         .route("/api/v1/skill-validations", get(list_skill_validations).post(create_skill_validation))
         .route("/api/v1/skill-validations/:id", axum::routing::put(update_skill_validation).delete(delete_skill_validation))
+        .route("/api/v1/skill-validations/logs", get(get_validation_logs))
         // Hierarchy views
         .route("/api/v1/my-competencies", get(get_my_competencies))
         .route("/api/v1/person-competencies/:person_id", get(get_person_competencies))

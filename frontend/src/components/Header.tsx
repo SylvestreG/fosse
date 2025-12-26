@@ -90,6 +90,9 @@ export default function Header() {
                   <Link to="/dashboard/level-documents" className={navLinkClass('/dashboard/level-documents')}>
                     Documents
                   </Link>
+                  <Link to="/dashboard/validation-logs" className={navLinkClass('/dashboard/validation-logs')}>
+                    Logs
+                  </Link>
                   <Link to="/dashboard/emails" className={navLinkClass('/dashboard/emails')}>
                     Emails
                   </Link>
@@ -203,6 +206,13 @@ export default function Header() {
                   onClick={closeMobileMenu}
                 >
                   📄 Documents
+                </Link>
+                <Link 
+                  to="/dashboard/validation-logs" 
+                  className={mobileNavLinkClass('/dashboard/validation-logs')}
+                  onClick={closeMobileMenu}
+                >
+                  📋 Logs
                 </Link>
                 <Link 
                   to="/dashboard/emails" 
