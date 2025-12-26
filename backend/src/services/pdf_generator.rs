@@ -8,6 +8,7 @@ use crate::entities::{
     people,
 };
 use crate::errors::AppError;
+use crate::models::diving_level::DivingLevel;
 
 pub struct PdfGenerator;
 
@@ -71,13 +72,17 @@ impl PdfGenerator {
         
         for position in positions {
             if let Some(validation) = validation_map.get(&position.skill_id) {
-                // Récupérer le validateur avec son niveau
+                // Récupérer le validateur avec son niveau le plus élevé
                 let (validator_name, validator_level) = if let Some(validator) = people::Entity::find_by_id(validation.validated_by_id)
                     .one(db)
                     .await?
                 {
                     let name = format!("{} {}", validator.first_name, validator.last_name);
-                    let level = validator.diving_level.clone().unwrap_or_default();
+                    // Extraire le niveau le plus élevé si plusieurs niveaux
+                    let level = validator.diving_level
+                        .as_ref()
+                        .map(|levels| get_highest_level(levels))
+                        .unwrap_or_default();
                     (name, level)
                 } else {
                     ("?".to_string(), String::new())
@@ -346,6 +351,25 @@ fn escape_pdf_string(s: &str) -> String {
     s.replace('\\', "\\\\")
         .replace('(', "\\(")
         .replace(')', "\\)")
+}
+
+/// Extrait le niveau le plus élevé d'une chaîne de niveaux séparés par des virgules
+fn get_highest_level(levels_str: &str) -> String {
+    let mut highest: Option<DivingLevel> = None;
+    let mut highest_hierarchy: u8 = 0;
+    
+    for level_str in levels_str.split(',') {
+        let trimmed = level_str.trim();
+        if let Some(level) = DivingLevel::parse(trimmed) {
+            let h = level.hierarchy();
+            if h > highest_hierarchy {
+                highest_hierarchy = h;
+                highest = Some(level);
+            }
+        }
+    }
+    
+    highest.map(|l| l.to_string()).unwrap_or_default()
 }
 
 #[allow(dead_code)]
