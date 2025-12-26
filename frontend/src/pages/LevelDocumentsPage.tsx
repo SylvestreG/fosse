@@ -45,9 +45,19 @@ export default function LevelDocumentsPage() {
   // Placement mode
   const [placementMode, setPlacementMode] = useState(false)
   const [skillToPlace, setSkillToPlace] = useState<SkillToPlace | null>(null)
-  const [hoveredPosition, setHoveredPosition] = useState<{ x: number; y: number } | null>(null)
+  
+  // Drawing/editing state
+  const [isDrawing, setIsDrawing] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
+  const [resizeHandle, setResizeHandle] = useState<string | null>(null)
+  const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null)
+  const [currentRect, setCurrentRect] = useState<{ x: number; y: number; width: number; height: number } | null>(null)
+  const [selectedPositionId, setSelectedPositionId] = useState<string | null>(null)
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null)
   
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const overlayRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -143,86 +153,275 @@ export default function LevelDocumentsPage() {
         viewport: viewport,
         canvas: canvas,
       } as any).promise
-
-      // Draw position markers
-      drawPositionMarkers(context, viewport)
     } catch (error) {
       console.error('Error rendering PDF:', error)
     }
-  }, [pdfData, currentPage, scale, positions])
+  }, [pdfData, currentPage, scale])
 
-  const drawPositionMarkers = (context: CanvasRenderingContext2D, viewport: { width: number; height: number; scale: number }) => {
-    const pagePositions = positions.filter(p => p.page === currentPage)
+  // Convert canvas coordinates to PDF coordinates
+  const canvasToPdf = (canvasX: number, canvasY: number) => {
+    if (!pdfDimensions) return { x: 0, y: 0 }
+    return {
+      x: canvasX / scale,
+      y: pdfDimensions.height - (canvasY / scale)
+    }
+  }
+
+  // Convert PDF coordinates to canvas coordinates  
+  const pdfToCanvas = (pdfX: number, pdfY: number) => {
+    if (!pdfDimensions) return { x: 0, y: 0 }
+    return {
+      x: pdfX * scale,
+      y: (pdfDimensions.height - pdfY) * scale
+    }
+  }
+
+  // Get mouse position relative to canvas
+  const getMousePos = (e: React.MouseEvent) => {
+    if (!canvasRef.current) return { x: 0, y: 0 }
+    const rect = canvasRef.current.getBoundingClientRect()
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    }
+  }
+
+  // Check if point is near a resize handle
+  const getResizeHandle = (mouseX: number, mouseY: number, position: SkillPositionWithInfo) => {
+    const handleSize = 8
+    const { x, y } = pdfToCanvas(position.x, position.y)
+    const width = position.width * scale
+    const height = position.height * scale
     
-    pagePositions.forEach(pos => {
-      const x = pos.x * scale
-      // PDF coordinates are from bottom-left, canvas from top-left
-      const y = viewport.height - (pos.y * scale)
+    const handles = {
+      'nw': { x: x, y: y - height },
+      'ne': { x: x + width, y: y - height },
+      'sw': { x: x, y: y },
+      'se': { x: x + width, y: y },
+    }
+    
+    for (const [name, pos] of Object.entries(handles)) {
+      if (Math.abs(mouseX - pos.x) < handleSize && Math.abs(mouseY - pos.y) < handleSize) {
+        return name
+      }
+    }
+    return null
+  }
+
+  // Check if point is inside a position rectangle
+  const getPositionAtPoint = (mouseX: number, mouseY: number) => {
+    const pagePositions = positions.filter(p => p.page === currentPage)
+    for (const pos of pagePositions) {
+      const { x, y } = pdfToCanvas(pos.x, pos.y)
       const width = pos.width * scale
       const height = pos.height * scale
-
-      // Draw rectangle
-      context.strokeStyle = '#22d3ee' // cyan-400
-      context.lineWidth = 2
-      context.strokeRect(x, y - height, width, height)
       
-      // Draw label background
-      context.fillStyle = 'rgba(34, 211, 238, 0.9)'
-      const labelText = pos.skill_name.substring(0, 20) + (pos.skill_name.length > 20 ? '...' : '')
-      context.font = '10px sans-serif'
-      const textWidth = context.measureText(labelText).width
-      context.fillRect(x, y - height - 16, textWidth + 6, 14)
-      
-      // Draw label text
-      context.fillStyle = '#0f172a'
-      context.fillText(labelText, x + 3, y - height - 5)
-    })
+      if (mouseX >= x && mouseX <= x + width && mouseY >= y - height && mouseY <= y) {
+        return pos
+      }
+    }
+    return null
   }
 
-  const handleCanvasClick = async (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!placementMode || !skillToPlace || !canvasRef.current || !pdfDimensions) return
-
-    const rect = canvasRef.current.getBoundingClientRect()
-    const canvasX = e.clientX - rect.left
-    const canvasY = e.clientY - rect.top
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!canvasRef.current || !pdfDimensions) return
     
-    // Convert to PDF coordinates (from bottom-left)
-    const pdfX = canvasX / scale
-    const pdfY = pdfDimensions.height - (canvasY / scale)
-
-    const position: SkillPosition = {
-      skill_id: skillToPlace.id,
-      page: currentPage,
-      x: Math.round(pdfX),
-      y: Math.round(pdfY),
-      width: 150,
-      height: 12,
-      font_size: 8,
+    const { x, y } = getMousePos(e)
+    
+    // If not in placement mode, check for existing position interaction
+    if (!placementMode) {
+      const clickedPos = getPositionAtPoint(x, y)
+      if (clickedPos) {
+        const handle = getResizeHandle(x, y, clickedPos)
+        if (handle) {
+          // Start resizing
+          setIsResizing(true)
+          setResizeHandle(handle)
+          setSelectedPositionId(clickedPos.skill_id)
+          const canvasPos = pdfToCanvas(clickedPos.x, clickedPos.y)
+          setCurrentRect({
+            x: canvasPos.x,
+            y: canvasPos.y - clickedPos.height * scale,
+            width: clickedPos.width * scale,
+            height: clickedPos.height * scale
+          })
+        } else {
+          // Start dragging
+          setIsDragging(true)
+          setSelectedPositionId(clickedPos.skill_id)
+          const canvasPos = pdfToCanvas(clickedPos.x, clickedPos.y)
+          setDragOffset({
+            x: x - canvasPos.x,
+            y: y - (canvasPos.y - clickedPos.height * scale)
+          })
+          setCurrentRect({
+            x: canvasPos.x,
+            y: canvasPos.y - clickedPos.height * scale,
+            width: clickedPos.width * scale,
+            height: clickedPos.height * scale
+          })
+        }
+        return
+      }
     }
-
-    try {
-      await levelDocumentsApi.setPosition(selectedLevel!, position)
-      setToast({ message: `Position définie pour "${skillToPlace.name}"`, type: 'success' })
-      loadPositions(selectedLevel!)
-      setPlacementMode(false)
-      setSkillToPlace(null)
-    } catch (error) {
-      console.error('Error saving position:', error)
-      setToast({ message: 'Erreur lors de la sauvegarde', type: 'error' })
+    
+    // In placement mode, start drawing
+    if (placementMode && skillToPlace) {
+      setIsDrawing(true)
+      setDrawStart({ x, y })
+      setCurrentRect({ x, y, width: 0, height: 0 })
     }
   }
 
-  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!placementMode || !canvasRef.current || !pdfDimensions) return
-
-    const rect = canvasRef.current.getBoundingClientRect()
-    const canvasX = e.clientX - rect.left
-    const canvasY = e.clientY - rect.top
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!canvasRef.current || !pdfDimensions) return
     
-    const pdfX = canvasX / scale
-    const pdfY = pdfDimensions.height - (canvasY / scale)
+    const { x, y } = getMousePos(e)
+    
+    // Update cursor based on hover state
+    if (!isDrawing && !isDragging && !isResizing && overlayRef.current) {
+      const clickedPos = getPositionAtPoint(x, y)
+      if (clickedPos) {
+        const handle = getResizeHandle(x, y, clickedPos)
+        if (handle) {
+          overlayRef.current.style.cursor = handle === 'nw' || handle === 'se' ? 'nwse-resize' : 'nesw-resize'
+        } else {
+          overlayRef.current.style.cursor = 'move'
+        }
+      } else if (placementMode) {
+        overlayRef.current.style.cursor = 'crosshair'
+      } else {
+        overlayRef.current.style.cursor = 'default'
+      }
+    }
+    
+    // Drawing
+    if (isDrawing && drawStart) {
+      const width = x - drawStart.x
+      const height = y - drawStart.y
+      setCurrentRect({
+        x: width >= 0 ? drawStart.x : x,
+        y: height >= 0 ? drawStart.y : y,
+        width: Math.abs(width),
+        height: Math.abs(height)
+      })
+    }
+    
+    // Dragging
+    if (isDragging && dragOffset && currentRect) {
+      setCurrentRect({
+        ...currentRect,
+        x: x - dragOffset.x,
+        y: y - dragOffset.y
+      })
+    }
+    
+    // Resizing
+    if (isResizing && resizeHandle && currentRect && selectedPositionId) {
+      const pos = positions.find(p => p.skill_id === selectedPositionId)
+      if (!pos) return
+      
+      const origCanvas = pdfToCanvas(pos.x, pos.y)
+      const origX = origCanvas.x
+      const origY = origCanvas.y - pos.height * scale
+      const origRight = origX + pos.width * scale
+      const origBottom = origCanvas.y
+      
+      let newX = currentRect.x
+      let newY = currentRect.y
+      let newWidth = currentRect.width
+      let newHeight = currentRect.height
+      
+      if (resizeHandle.includes('w')) {
+        newX = Math.min(x, origRight - 20)
+        newWidth = origRight - newX
+      }
+      if (resizeHandle.includes('e')) {
+        newWidth = Math.max(20, x - origX)
+      }
+      if (resizeHandle.includes('n')) {
+        newY = Math.min(y, origBottom - 10)
+        newHeight = origBottom - newY
+      }
+      if (resizeHandle.includes('s')) {
+        newHeight = Math.max(10, y - origY)
+      }
+      
+      setCurrentRect({ x: newX, y: newY, width: newWidth, height: newHeight })
+    }
+  }
 
-    setHoveredPosition({ x: Math.round(pdfX), y: Math.round(pdfY) })
+  const handleMouseUp = async () => {
+    if (!pdfDimensions || !selectedLevel) {
+      resetEditState()
+      return
+    }
+    
+    // Save after drawing
+    if (isDrawing && currentRect && skillToPlace && currentRect.width > 10 && currentRect.height > 5) {
+      const pdfPos = canvasToPdf(currentRect.x, currentRect.y + currentRect.height)
+      
+      const position: SkillPosition = {
+        skill_id: skillToPlace.id,
+        page: currentPage,
+        x: Math.round(pdfPos.x),
+        y: Math.round(pdfPos.y),
+        width: Math.round(currentRect.width / scale),
+        height: Math.round(currentRect.height / scale),
+        font_size: 8,
+      }
+
+      try {
+        await levelDocumentsApi.setPosition(selectedLevel, position)
+        setToast({ message: `Position définie pour "${skillToPlace.name}"`, type: 'success' })
+        loadPositions(selectedLevel)
+        setPlacementMode(false)
+        setSkillToPlace(null)
+      } catch (error) {
+        console.error('Error saving position:', error)
+        setToast({ message: 'Erreur lors de la sauvegarde', type: 'error' })
+      }
+    }
+    
+    // Save after dragging or resizing
+    if ((isDragging || isResizing) && currentRect && selectedPositionId) {
+      const pos = positions.find(p => p.skill_id === selectedPositionId)
+      if (pos) {
+        const pdfPos = canvasToPdf(currentRect.x, currentRect.y + currentRect.height)
+        
+        const position: SkillPosition = {
+          skill_id: selectedPositionId,
+          page: currentPage,
+          x: Math.round(pdfPos.x),
+          y: Math.round(pdfPos.y),
+          width: Math.round(currentRect.width / scale),
+          height: Math.round(currentRect.height / scale),
+          font_size: pos.font_size,
+        }
+
+        try {
+          await levelDocumentsApi.setPosition(selectedLevel, position)
+          setToast({ message: 'Position mise à jour', type: 'success' })
+          loadPositions(selectedLevel)
+        } catch (error) {
+          console.error('Error updating position:', error)
+          setToast({ message: 'Erreur lors de la mise à jour', type: 'error' })
+        }
+      }
+    }
+    
+    resetEditState()
+  }
+  
+  const resetEditState = () => {
+    setIsDrawing(false)
+    setIsDragging(false)
+    setIsResizing(false)
+    setDrawStart(null)
+    setCurrentRect(null)
+    setSelectedPositionId(null)
+    setDragOffset(null)
+    setResizeHandle(null)
   }
 
   const handleUpload = async (level: string, file: File) => {
@@ -279,7 +478,7 @@ export default function LevelDocumentsPage() {
   const cancelPlacement = () => {
     setPlacementMode(false)
     setSkillToPlace(null)
-    setHoveredPosition(null)
+    resetEditState()
   }
 
   const getDocForLevel = (level: string) => documents.find(d => d.level === level)
@@ -406,13 +605,11 @@ export default function LevelDocumentsPage() {
                     <div>
                       <span className="text-cyan-300 font-medium">Mode placement actif</span>
                       <p className="text-sm text-cyan-200/80">
-                        Cliquez sur le PDF pour placer : <strong>{skillToPlace.name}</strong>
+                        Dessinez un rectangle sur le PDF pour placer : <strong>{skillToPlace.name}</strong>
                       </p>
-                      {hoveredPosition && (
-                        <p className="text-xs text-cyan-300/60 mt-1">
-                          Position : X={hoveredPosition.x}, Y={hoveredPosition.y}
-                        </p>
-                      )}
+                      <p className="text-xs text-cyan-300/60 mt-1">
+                        Cliquez et glissez pour dessiner la zone
+                      </p>
                     </div>
                     <Button variant="secondary" size="sm" onClick={cancelPlacement}>
                       ✕ Annuler
@@ -464,27 +661,101 @@ export default function LevelDocumentsPage() {
                   </div>
                 </div>
 
-                {/* Canvas */}
+                {/* Canvas with interactive overlay */}
                 <div 
                   ref={containerRef}
-                  className={`overflow-auto max-h-[600px] border border-slate-600 rounded-lg bg-slate-900 ${
-                    placementMode ? 'cursor-crosshair' : ''
-                  }`}
+                  className="overflow-auto max-h-[600px] border border-slate-600 rounded-lg bg-slate-900"
                 >
-                  <canvas
-                    ref={canvasRef}
-                    onClick={handleCanvasClick}
-                    onMouseMove={handleCanvasMouseMove}
-                    onMouseLeave={() => setHoveredPosition(null)}
-                    className="mx-auto"
-                  />
+                  <div className="relative inline-block mx-auto">
+                    <canvas
+                      ref={canvasRef}
+                      className="block"
+                    />
+                    {/* Interactive overlay */}
+                    <div
+                      ref={overlayRef}
+                      className="absolute top-0 left-0 w-full h-full"
+                      onMouseDown={handleMouseDown}
+                      onMouseMove={handleMouseMove}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={() => {
+                        if (isDrawing || isDragging || isResizing) {
+                          handleMouseUp()
+                        }
+                      }}
+                    >
+                      {/* Position rectangles overlay */}
+                      {positions.filter(p => p.page === currentPage).map(pos => {
+                        const canvasPos = pdfToCanvas(pos.x, pos.y)
+                        const isSelected = selectedPositionId === pos.skill_id
+                        const isBeingEdited = isSelected && (isDragging || isResizing)
+                        
+                        if (isBeingEdited) return null // Will be shown as currentRect
+                        
+                        return (
+                          <div
+                            key={pos.skill_id}
+                            className={`absolute border-2 ${isSelected ? 'border-amber-400' : 'border-cyan-400'} bg-cyan-500/10 pointer-events-none`}
+                            style={{
+                              left: canvasPos.x,
+                              top: canvasPos.y - pos.height * scale,
+                              width: pos.width * scale,
+                              height: pos.height * scale,
+                            }}
+                          >
+                            {/* Label */}
+                            <div 
+                              className="absolute -top-5 left-0 px-1 text-[10px] bg-cyan-500 text-slate-900 whitespace-nowrap rounded-sm"
+                            >
+                              {pos.skill_name.substring(0, 25)}{pos.skill_name.length > 25 ? '...' : ''}
+                            </div>
+                            {/* Resize handles */}
+                            <div className="absolute -top-1 -left-1 w-2 h-2 bg-cyan-400 border border-slate-900 pointer-events-auto cursor-nwse-resize" />
+                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-400 border border-slate-900 pointer-events-auto cursor-nesw-resize" />
+                            <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-cyan-400 border border-slate-900 pointer-events-auto cursor-nesw-resize" />
+                            <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-cyan-400 border border-slate-900 pointer-events-auto cursor-nwse-resize" />
+                          </div>
+                        )
+                      })}
+                      
+                      {/* Current drawing/editing rectangle */}
+                      {currentRect && (
+                        <div
+                          className={`absolute border-2 ${isDrawing ? 'border-amber-400 bg-amber-500/20' : 'border-cyan-400 bg-cyan-500/20'}`}
+                          style={{
+                            left: currentRect.x,
+                            top: currentRect.y,
+                            width: currentRect.width,
+                            height: currentRect.height,
+                          }}
+                        >
+                          {/* Resize handles for editing */}
+                          {(isDragging || isResizing) && (
+                            <>
+                              <div className="absolute -top-1 -left-1 w-2 h-2 bg-amber-400 border border-slate-900" />
+                              <div className="absolute -top-1 -right-1 w-2 h-2 bg-amber-400 border border-slate-900" />
+                              <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-amber-400 border border-slate-900" />
+                              <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-amber-400 border border-slate-900" />
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Legend */}
-                <div className="mt-4 flex items-center gap-4 text-sm text-slate-400">
+                <div className="mt-4 flex items-center gap-6 text-sm text-slate-400">
                   <div className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-cyan-400 rounded"></span>
                     <span>Position définie</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-amber-400 bg-amber-500/20 rounded"></span>
+                    <span>En cours d'édition</span>
+                  </div>
+                  <div className="text-slate-500">
+                    💡 Glissez pour déplacer • Coins pour redimensionner
                   </div>
                 </div>
               </>
