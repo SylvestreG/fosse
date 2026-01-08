@@ -267,11 +267,12 @@ export default function SessionsPage() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-sm text-slate-200">
                     <p>Encadrant: {q.is_encadrant ? '✅' : '❌'}</p>
                     <p>Nitrox: {q.wants_nitrox ? '✅' : '❌'}</p>
                     <p>2ème détendeur: {q.wants_2nd_reg ? '✅' : '❌'}</p>
                     <p>Stab: {q.wants_stab ? `✅ (${q.stab_size || 'N/A'})` : '❌'}</p>
+                    <p>Formation Nitrox: {q.nitrox_training ? '✅' : '❌'}</p>
                     <p>Voiture: {q.has_car ? `✅ (${q.car_seats || 0} places)` : '❌'}</p>
                     <div className="col-span-2 flex items-center justify-between">
                       <p>Statut: {q.submitted_at ? '✅ Soumis' : '⏳ En attente'}</p>
