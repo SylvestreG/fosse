@@ -6,7 +6,7 @@ use crate::middleware::acl::{acl_auth_middleware, AclState};
 use crate::services::{AuthService, EmailService};
 use axum::{
     middleware,
-    routing::{get, post, put},
+    routing::{get, post},
     Router,
     response::IntoResponse,
     http::StatusCode,
