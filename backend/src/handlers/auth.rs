@@ -33,7 +33,7 @@ pub async fn get_oauth_config(
 }
 
 /// Niveaux qui permettent de valider des compétences (encadrants)
-const VALIDATOR_LEVELS: &[&str] = &["E2", "E3", "E4"];
+const VALIDATOR_LEVELS: &[&str] = &["E1", "E2", "E3", "E4"];
 
 /// Vérifie si un utilisateur peut valider des compétences basé sur son niveau de plongée
 /// Le diving_level peut être une liste séparée par des virgules (ex: "N1,N2,N3,N4,N5,E2")

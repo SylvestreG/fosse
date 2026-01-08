@@ -48,9 +48,9 @@ impl DivingLevel {
         }
     }
     
-    /// Vérifie si ce niveau ou supérieur est un niveau d'encadrant (>= E2)
+    /// Vérifie si ce niveau est un niveau d'encadrant (commence par E)
     pub fn is_instructor_level(&self) -> bool {
-        self.hierarchy() >= DivingLevel::E2.hierarchy()
+        matches!(self, DivingLevel::E1 | DivingLevel::E2 | DivingLevel::E3 | DivingLevel::E4)
     }
     
     /// Retourne le niveau parent pour les compétences intermédiaires
@@ -264,6 +264,7 @@ mod tests {
     
     #[test]
     fn test_is_instructor() {
+        // Les niveaux N ne sont pas encadrants
         let mut level = DiverLevel::new();
         level.add_validated(DivingLevel::N1);
         assert!(!level.is_instructor());
@@ -271,6 +272,15 @@ mod tests {
         let mut level = DiverLevel::new();
         level.add_validated(DivingLevel::N4);
         assert!(!level.is_instructor());
+        
+        let mut level = DiverLevel::new();
+        level.add_validated(DivingLevel::N5);
+        assert!(!level.is_instructor());
+        
+        // Les niveaux E sont encadrants
+        let mut level = DiverLevel::new();
+        level.add_validated(DivingLevel::E1);
+        assert!(level.is_instructor());
         
         let mut level = DiverLevel::new();
         level.add_validated(DivingLevel::E2);
