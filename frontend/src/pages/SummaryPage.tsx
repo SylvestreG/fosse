@@ -168,16 +168,26 @@ export default function SummaryPage() {
         // Calcul des bouteilles avec optimisation si activée
         // En mode optimisation: les élèves font 2 rotations donc on divise par 2 (arrondi sup)
         const studentsAirCount = summary.students_count - summary.nitrox_training_count
-        const optimizedStudentBottles = summary.optimization_mode 
+        const studentsNitroxCount = summary.nitrox_training_count
+        
+        // En mode optimisation, tous les élèves (air et nitrox) sont divisés par 2
+        const optimizedStudentAirBottles = summary.optimization_mode 
           ? Math.ceil(studentsAirCount / 2) 
           : studentsAirCount
+        const optimizedStudentNitroxBottles = summary.optimization_mode 
+          ? Math.ceil(studentsNitroxCount / 2) 
+          : studentsNitroxCount
         
-        // Bouteilles Air = encadrants sans nitrox + élèves optimisés + 1 secours
+        // Bouteilles Nitrox = encadrants nitrox + élèves nitrox optimisés
+        const encadrantsNitroxCount = summary.nitrox_count // encadrants qui veulent nitrox
+        const optimizedNitroxBottles = encadrantsNitroxCount + optimizedStudentNitroxBottles
+        
+        // Bouteilles Air = encadrants sans nitrox + élèves air optimisés + 1 secours
         const encadrantsAirCount = summary.encadrants_count - summary.nitrox_count
-        const optimizedAirBottles = encadrantsAirCount + optimizedStudentBottles + 1
+        const optimizedAirBottles = encadrantsAirCount + optimizedStudentAirBottles + 1
         
-        // Total = Nitrox + Air optimisé
-        const optimizedTotalBottles = summary.nitrox_bottles + optimizedAirBottles
+        // Total = Nitrox optimisé + Air optimisé
+        const optimizedTotalBottles = optimizedNitroxBottles + optimizedAirBottles
         
         const savedBottles = summary.optimization_mode ? (summary.total_bottles - optimizedTotalBottles) : 0
 
@@ -200,7 +210,7 @@ export default function SummaryPage() {
               <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
                 <p className="text-sm text-green-300">
                   <strong>🔄 Optimisation activée :</strong> Les élèves font 2 rotations avec les mêmes blocs, 
-                  ce qui réduit le nombre de bouteilles Air nécessaires de {studentsAirCount} à {optimizedStudentBottles}.
+                  ce qui réduit le nombre de bouteilles nécessaires (Air: {studentsAirCount} → {optimizedStudentAirBottles}, Nitrox: {studentsNitroxCount} → {optimizedStudentNitroxBottles}).
                 </p>
               </div>
             )}
@@ -214,9 +224,10 @@ export default function SummaryPage() {
               />
               <StatCard
                 title="Bouteilles Nitrox"
-                value={summary.nitrox_bottles}
+                value={optimizedNitroxBottles}
                 icon="⚡"
                 color="yellow"
+                subtitle={summary.optimization_mode && studentsNitroxCount > 0 ? `Élèves: ${studentsNitroxCount} → ${optimizedStudentNitroxBottles}` : undefined}
               />
               <StatCard
                 title="Bouteilles Air"
