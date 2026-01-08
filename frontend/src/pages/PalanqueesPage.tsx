@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, DragEvent } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { 
   palanqueesApi, 
@@ -25,6 +25,7 @@ export default function PalanqueesPage() {
   const [data, setData] = useState<SessionPalanquees | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [draggedParticipant, setDraggedParticipant] = useState<UnassignedParticipant | null>(null)
   
   // Modal states
   const [showFicheModal, setShowFicheModal] = useState(false)
@@ -55,7 +56,6 @@ export default function PalanqueesPage() {
       ])
       setSession(sessionRes.data)
       setData(palanqueesRes.data)
-      // Pré-remplir les options de la fiche
       setFicheOptions(prev => ({
         ...prev,
         site: sessionRes.data.location || '',
@@ -132,29 +132,12 @@ export default function PalanqueesPage() {
     }
   }
 
-  const handleUpdateMember = async (
-    memberId: string, 
-    role?: string, 
-    gasType?: string
-  ) => {
+  const handleUpdateMember = async (memberId: string, role?: string, gasType?: string) => {
     try {
       await palanqueesApi.updateMember(memberId, role, gasType)
       loadData()
     } catch (err) {
       console.error('Erreur mise à jour membre:', err)
-    }
-  }
-
-  const handleUpdatePalanquee = async (
-    palanqueeId: string, 
-    field: string, 
-    value: string | number | undefined
-  ) => {
-    try {
-      await palanqueesApi.updatePalanquee(palanqueeId, { [field]: value })
-      loadData()
-    } catch (err) {
-      console.error('Erreur mise à jour palanquée:', err)
     }
   }
 
@@ -176,6 +159,22 @@ export default function PalanqueesPage() {
       alert('Erreur lors du téléchargement du PDF')
     } finally {
       setDownloading(false)
+    }
+  }
+
+  // Drag & Drop handlers
+  const handleDragStart = (participant: UnassignedParticipant) => {
+    setDraggedParticipant(participant)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedParticipant(null)
+  }
+
+  const handleDrop = (palanqueeId: string) => {
+    if (draggedParticipant) {
+      handleAddMember(palanqueeId, draggedParticipant)
+      setDraggedParticipant(null)
     }
   }
 
@@ -205,12 +204,12 @@ export default function PalanqueesPage() {
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">🤿 Palanquées</h1>
               <p className="text-slate-300">
-                {session?.name} - Organiser les plongeurs en palanquées
+                {session?.name} — <span className="text-slate-400">Glissez-déposez les participants dans les palanquées</span>
               </p>
             </div>
             <div className="flex items-center gap-3">
               <Link
-                to={`/sessions/${sessionId}`}
+                to={`/dashboard/sessions`}
                 className="px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors"
               >
                 ← Retour
@@ -228,8 +227,8 @@ export default function PalanqueesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Participants non assignés */}
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 border border-slate-700">
-            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 border border-slate-700 h-fit sticky top-4">
+            <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
               👥 Non assignés
               <span className="bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full text-sm">
                 {data.unassigned_participants.length}
@@ -237,15 +236,15 @@ export default function PalanqueesPage() {
             </h2>
             
             {data.unassigned_participants.length === 0 ? (
-              <p className="text-slate-400 text-sm">Tous les participants sont assignés !</p>
+              <p className="text-slate-400 text-sm text-center py-4">✅ Tous assignés !</p>
             ) : (
-              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+              <div className="space-y-1.5 max-h-[70vh] overflow-y-auto pr-1">
                 {data.unassigned_participants.map(p => (
-                  <ParticipantCard
+                  <DraggableParticipant
                     key={p.questionnaire_id}
                     participant={p}
-                    rotations={data.rotations}
-                    onAssign={handleAddMember}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
                   />
                 ))}
               </div>
@@ -253,23 +252,23 @@ export default function PalanqueesPage() {
           </div>
 
           {/* Rotations et Palanquées */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             
-            {/* Bouton ajouter rotation */}
+            {/* Actions */}
             <div className="flex justify-end">
               <button
                 onClick={handleCreateRotation}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors flex items-center gap-2"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors"
               >
-                ➕ Ajouter une rotation
+                ➕ Rotation
               </button>
             </div>
 
             {data.rotations.length === 0 ? (
               <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-8 border border-slate-700 text-center">
-                <p className="text-slate-400 mb-4">Aucune rotation créée</p>
+                <p className="text-slate-400 mb-2">Aucune rotation</p>
                 <p className="text-slate-500 text-sm">
-                  Créez une rotation, puis des palanquées pour organiser les plongeurs.
+                  Créez une rotation puis ajoutez des palanquées.
                 </p>
               </div>
             ) : (
@@ -277,12 +276,13 @@ export default function PalanqueesPage() {
                 <RotationCard
                   key={rotation.id}
                   rotation={rotation}
+                  isDragging={!!draggedParticipant}
                   onCreatePalanquee={handleCreatePalanquee}
                   onDeleteRotation={handleDeleteRotation}
                   onDeletePalanquee={handleDeletePalanquee}
+                  onDrop={handleDrop}
                   onRemoveMember={handleRemoveMember}
                   onUpdateMember={handleUpdateMember}
-                  onUpdatePalanquee={handleUpdatePalanquee}
                 />
               ))
             )}
@@ -395,97 +395,77 @@ export default function PalanqueesPage() {
 
 // ============ COMPOSANTS ============
 
-function ParticipantCard({
+function DraggableParticipant({
   participant,
-  rotations,
-  onAssign,
+  onDragStart,
+  onDragEnd,
 }: {
   participant: UnassignedParticipant
-  rotations: Rotation[]
-  onAssign: (palanqueeId: string, participant: UnassignedParticipant) => void
+  onDragStart: (p: UnassignedParticipant) => void
+  onDragEnd: () => void
 }) {
-  const [showMenu, setShowMenu] = useState(false)
-  
+  const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
+    e.dataTransfer.effectAllowed = 'move'
+    onDragStart(participant)
+  }
+
   return (
-    <div className="relative">
-      <div
-        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-          participant.is_encadrant
-            ? 'bg-purple-900/30 border-purple-700 hover:bg-purple-900/50'
-            : 'bg-slate-700/50 border-slate-600 hover:bg-slate-700'
-        }`}
-        onClick={() => setShowMenu(!showMenu)}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-white font-medium">
-              {participant.last_name.toUpperCase()} {participant.first_name}
-            </p>
-            <p className="text-slate-400 text-sm">
-              {participant.diving_level || 'Niveau ?'}
-              {participant.preparing_level && ` → ${participant.preparing_level}`}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {participant.is_encadrant && (
-              <span className="text-purple-400 text-xs">E</span>
-            )}
-            {(participant.wants_nitrox || participant.nitrox_training) && (
-              <span className="text-yellow-400 text-xs">Nx</span>
-            )}
-          </div>
+    <div
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={onDragEnd}
+      className={`p-2.5 rounded-lg border cursor-grab active:cursor-grabbing transition-all select-none ${
+        participant.is_encadrant
+          ? 'bg-purple-900/40 border-purple-600 hover:bg-purple-900/60'
+          : 'bg-slate-700/60 border-slate-600 hover:bg-slate-700'
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-white text-sm font-medium truncate">
+            {participant.last_name.toUpperCase()} {participant.first_name}
+          </p>
+          <p className="text-slate-400 text-xs">
+            {participant.diving_level || '?'}
+            {participant.preparing_level && ` → ${participant.preparing_level}`}
+          </p>
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {participant.is_encadrant && (
+            <span className="bg-purple-600 text-white text-xs px-1.5 py-0.5 rounded">E</span>
+          )}
+          {(participant.wants_nitrox || participant.nitrox_training) && (
+            <span className="bg-yellow-600 text-white text-xs px-1.5 py-0.5 rounded">Nx</span>
+          )}
         </div>
       </div>
-      
-      {/* Menu d'assignation */}
-      {showMenu && rotations.length > 0 && (
-        <div className="absolute right-0 top-full mt-1 z-10 bg-slate-800 border border-slate-600 rounded-lg shadow-xl p-2 min-w-[200px]">
-          <p className="text-slate-400 text-xs px-2 mb-2">Assigner à :</p>
-          {rotations.map(rotation => (
-            <div key={rotation.id}>
-              <p className="text-slate-500 text-xs px-2 py-1">Rotation {rotation.number}</p>
-              {rotation.palanquees.map(palanquee => (
-                <button
-                  key={palanquee.id}
-                  onClick={() => {
-                    onAssign(palanquee.id, participant)
-                    setShowMenu(false)
-                  }}
-                  className="w-full text-left px-3 py-1.5 text-slate-200 hover:bg-slate-700 rounded text-sm"
-                >
-                  Palanquée {palanquee.number}
-                  {palanquee.call_sign && ` (${palanquee.call_sign})`}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
 
 function RotationCard({
   rotation,
+  isDragging,
   onCreatePalanquee,
   onDeleteRotation,
   onDeletePalanquee,
+  onDrop,
   onRemoveMember,
   onUpdateMember,
-  onUpdatePalanquee,
 }: {
   rotation: Rotation
+  isDragging: boolean
   onCreatePalanquee: (rotationId: string) => void
   onDeleteRotation: (id: string) => void
   onDeletePalanquee: (id: string) => void
+  onDrop: (palanqueeId: string) => void
   onRemoveMember: (memberId: string) => void
   onUpdateMember: (memberId: string, role?: string, gasType?: string) => void
-  onUpdatePalanquee: (palanqueeId: string, field: string, value: string | number | undefined) => void
 }) {
   return (
     <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow border border-slate-700">
-      <div className="p-4 border-b border-slate-700 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+      <div className="p-3 border-b border-slate-700 flex items-center justify-between">
+        <h3 className="text-base font-semibold text-white flex items-center gap-2">
           🔄 Rotation {rotation.number}
           <span className="text-slate-400 text-sm font-normal">
             ({rotation.palanquees.reduce((acc, p) => acc + p.members.length, 0)} plongeurs)
@@ -494,13 +474,14 @@ function RotationCard({
         <div className="flex items-center gap-2">
           <button
             onClick={() => onCreatePalanquee(rotation.id)}
-            className="px-3 py-1.5 bg-green-600/80 text-white rounded hover:bg-green-600 transition-colors text-sm"
+            className="px-2.5 py-1 bg-green-600/80 text-white rounded hover:bg-green-600 transition-colors text-sm"
           >
             + Palanquée
           </button>
           <button
             onClick={() => onDeleteRotation(rotation.id)}
-            className="px-3 py-1.5 bg-red-600/80 text-white rounded hover:bg-red-600 transition-colors text-sm"
+            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-slate-700 rounded transition-colors"
+            title="Supprimer rotation"
           >
             🗑️
           </button>
@@ -508,19 +489,20 @@ function RotationCard({
       </div>
       
       {rotation.palanquees.length === 0 ? (
-        <div className="p-6 text-center text-slate-400">
-          Aucune palanquée. Cliquez sur "+ Palanquée" pour en créer une.
+        <div className="p-4 text-center text-slate-500 text-sm">
+          Cliquez sur "+ Palanquée" pour créer une palanquée
         </div>
       ) : (
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {rotation.palanquees.map(palanquee => (
             <PalanqueeCard
               key={palanquee.id}
               palanquee={palanquee}
+              isDragging={isDragging}
               onDelete={onDeletePalanquee}
+              onDrop={onDrop}
               onRemoveMember={onRemoveMember}
               onUpdateMember={onUpdateMember}
-              onUpdatePalanquee={onUpdatePalanquee}
             />
           ))}
         </div>
@@ -531,89 +513,70 @@ function RotationCard({
 
 function PalanqueeCard({
   palanquee,
+  isDragging,
   onDelete,
+  onDrop,
   onRemoveMember,
   onUpdateMember,
-  onUpdatePalanquee,
 }: {
   palanquee: Palanquee
+  isDragging: boolean
   onDelete: (id: string) => void
+  onDrop: (palanqueeId: string) => void
   onRemoveMember: (memberId: string) => void
   onUpdateMember: (memberId: string, role?: string, gasType?: string) => void
-  onUpdatePalanquee: (palanqueeId: string, field: string, value: string | number | undefined) => void
 }) {
-  const [showParams, setShowParams] = useState(false)
-  
+  const [isOver, setIsOver] = useState(false)
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setIsOver(true)
+  }
+
+  const handleDragLeave = () => {
+    setIsOver(false)
+  }
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsOver(false)
+    onDrop(palanquee.id)
+  }
+
   return (
-    <div className="bg-slate-700/50 rounded-lg border border-slate-600 overflow-hidden">
+    <div
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`rounded-lg border-2 transition-all ${
+        isOver
+          ? 'border-green-500 bg-green-500/10'
+          : isDragging
+          ? 'border-dashed border-slate-500 bg-slate-700/30'
+          : 'border-slate-600 bg-slate-700/50'
+      }`}
+    >
       {/* Header */}
-      <div className="p-3 bg-slate-700/80 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-white font-semibold">Palanquée {palanquee.number}</span>
-          <input
-            type="text"
-            placeholder="Nom..."
-            value={palanquee.call_sign || ''}
-            onChange={e => onUpdatePalanquee(palanquee.id, 'call_sign', e.target.value || undefined)}
-            className="px-2 py-0.5 bg-slate-600 border border-slate-500 rounded text-white text-sm w-24"
-          />
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setShowParams(!showParams)}
-            className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-600 rounded"
-            title="Paramètres"
-          >
-            ⚙️
-          </button>
-          <button
-            onClick={() => onDelete(palanquee.id)}
-            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-slate-600 rounded"
-            title="Supprimer"
-          >
-            🗑️
-          </button>
-        </div>
+      <div className="p-2 bg-slate-700/60 rounded-t-lg flex items-center justify-between">
+        <span className="text-white font-medium text-sm">
+          P{palanquee.number}
+          <span className="text-slate-400 ml-1">({palanquee.members.length})</span>
+        </span>
+        <button
+          onClick={() => onDelete(palanquee.id)}
+          className="p-1 text-red-400 hover:text-red-300 hover:bg-slate-600 rounded transition-colors"
+          title="Supprimer"
+        >
+          ✕
+        </button>
       </div>
       
-      {/* Paramètres (dépliable) */}
-      {showParams && (
-        <div className="p-3 bg-slate-800/50 border-b border-slate-600 grid grid-cols-2 gap-2 text-sm">
-          <div>
-            <label className="text-slate-400 text-xs">Heure départ</label>
-            <input
-              type="time"
-              value={palanquee.planned_departure_time || ''}
-              onChange={e => onUpdatePalanquee(palanquee.id, 'planned_departure_time', e.target.value || undefined)}
-              className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-slate-400 text-xs">Prof. prévue (m)</label>
-            <input
-              type="number"
-              value={palanquee.planned_depth || ''}
-              onChange={e => onUpdatePalanquee(palanquee.id, 'planned_depth', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm"
-            />
-          </div>
-          <div>
-            <label className="text-slate-400 text-xs">Durée prévue (min)</label>
-            <input
-              type="number"
-              value={palanquee.planned_time || ''}
-              onChange={e => onUpdatePalanquee(palanquee.id, 'planned_time', e.target.value ? parseInt(e.target.value) : undefined)}
-              className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm"
-            />
-          </div>
-        </div>
-      )}
-      
       {/* Membres */}
-      <div className="p-3 space-y-2">
+      <div className="p-2 space-y-1 min-h-[60px]">
         {palanquee.members.length === 0 ? (
-          <p className="text-slate-500 text-sm text-center py-2">
-            Cliquez sur un participant pour l'ajouter
+          <p className="text-slate-500 text-xs text-center py-3">
+            {isDragging ? '↓ Déposez ici' : 'Vide'}
           </p>
         ) : (
           palanquee.members.map(member => (
@@ -640,13 +603,13 @@ function MemberRow({
   onUpdate: (memberId: string, role?: string, gasType?: string) => void
 }) {
   return (
-    <div className={`flex items-center gap-2 p-2 rounded ${
-      member.role === 'E' ? 'bg-purple-900/30' : 'bg-slate-600/30'
+    <div className={`flex items-center gap-1.5 p-1.5 rounded text-xs ${
+      member.role === 'E' ? 'bg-purple-900/40' : 'bg-slate-600/40'
     }`}>
       <select
         value={member.role}
         onChange={e => onUpdate(member.id, e.target.value, undefined)}
-        className="px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-xs w-14"
+        className="px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-xs w-12"
       >
         {ROLES.map(r => (
           <option key={r.value} value={r.value}>{r.value}</option>
@@ -654,19 +617,15 @@ function MemberRow({
       </select>
       
       <div className="flex-1 min-w-0">
-        <p className="text-white text-sm truncate">
+        <p className="text-white truncate">
           {member.last_name.toUpperCase()} {member.first_name}
-        </p>
-        <p className="text-slate-400 text-xs">
-          {member.diving_level || '?'}
-          {member.preparing_level && ` → ${member.preparing_level}`}
         </p>
       </div>
       
       <select
         value={member.gas_type}
         onChange={e => onUpdate(member.id, undefined, e.target.value)}
-        className="px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-xs w-16"
+        className="px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-xs w-14"
       >
         {GAS_TYPES.map(g => (
           <option key={g} value={g}>{g}</option>
@@ -675,12 +634,10 @@ function MemberRow({
       
       <button
         onClick={() => onRemove(member.id)}
-        className="p-1 text-red-400 hover:text-red-300 hover:bg-slate-600 rounded"
-        title="Retirer"
+        className="p-0.5 text-red-400 hover:text-red-300 rounded"
       >
         ✕
       </button>
     </div>
   )
 }
-
