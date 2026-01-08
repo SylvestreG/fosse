@@ -12,9 +12,10 @@ pub enum DivingLevel {
     N5,
     
     // Encadrement
+    E1,
     E2,
-    MF1,
-    MF2,
+    E3,
+    E4,
     
     // Compétences intermédiaires N2
     PE40,
@@ -38,11 +39,12 @@ impl DivingLevel {
             DivingLevel::PE60 => 21,
             DivingLevel::PA60 => 21,
             DivingLevel::N3 => 30,
+            DivingLevel::E1 => 35,
             DivingLevel::N4 => 40,
             DivingLevel::N5 => 50,
             DivingLevel::E2 => 55,
-            DivingLevel::MF1 => 60,
-            DivingLevel::MF2 => 70,
+            DivingLevel::E3 => 60,
+            DivingLevel::E4 => 70,
         }
     }
     
@@ -78,9 +80,10 @@ impl DivingLevel {
             "N3" => Some(DivingLevel::N3),
             "N4" => Some(DivingLevel::N4),
             "N5" => Some(DivingLevel::N5),
+            "E1" => Some(DivingLevel::E1),
             "E2" => Some(DivingLevel::E2),
-            "MF1" => Some(DivingLevel::MF1),
-            "MF2" => Some(DivingLevel::MF2),
+            "E3" => Some(DivingLevel::E3),
+            "E4" => Some(DivingLevel::E4),
             "PE40" => Some(DivingLevel::PE40),
             "PA20" => Some(DivingLevel::PA20),
             "PA40" => Some(DivingLevel::PA40),
@@ -99,9 +102,10 @@ impl fmt::Display for DivingLevel {
             DivingLevel::N3 => "N3",
             DivingLevel::N4 => "N4",
             DivingLevel::N5 => "N5",
+            DivingLevel::E1 => "E1",
             DivingLevel::E2 => "E2",
-            DivingLevel::MF1 => "MF1",
-            DivingLevel::MF2 => "MF2",
+            DivingLevel::E3 => "E3",
+            DivingLevel::E4 => "E4",
             DivingLevel::PE40 => "PE40",
             DivingLevel::PA20 => "PA20",
             DivingLevel::PA40 => "PA40",
@@ -246,7 +250,7 @@ mod tests {
         assert!(DivingLevel::N2.hierarchy() > DivingLevel::N1.hierarchy());
         assert!(DivingLevel::N3.hierarchy() > DivingLevel::N2.hierarchy());
         assert!(DivingLevel::E2.hierarchy() > DivingLevel::N5.hierarchy());
-        assert!(DivingLevel::MF2.hierarchy() > DivingLevel::MF1.hierarchy());
+        assert!(DivingLevel::E4.hierarchy() > DivingLevel::E3.hierarchy());
     }
     
     #[test]
@@ -254,7 +258,7 @@ mod tests {
         assert_eq!(DivingLevel::parse("N1"), Some(DivingLevel::N1));
         assert_eq!(DivingLevel::parse("n2"), Some(DivingLevel::N2));
         assert_eq!(DivingLevel::parse("E2"), Some(DivingLevel::E2));
-        assert_eq!(DivingLevel::parse("MF1"), Some(DivingLevel::MF1));
+        assert_eq!(DivingLevel::parse("E3"), Some(DivingLevel::E3));
         assert_eq!(DivingLevel::parse("invalid"), None);
     }
     
@@ -273,11 +277,11 @@ mod tests {
         assert!(level.is_instructor());
         
         let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::MF1);
+        level.add_validated(DivingLevel::E3);
         assert!(level.is_instructor());
         
         let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::MF2);
+        level.add_validated(DivingLevel::E4);
         assert!(level.is_instructor());
     }
     
@@ -324,10 +328,10 @@ mod tests {
     }
     
     #[test]
-    fn test_mf1_level() {
+    fn test_e3_level() {
         let mut level = DiverLevel::new();
-        level.add_validated(DivingLevel::MF1);
-        assert_eq!(level.display(), "MF1");
+        level.add_validated(DivingLevel::E3);
+        assert_eq!(level.display(), "E3");
     }
 }
 

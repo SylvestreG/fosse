@@ -6,8 +6,8 @@ import Toast from '@/components/Toast'
 import Modal from '@/components/Modal'
 
 // Constantes pour les filtres
-const ALL_LEVELS = ['N1', 'N2', 'N3', 'N4', 'N5', 'E2', 'E3', 'E4', 'MF1', 'MF2']
-const PREPARING_LEVELS = ['N1', 'N2', 'N3', 'N4', 'N5', 'E2']
+const ALL_LEVELS = ['N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2', 'E3', 'E4']
+const PREPARING_LEVELS = ['N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2']
 
 export default function UsersPage() {
   const [people, setPeople] = useState<Person[]>([])
@@ -449,17 +449,18 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
     N1: currentLevels.includes('N1'),
     N2: currentLevels.includes('N2'),
     N3: currentLevels.includes('N3'),
+    E1: currentLevels.includes('E1'),
     N4: currentLevels.includes('N4'),
     N5: currentLevels.includes('N5'),
     E2: currentLevels.includes('E2'),
-    MF1: currentLevels.includes('MF1'),
-    MF2: currentLevels.includes('MF2'),
+    E3: currentLevels.includes('E3'),
+    E4: currentLevels.includes('E4'),
   })
 
   const [preparingLevel, setPreparingLevel] = useState(person.preparing_level || '')
 
   // Hiérarchie des niveaux
-  const levelHierarchy = ['N1', 'N2', 'N3', 'N4', 'N5', 'E2', 'MF1', 'MF2']
+  const levelHierarchy = ['N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2', 'E3', 'E4']
 
   // Calculer le niveau le plus haut validé
   const getHighestLevel = () => {

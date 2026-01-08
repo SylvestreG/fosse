@@ -5,7 +5,7 @@ import Modal from '@/components/Modal'
 import Toast from '@/components/Toast'
 
 // Ordre des niveaux
-const LEVEL_ORDER = ['N1', 'N2', 'N3', 'N4', 'N5', 'E2', 'MF1', 'MF2']
+const LEVEL_ORDER = ['N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2', 'E3', 'E4']
 
 // Noms complets des niveaux
 const LEVEL_NAMES: Record<string, string> = {
@@ -15,8 +15,8 @@ const LEVEL_NAMES: Record<string, string> = {
   N4: 'Niveau 4 - Guide de Palanquée',
   N5: 'Niveau 5 - Directeur de Plongée',
   E2: 'E2 - Encadrant Niveau 2',
-  MF1: 'MF1 - Moniteur Fédéral 1',
-  MF2: 'MF2 - Moniteur Fédéral 2',
+  E3: 'E3 - Encadrant niveau 3',
+  E4: 'E4 - Encadrant niveau 4',
 }
 
 export default function CompetencesPage() {

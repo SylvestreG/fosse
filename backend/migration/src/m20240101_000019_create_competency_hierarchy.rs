@@ -212,7 +212,7 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .default(0),
                     )
-                    // Niveau minimum du validateur requis (ex: "E2", "MF1", "N4")
+                    // Niveau minimum du validateur requis (ex: "E2", "E3", "N4")
                     .col(
                         ColumnDef::new(CompetencySkills::MinValidatorLevel)
                             .string_len(10)

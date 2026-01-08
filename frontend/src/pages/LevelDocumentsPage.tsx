@@ -17,7 +17,7 @@ import pdfjsWorkerText from 'pdfjs-dist/build/pdf.worker.min.mjs?raw'
 const workerBlob = new Blob([pdfjsWorkerText], { type: 'application/javascript' })
 pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(workerBlob)
 
-const DIVING_LEVELS = ['N1', 'N2', 'N3', 'N4', 'E1', 'E2', 'E3', 'E4']
+const DIVING_LEVELS = ['N1', 'N2', 'N3', 'E1', 'N4', 'E2', 'E3', 'E4']
 
 interface SkillToPlace {
   id: string

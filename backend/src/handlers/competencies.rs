@@ -89,7 +89,7 @@ pub async fn list_competencies_by_level(
     }
 
     // Convert to sorted vec
-    let level_order = ["N1", "N2", "N3", "N4", "N5", "E2", "MF1", "MF2"];
+    let level_order = ["N1", "N2", "N3", "E1", "N4", "N5", "E2", "E3", "E4"];
     let mut result: Vec<CompetenciesByLevel> = Vec::new();
     
     for level in level_order {

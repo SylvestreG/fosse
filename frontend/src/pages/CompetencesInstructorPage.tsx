@@ -26,8 +26,8 @@ const LEVEL_NAMES: Record<string, string> = {
   N4: 'Niveau 4 - Guide de Palanquée',
   N5: 'Niveau 5 - Directeur de Plongée',
   E2: 'E2 - Encadrant Niveau 2',
-  MF1: 'MF1 - Moniteur Fédéral 1',
-  MF2: 'MF2 - Moniteur Fédéral 2',
+  E3: 'E3 - Encadrant niveau 3',
+  E4: 'E4 - Encadrant niveau 4',
 }
 
 type ViewMode = 'students' | 'stats'

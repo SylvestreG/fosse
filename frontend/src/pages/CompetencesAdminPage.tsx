@@ -26,7 +26,7 @@ import {
 
 // Ordre des niveaux - limité à N1, N2, N3 pour l'instant
 const LEVEL_ORDER = ['N1', 'N2', 'N3']
-const MIN_VALIDATOR_LEVELS = ['E2', 'MF1', 'MF2', 'N4', 'N3']
+const MIN_VALIDATOR_LEVELS = ['E2', 'E3', 'E4', 'N4', 'E1', 'N3']
 
 // Noms complets des niveaux
 const LEVEL_NAMES: Record<string, string> = {
@@ -36,8 +36,8 @@ const LEVEL_NAMES: Record<string, string> = {
   N4: 'Niveau 4 - Guide de Palanquée',
   N5: 'Niveau 5 - Directeur de Plongée',
   E2: 'E2 - Encadrant Niveau 2',
-  MF1: 'MF1 - Moniteur Fédéral 1',
-  MF2: 'MF2 - Moniteur Fédéral 2',
+  E3: 'E3 - Encadrant niveau 3',
+  E4: 'E4 - Encadrant niveau 4',
 }
 
 type ManageMode = 'hierarchy' | 'stages' | 'students' | 'stats'
