@@ -76,7 +76,11 @@ export default function PublicSummary() {
   const optimizedAirBottles = encadrantsAirCount + optimizedStudentAirPlusBackup
 
   const optimizedTotalBottles = optimizedNitroxBottles + optimizedAirBottles
-  const savedBottles = summary.optimization_mode ? (summary.total_bottles - optimizedTotalBottles) : 0
+  
+  // Économies par type
+  const savedAirBottles = summary.optimization_mode ? (studentsAirPlusBackup - optimizedStudentAirPlusBackup) : 0
+  const savedNitroxBottles = summary.optimization_mode ? (studentsNitroxCount - optimizedStudentNitroxBottles) : 0
+  const savedBottles = savedAirBottles + savedNitroxBottles
 
   // Groupement des élèves
   const students = summary.participants.filter(p => !p.is_encadrant)
@@ -137,7 +141,7 @@ export default function PublicSummary() {
             <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
               <p className="text-sm text-green-300">
                 <strong>🔄 Optimisation activée :</strong> Les élèves font 2 rotations avec les mêmes blocs. 
-                Air (élèves + secours): {studentsAirPlusBackup} → {optimizedStudentAirPlusBackup}, Nitrox: {studentsNitroxCount} → {optimizedStudentNitroxBottles}.
+                Air (élèves + secours): {studentsAirPlusBackup} → {optimizedStudentAirPlusBackup} (-{savedAirBottles}), Nitrox: {studentsNitroxCount} → {optimizedStudentNitroxBottles} (-{savedNitroxBottles}).
               </p>
             </div>
           )}
@@ -147,21 +151,21 @@ export default function PublicSummary() {
               value={optimizedTotalBottles} 
               icon="🫧" 
               color="blue" 
-              subtitle={summary.optimization_mode ? "Optimisé (2 rotations)" : "1 par personne + secours"} 
+              subtitle={summary.optimization_mode ? `${savedBottles} économisées` : "1 par personne + secours"} 
             />
             <StatCard 
               title="Bouteilles Nitrox" 
               value={optimizedNitroxBottles} 
               icon="⚡" 
               color="yellow" 
-              subtitle={summary.optimization_mode && studentsNitroxCount > 0 ? `Élèves: ${studentsNitroxCount} → ${optimizedStudentNitroxBottles}` : undefined}
+              subtitle={summary.optimization_mode && savedNitroxBottles > 0 ? `${savedNitroxBottles} économisées` : undefined}
             />
             <StatCard 
               title="Bouteilles Air" 
               value={optimizedAirBottles} 
               icon="💨" 
               color="gray" 
-              subtitle={summary.optimization_mode ? `${savedBottles} économisées` : "Inclut bloc de secours"} 
+              subtitle={summary.optimization_mode ? `${savedAirBottles} économisées` : "Inclut bloc de secours"} 
             />
           </div>
         </div>
