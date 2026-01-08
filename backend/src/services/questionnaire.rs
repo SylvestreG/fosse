@@ -346,12 +346,12 @@ impl QuestionnaireService {
             .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query questionnaire: {}", e))))?
             .ok_or_else(|| AppError::NotFound("Questionnaire not found".to_string()))?;
 
-        // Apply same business rules as submit
-        Self::apply_business_rules_update(&mut payload);
+        // Apply same business rules as submit, using stored is_encadrant from questionnaire
+        Self::apply_business_rules_update(&mut payload, questionnaire.is_encadrant);
 
         let now = Utc::now().naive_utc();
         let mut active: questionnaires::ActiveModel = questionnaire.into();
-        active.is_encadrant = Set(payload.is_encadrant);
+        // Note: is_encadrant is derived from person's diving level, not editable
         active.wants_regulator = Set(payload.wants_regulator);
         active.wants_nitrox = Set(payload.wants_nitrox);
         active.wants_2nd_reg = Set(payload.wants_2nd_reg);
@@ -396,9 +396,9 @@ impl QuestionnaireService {
         })
     }
 
-    fn apply_business_rules_update(request: &mut UpdateQuestionnaireRequest) {
+    fn apply_business_rules_update(request: &mut UpdateQuestionnaireRequest, is_encadrant: bool) {
         // Rule 1: Encadrant gets 2nd regulator by default
-        if request.is_encadrant {
+        if is_encadrant {
             if !request.wants_2nd_reg {
                 request.wants_2nd_reg = true;
             }

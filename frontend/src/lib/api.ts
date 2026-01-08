@@ -268,7 +268,6 @@ export const questionnairesApi = {
   listDetail: (sessionId: string) =>
     api.get<QuestionnaireDetail[]>('/questionnaires-detail', { params: { session_id: sessionId } }),
   update: (id: string, data: {
-    is_encadrant: boolean
     wants_regulator: boolean
     wants_nitrox: boolean
     wants_2nd_reg: boolean

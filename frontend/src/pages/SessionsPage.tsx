@@ -117,7 +117,6 @@ export default function SessionsPage() {
 
     try {
       await questionnairesApi.update(questionnaire.id, {
-        is_encadrant: questionnaire.is_encadrant,
         wants_regulator: questionnaire.wants_regulator,
         wants_nitrox: questionnaire.wants_nitrox,
         wants_2nd_reg: questionnaire.wants_2nd_reg,

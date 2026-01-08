@@ -18,7 +18,6 @@ export default function EditQuestionnaireModal({
   onSave,
 }: EditQuestionnaireModalProps) {
   const [formData, setFormData] = useState({
-    is_encadrant: false,
     wants_regulator: false,
     wants_nitrox: false,
     wants_2nd_reg: false,
@@ -35,7 +34,6 @@ export default function EditQuestionnaireModal({
   useEffect(() => {
     if (questionnaire) {
       setFormData({
-        is_encadrant: questionnaire.is_encadrant,
         wants_regulator: questionnaire.wants_regulator,
         wants_nitrox: questionnaire.wants_nitrox,
         wants_2nd_reg: questionnaire.wants_2nd_reg,
@@ -57,7 +55,6 @@ export default function EditQuestionnaireModal({
     setLoading(true)
     try {
       await onSave(questionnaire.id, {
-        is_encadrant: formData.is_encadrant,
         wants_regulator: formData.wants_regulator,
         wants_nitrox: formData.wants_nitrox,
         wants_2nd_reg: formData.wants_2nd_reg,
@@ -90,21 +87,6 @@ export default function EditQuestionnaireModal({
           <label className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={formData.is_encadrant}
-              onChange={(e) => setFormData({ 
-                ...formData, 
-                is_encadrant: e.target.checked,
-                wants_nitrox: e.target.checked ? formData.wants_nitrox : false,
-                wants_2nd_reg: e.target.checked ? formData.wants_2nd_reg : false
-              })}
-              className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
-            />
-            <span className="text-sm text-slate-200">Encadrant</span>
-          </label>
-
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
               checked={formData.wants_regulator}
               onChange={(e) => setFormData({ ...formData, wants_regulator: e.target.checked })}
               className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
@@ -112,7 +94,7 @@ export default function EditQuestionnaireModal({
             <span className="text-sm text-slate-200">Souhaite un détendeur</span>
           </label>
 
-          {formData.is_encadrant && (
+          {questionnaire.is_encadrant && (
             <>
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
@@ -136,7 +118,7 @@ export default function EditQuestionnaireModal({
             </>
           )}
 
-          {!formData.is_encadrant && (
+          {!questionnaire.is_encadrant && (
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"

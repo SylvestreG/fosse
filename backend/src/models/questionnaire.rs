@@ -73,7 +73,6 @@ pub struct QuestionnaireDetailResponse {
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct UpdateQuestionnaireRequest {
-    pub is_encadrant: bool,
     pub wants_regulator: bool,
     pub wants_nitrox: bool,
     pub wants_2nd_reg: bool,
