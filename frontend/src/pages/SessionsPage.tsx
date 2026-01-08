@@ -254,8 +254,8 @@ export default function SessionsPage() {
                 <div key={q.id} className="bg-slate-800/50 backdrop-blur-xl p-6 rounded-lg shadow space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-lg font-medium">{q.first_name} {q.last_name}</p>
-                      <p className="text-sm text-slate-300">{q.email}</p>
+                      <p className="text-lg font-semibold text-white">{q.first_name} {q.last_name}</p>
+                      <p className="text-sm text-slate-400">{q.email}</p>
                     </div>
                     <div className="flex space-x-2">
                       <Button size="sm" onClick={() => handleEditQuestionnaire(q)}>
