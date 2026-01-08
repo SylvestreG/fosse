@@ -39,7 +39,6 @@ pub struct CreatePersonRequest {
     #[validate(length(max = 20))]
     pub phone: Option<String>,
     
-    pub default_is_encadrant: Option<bool>,
     pub default_wants_regulator: Option<bool>,
     pub default_wants_nitrox: Option<bool>,
     pub default_wants_2nd_reg: Option<bool>,
@@ -63,7 +62,6 @@ pub struct UpdatePersonRequest {
     #[validate(length(max = 20))]
     pub phone: Option<String>,
     
-    pub default_is_encadrant: Option<bool>,
     pub default_wants_regulator: Option<bool>,
     pub default_wants_nitrox: Option<bool>,
     pub default_wants_2nd_reg: Option<bool>,

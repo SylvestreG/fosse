@@ -109,7 +109,7 @@ impl QuestionnaireService {
                 last_name: person.last_name,
                 email: person.email,
                 phone: person.phone,
-                default_is_encadrant: person.default_is_encadrant,
+                default_is_encadrant: is_instructor, // Now derived from diving_level
                 default_wants_regulator: person.default_wants_regulator,
                 default_wants_nitrox: person.default_wants_nitrox,
                 default_wants_2nd_reg: person.default_wants_2nd_reg,

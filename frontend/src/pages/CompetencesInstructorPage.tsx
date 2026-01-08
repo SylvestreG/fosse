@@ -199,7 +199,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
   const [loading, setLoading] = useState(true)
 
   // Créer un map des encadrants pour lookup rapide
-  const encadrantIds = new Set(people.filter(p => p.default_is_encadrant).map(p => p.id))
+  const encadrantIds = new Set(people.filter(p => p.is_instructor).map(p => p.id))
 
   useEffect(() => {
     loadStatistics()
@@ -310,8 +310,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
 
   // Données pour le graphique encadrants vs élèves
   const encadrantsVsEleves = (() => {
-    const encadrants = people.filter(p => p.default_is_encadrant).length
-    const eleves = people.filter(p => !p.default_is_encadrant).length
+    const encadrants = people.filter(p => p.is_instructor).length
+    const eleves = people.filter(p => !p.is_instructor).length
     return [
       { name: 'Encadrants', value: encadrants, color: '#3B82F6' },
       { name: 'Élèves', value: eleves, color: '#10B981' }
@@ -347,7 +347,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
           <div className="text-blue-100">Membres total</div>
         </div>
         <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white">
-          <div className="text-3xl font-bold">{people.filter(p => p.default_is_encadrant).length}</div>
+          <div className="text-3xl font-bold">{people.filter(p => p.is_instructor).length}</div>
           <div className="text-green-100">Encadrants</div>
         </div>
         <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-6 text-white">

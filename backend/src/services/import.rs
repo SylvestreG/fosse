@@ -186,11 +186,16 @@ impl ImportService {
 
         // Create questionnaire record pre-filled with user's default preferences
         let now = Utc::now().naive_utc();
+        // Compute is_instructor from diving_level
+        let is_instructor = person.diving_level.as_ref()
+            .and_then(|level_str| crate::models::DiverLevel::from_string(level_str))
+            .map(|diver_level| diver_level.is_instructor())
+            .unwrap_or(false);
         let questionnaire = questionnaires::ActiveModel {
             id: Set(Uuid::new_v4()),
             session_id: Set(session_id),
             person_id: Set(person.id),
-            is_encadrant: Set(person.default_is_encadrant),
+            is_encadrant: Set(is_instructor),
             wants_regulator: Set(person.default_wants_regulator),
             wants_nitrox: Set(person.default_wants_nitrox),
             wants_2nd_reg: Set(person.default_wants_2nd_reg),

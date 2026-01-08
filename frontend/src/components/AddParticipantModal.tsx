@@ -150,7 +150,7 @@ ${formData.first_name},${formData.last_name},${formData.email},${formData.phone 
                       <p className="text-sm text-slate-300">{person.email}</p>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {person.default_is_encadrant && <span className="text-xs px-2 py-1 bg-purple-100 rounded">Encadrant</span>}
+                      {person.is_instructor && <span className="text-xs px-2 py-1 bg-purple-100 rounded">Encadrant</span>}
                       {person.default_wants_nitrox && <span className="text-xs px-2 py-1 bg-yellow-100 rounded">Nitrox</span>}
                     </div>
                   </div>

@@ -208,7 +208,7 @@ export default function UsersPage() {
             )}
             
             <div className="mt-2 sm:mt-3 flex flex-wrap gap-1">
-              {person.default_is_encadrant && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-purple-500/30 text-purple-300 border border-purple-500/50 rounded">Encadrant</span>}
+              {person.is_instructor && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-purple-500/30 text-purple-300 border border-purple-500/50 rounded">Encadrant</span>}
               {person.default_wants_nitrox && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-yellow-500/30 text-yellow-300 border border-yellow-500/50 rounded">Nitrox</span>}
               {person.default_wants_stab && person.default_stab_size && <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 rounded">Stab {person.default_stab_size}</span>}
             </div>
@@ -313,12 +313,12 @@ interface UserModalProps {
 }
 
 function UserModal({ person, onClose, onSuccess }: UserModalProps) {
+  const isInstructor = person?.is_instructor || false
   const [formData, setFormData] = useState({
     first_name: person?.first_name || '',
     last_name: person?.last_name || '',
     email: person?.email || '',
     phone: person?.phone || '',
-    default_is_encadrant: person?.default_is_encadrant || false,
     default_wants_regulator: person?.default_wants_regulator !== undefined ? person.default_wants_regulator : true,
     default_wants_nitrox: person?.default_wants_nitrox || false,
     default_wants_2nd_reg: person?.default_wants_2nd_reg || false,
@@ -384,14 +384,10 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
             
             <div className="grid grid-cols-2 gap-3">
               <label className="flex items-center space-x-2 text-slate-300">
-                <input type="checkbox" checked={formData.default_is_encadrant} onChange={(e) => setFormData({ ...formData, default_is_encadrant: e.target.checked, default_wants_nitrox: e.target.checked ? formData.default_wants_nitrox : false, default_wants_2nd_reg: e.target.checked ? formData.default_wants_2nd_reg : false })} className="w-4 h-4 accent-cyan-500" />
-                <span>Encadrant</span>
-              </label>
-              <label className="flex items-center space-x-2 text-slate-300">
                 <input type="checkbox" checked={formData.default_wants_regulator} onChange={(e) => setFormData({ ...formData, default_wants_regulator: e.target.checked })} className="w-4 h-4 accent-cyan-500" />
                 <span>Détendeur</span>
               </label>
-              {formData.default_is_encadrant && (
+              {isInstructor && (
                 <>
                   <label className="flex items-center space-x-2 text-slate-300">
                     <input type="checkbox" checked={formData.default_wants_nitrox} onChange={(e) => setFormData({ ...formData, default_wants_nitrox: e.target.checked })} className="w-4 h-4 accent-cyan-500" />

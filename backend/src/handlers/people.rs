@@ -84,7 +84,7 @@ pub async fn list_people(
                 last_name: p.last_name.clone(),
                 email: p.email.clone(),
                 phone: p.phone.clone(),
-                default_is_encadrant: p.default_is_encadrant,
+                default_is_encadrant: is_instructor, // Now derived from diving_level
                 default_wants_regulator: p.default_wants_regulator,
                 default_wants_nitrox: p.default_wants_nitrox,
                 default_wants_2nd_reg: p.default_wants_2nd_reg,
@@ -156,7 +156,7 @@ pub async fn get_person(
         last_name: person.last_name,
         email: person.email,
         phone: person.phone,
-        default_is_encadrant: person.default_is_encadrant,
+        default_is_encadrant: is_instructor, // Now derived from diving_level
         default_wants_regulator: person.default_wants_regulator,
         default_wants_nitrox: person.default_wants_nitrox,
         default_wants_2nd_reg: person.default_wants_2nd_reg,
@@ -188,7 +188,7 @@ pub async fn create_person(
         last_name: Set(payload.last_name),
         email: Set(payload.email),
         phone: Set(payload.phone),
-        default_is_encadrant: Set(payload.default_is_encadrant.unwrap_or(false)),
+        default_is_encadrant: Set(false), // Deprecated: determined by diving_level now
         default_wants_regulator: Set(payload.default_wants_regulator.unwrap_or(true)),
         default_wants_nitrox: Set(payload.default_wants_nitrox.unwrap_or(false)),
         default_wants_2nd_reg: Set(payload.default_wants_2nd_reg.unwrap_or(false)),
@@ -232,7 +232,7 @@ pub async fn create_person(
         last_name: person.last_name,
         email: person.email,
         phone: person.phone,
-        default_is_encadrant: person.default_is_encadrant,
+        default_is_encadrant: is_instructor, // Now derived from diving_level
         default_wants_regulator: person.default_wants_regulator,
         default_wants_nitrox: person.default_wants_nitrox,
         default_wants_2nd_reg: person.default_wants_2nd_reg,
@@ -277,9 +277,6 @@ pub async fn update_person(
     }
     if let Some(phone) = payload.phone {
         person.phone = Set(Some(phone));
-    }
-    if let Some(val) = payload.default_is_encadrant {
-        person.default_is_encadrant = Set(val);
     }
     if let Some(val) = payload.default_wants_regulator {
         person.default_wants_regulator = Set(val);
@@ -333,7 +330,7 @@ pub async fn update_person(
         last_name: updated.last_name,
         email: updated.email,
         phone: updated.phone,
-        default_is_encadrant: updated.default_is_encadrant,
+        default_is_encadrant: is_instructor, // Now derived from diving_level
         default_wants_regulator: updated.default_wants_regulator,
         default_wants_nitrox: updated.default_wants_nitrox,
         default_wants_2nd_reg: updated.default_wants_2nd_reg,

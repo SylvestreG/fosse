@@ -166,7 +166,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
   
   // Pré-remplir avec les préférences de l'utilisateur
   const [formData, setFormData] = useState({
-    is_encadrant: person.is_instructor && person.default_is_encadrant,
+    is_encadrant: person.is_instructor,
     wants_regulator: person.default_wants_regulator,
     wants_nitrox: person.is_instructor && person.default_wants_nitrox,
     wants_2nd_reg: person.is_instructor && person.default_wants_2nd_reg,
