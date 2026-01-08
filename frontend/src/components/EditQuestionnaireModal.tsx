@@ -87,7 +87,7 @@ export default function EditQuestionnaireModal({
         </div>
 
         <div className="space-y-3">
-          <label className="flex items-center space-x-2">
+          <label className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
               checked={formData.is_encadrant}
@@ -97,65 +97,65 @@ export default function EditQuestionnaireModal({
                 wants_nitrox: e.target.checked ? formData.wants_nitrox : false,
                 wants_2nd_reg: e.target.checked ? formData.wants_2nd_reg : false
               })}
-              className="rounded border-slate-600"
+              className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
             />
-            <span className="text-sm">Encadrant</span>
+            <span className="text-sm text-slate-200">Encadrant</span>
           </label>
 
-          <label className="flex items-center space-x-2">
+          <label className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
               checked={formData.wants_regulator}
               onChange={(e) => setFormData({ ...formData, wants_regulator: e.target.checked })}
-              className="rounded border-slate-600"
+              className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
             />
-            <span className="text-sm">Souhaite un détendeur</span>
+            <span className="text-sm text-slate-200">Souhaite un détendeur</span>
           </label>
 
           {formData.is_encadrant && (
             <>
-              <label className="flex items-center space-x-2">
+              <label className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.wants_2nd_reg}
                   onChange={(e) => setFormData({ ...formData, wants_2nd_reg: e.target.checked })}
-                  className="rounded border-slate-600"
+                  className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
                 />
-                <span className="text-sm">Souhaite 2ème détendeur</span>
+                <span className="text-sm text-slate-200">Souhaite 2ème détendeur</span>
               </label>
 
-              <label className="flex items-center space-x-2">
+              <label className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.wants_nitrox}
                   onChange={(e) => setFormData({ ...formData, wants_nitrox: e.target.checked })}
-                  className="rounded border-slate-600"
+                  className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
                 />
-                <span className="text-sm">Souhaite Nitrox</span>
+                <span className="text-sm text-slate-200">Souhaite Nitrox</span>
               </label>
             </>
           )}
 
           {!formData.is_encadrant && (
-            <label className="flex items-center space-x-2">
+            <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.nitrox_training}
                 onChange={(e) => setFormData({ ...formData, nitrox_training: e.target.checked })}
-                className="rounded border-slate-600"
+                className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
               />
-              <span className="text-sm">🎓 Formation Nitrox (bloc nitrox)</span>
+              <span className="text-sm text-slate-200">🎓 Formation Nitrox (bloc nitrox)</span>
             </label>
           )}
 
-          <label className="flex items-center space-x-2">
+          <label className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
               checked={formData.wants_stab}
               onChange={(e) => setFormData({ ...formData, wants_stab: e.target.checked })}
-              className="rounded border-slate-600"
+              className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
             />
-            <span className="text-sm">Souhaite stab</span>
+            <span className="text-sm text-slate-200">Souhaite stab</span>
           </label>
 
           {formData.wants_stab && (
@@ -166,7 +166,7 @@ export default function EditQuestionnaireModal({
               <select
                 value={formData.stab_size}
                 onChange={(e) => setFormData({ ...formData, stab_size: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-600 rounded-lg bg-slate-700 text-slate-200 focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Sélectionner</option>
                 <option value="XS">XS</option>
@@ -178,35 +178,35 @@ export default function EditQuestionnaireModal({
             </div>
           )}
 
-          <label className="flex items-center space-x-2">
+          <label className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
               checked={formData.comes_from_issoire}
               onChange={(e) => setFormData({ ...formData, comes_from_issoire: e.target.checked, has_car: e.target.checked ? formData.has_car : false })}
-              className="rounded border-slate-600"
+              className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
             />
-            <span className="text-sm">🗺️ Vient d'Issoire</span>
+            <span className="text-sm text-slate-200">🗺️ Vient d'Issoire</span>
           </label>
 
           {formData.comes_from_issoire && (
             <>
-              <label className="flex items-center space-x-2 ml-6">
+              <label className="flex items-center space-x-2 ml-6 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.has_car}
                   onChange={(e) => setFormData({ ...formData, has_car: e.target.checked })}
-                  className="rounded border-slate-600"
+                  className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
                 />
-                <span className="text-sm">🚗 A une voiture</span>
+                <span className="text-sm text-slate-200">🚗 A une voiture</span>
               </label>
 
               {formData.has_car && (
-                <div className="ml-12 bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                <div className="ml-12 bg-blue-900/30 border border-blue-700 rounded-lg p-3 space-y-2">
                   <div className="flex items-start space-x-2 mb-2">
-                    <svg className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="text-xs text-blue-800">
+                    <p className="text-xs text-blue-300">
                       <strong>Important :</strong> La personne doit se compter dans les places
                     </p>
                   </div>
@@ -232,7 +232,7 @@ export default function EditQuestionnaireModal({
               value={formData.comments}
               onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-slate-600 rounded-lg bg-slate-700 text-slate-200 placeholder-slate-400 focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
