@@ -167,13 +167,16 @@ export default function SummaryPage() {
       {(() => {
         // Calcul des bouteilles avec optimisation si activée
         // En mode optimisation: les élèves font 2 rotations donc on divise par 2 (arrondi sup)
+        // Le bloc de secours est inclus dans la division avec les élèves air
         const studentsAirCount = summary.students_count - summary.nitrox_training_count
         const studentsNitroxCount = summary.nitrox_training_count
+        const backupTank = 1 // bloc de secours
         
-        // En mode optimisation, tous les élèves (air et nitrox) sont divisés par 2
-        const optimizedStudentAirBottles = summary.optimization_mode 
-          ? Math.ceil(studentsAirCount / 2) 
-          : studentsAirCount
+        // En mode optimisation: élèves air + bloc secours divisés par 2, élèves nitrox divisés par 2
+        const studentsAirPlusBackup = studentsAirCount + backupTank
+        const optimizedStudentAirPlusBackup = summary.optimization_mode 
+          ? Math.ceil(studentsAirPlusBackup / 2) 
+          : studentsAirPlusBackup
         const optimizedStudentNitroxBottles = summary.optimization_mode 
           ? Math.ceil(studentsNitroxCount / 2) 
           : studentsNitroxCount
@@ -182,9 +185,9 @@ export default function SummaryPage() {
         const encadrantsNitroxCount = summary.nitrox_count // encadrants qui veulent nitrox
         const optimizedNitroxBottles = encadrantsNitroxCount + optimizedStudentNitroxBottles
         
-        // Bouteilles Air = encadrants sans nitrox + élèves air optimisés + 1 secours
+        // Bouteilles Air = encadrants sans nitrox + (élèves air + secours) optimisés
         const encadrantsAirCount = summary.encadrants_count - summary.nitrox_count
-        const optimizedAirBottles = encadrantsAirCount + optimizedStudentAirBottles + 1
+        const optimizedAirBottles = encadrantsAirCount + optimizedStudentAirPlusBackup
         
         // Total = Nitrox optimisé + Air optimisé
         const optimizedTotalBottles = optimizedNitroxBottles + optimizedAirBottles
@@ -202,15 +205,15 @@ export default function SummaryPage() {
                   </span>
                 )}
                 <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
-                  Inclut +1 bloc de secours (Air)
+                  Inclut bloc de secours (Air)
                 </span>
               </div>
             </div>
             {summary.optimization_mode && (
               <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
                 <p className="text-sm text-green-300">
-                  <strong>🔄 Optimisation activée :</strong> Les élèves font 2 rotations avec les mêmes blocs, 
-                  ce qui réduit le nombre de bouteilles nécessaires (Air: {studentsAirCount} → {optimizedStudentAirBottles}, Nitrox: {studentsNitroxCount} → {optimizedStudentNitroxBottles}).
+                  <strong>🔄 Optimisation activée :</strong> Les élèves font 2 rotations avec les mêmes blocs. 
+                  Air (élèves + secours): {studentsAirPlusBackup} → {optimizedStudentAirPlusBackup}, Nitrox: {studentsNitroxCount} → {optimizedStudentNitroxBottles}.
                 </p>
               </div>
             )}
