@@ -24,6 +24,7 @@ export default function EditQuestionnaireModal({
     wants_2nd_reg: false,
     wants_stab: false,
     stab_size: '',
+    nitrox_training: false,
     comes_from_issoire: true,
     has_car: false,
     car_seats: '',
@@ -40,6 +41,7 @@ export default function EditQuestionnaireModal({
         wants_2nd_reg: questionnaire.wants_2nd_reg,
         wants_stab: questionnaire.wants_stab,
         stab_size: questionnaire.stab_size || '',
+        nitrox_training: questionnaire.nitrox_training,
         comes_from_issoire: questionnaire.comes_from_issoire,
         has_car: questionnaire.has_car,
         car_seats: questionnaire.car_seats?.toString() || '',
@@ -61,6 +63,7 @@ export default function EditQuestionnaireModal({
         wants_2nd_reg: formData.wants_2nd_reg,
         wants_stab: formData.wants_stab,
         stab_size: formData.wants_stab && formData.stab_size ? formData.stab_size : undefined,
+        nitrox_training: formData.nitrox_training,
         comes_from_issoire: formData.comes_from_issoire,
         has_car: formData.has_car,
         car_seats: formData.has_car && formData.car_seats ? parseInt(formData.car_seats) : undefined,
@@ -131,6 +134,18 @@ export default function EditQuestionnaireModal({
                 <span className="text-sm">Souhaite Nitrox</span>
               </label>
             </>
+          )}
+
+          {!formData.is_encadrant && (
+            <label className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                checked={formData.nitrox_training}
+                onChange={(e) => setFormData({ ...formData, nitrox_training: e.target.checked })}
+                className="rounded border-slate-600"
+              />
+              <span className="text-sm">🎓 Formation Nitrox (bloc nitrox)</span>
+            </label>
           )}
 
           <label className="flex items-center space-x-2">

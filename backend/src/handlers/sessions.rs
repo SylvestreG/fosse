@@ -160,6 +160,7 @@ pub async fn get_session_summary(
     let students_count = total_questionnaires - encadrants_count;
     let from_issoire_count = questionnaires_list.iter().filter(|q| q.comes_from_issoire).count() as i64;
     let nitrox_count = questionnaires_list.iter().filter(|q| q.wants_nitrox).count() as i64;
+    let nitrox_training_count = questionnaires_list.iter().filter(|q| q.nitrox_training).count() as i64;
     let second_reg_count = questionnaires_list.iter().filter(|q| q.wants_2nd_reg).count() as i64;
     let stab_count = questionnaires_list.iter().filter(|q| q.wants_stab).count() as i64;
     let vehicles_count = questionnaires_list.iter().filter(|q| q.has_car).count() as i64;
@@ -167,7 +168,8 @@ pub async fn get_session_summary(
     
     // Bouteilles: 1 par personne + 1 pour le bloc de secours
     let total_bottles = total_questionnaires + 1;
-    let nitrox_bottles = nitrox_count;
+    // Nitrox bottles: encadrants qui veulent nitrox + élèves en formation nitrox
+    let nitrox_bottles = questionnaires_list.iter().filter(|q| q.wants_nitrox || q.nitrox_training).count() as i64;
     let air_bottles = total_bottles - nitrox_bottles; // Le bloc de secours est en Air
     
     // Détendeurs: compter ceux qui en veulent + 1 pour le bloc de secours
@@ -211,6 +213,7 @@ pub async fn get_session_summary(
                 magic_link,
                 submitted: q.submitted_at.is_some(),
                 is_encadrant: q.is_encadrant,
+                nitrox_training: q.nitrox_training,
                 comes_from_issoire: q.comes_from_issoire,
             });
         }
@@ -227,6 +230,7 @@ pub async fn get_session_summary(
         air_bottles, // Inclut +1 pour le bloc de secours (Air)
         regulators_count, // Inclut +1 pour le bloc de secours
         nitrox_count,
+        nitrox_training_count,
         second_reg_count,
         stab_count: stab_count + 1, // +1 pour le bloc de secours
         stab_sizes, // Inclut "Secours"

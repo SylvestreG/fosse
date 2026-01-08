@@ -201,6 +201,7 @@ impl ImportService {
             wants_2nd_reg: Set(person.default_wants_2nd_reg),
             wants_stab: Set(person.default_wants_stab),
             stab_size: Set(person.default_stab_size.clone()),
+            nitrox_training: Set(false), // Session-specific, not a default preference
             comes_from_issoire: Set(false), // Session-specific, no default
             has_car: Set(false), // Session-specific, no default
             car_seats: Set(None), // Session-specific, no default

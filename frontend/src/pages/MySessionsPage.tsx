@@ -172,6 +172,7 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
     wants_2nd_reg: person.is_instructor && person.default_wants_2nd_reg,
     wants_stab: person.default_wants_stab,
     stab_size: person.default_stab_size || 'M',
+    nitrox_training: false,
     comes_from_issoire: true,
     has_car: false,
     car_seats: 0,
@@ -282,6 +283,21 @@ function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalPro
                 <span>2ème détendeur (encadrement)</span>
               </label>
             </>
+          )}
+
+          {!formData.is_encadrant && (
+            <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
+              <input
+                type="checkbox"
+                checked={formData.nitrox_training}
+                onChange={(e) => setFormData({ ...formData, nitrox_training: e.target.checked })}
+                className="w-5 h-5"
+              />
+              <div>
+                <span>🎓 Formation Nitrox</span>
+                <p className="text-sm text-slate-400">Je participe à la formation nitrox (bloc nitrox)</p>
+              </div>
+            </label>
           )}
 
           <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">

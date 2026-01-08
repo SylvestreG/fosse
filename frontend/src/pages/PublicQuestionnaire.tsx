@@ -19,6 +19,7 @@ export default function PublicQuestionnaire() {
     wants_2nd_reg: false,
     wants_stab: false,
     stab_size: '',
+    nitrox_training: false,
     comes_from_issoire: false,
     has_car: false,
     car_seats: '',
@@ -46,6 +47,7 @@ export default function PublicQuestionnaire() {
           wants_2nd_reg: q.wants_2nd_reg,
           wants_stab: q.wants_stab,
           stab_size: q.stab_size || '',
+          nitrox_training: q.nitrox_training,
           comes_from_issoire: q.comes_from_issoire,
           has_car: q.has_car,
           car_seats: q.car_seats?.toString() || '',
@@ -74,6 +76,7 @@ export default function PublicQuestionnaire() {
         wants_2nd_reg: formData.wants_2nd_reg,
         wants_stab: formData.wants_stab,
         stab_size: formData.wants_stab && formData.stab_size ? formData.stab_size : undefined,
+        nitrox_training: formData.nitrox_training,
         comes_from_issoire: formData.comes_from_issoire,
         has_car: formData.has_car,
         car_seats: formData.has_car && formData.car_seats ? parseInt(formData.car_seats) : undefined,
@@ -196,6 +199,21 @@ export default function PublicQuestionnaire() {
                       </label>
                     </div>
                   </>
+                )}
+
+                {!formData.is_encadrant && (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="nitrox_training"
+                      checked={formData.nitrox_training}
+                      onChange={(e) => setFormData({ ...formData, nitrox_training: e.target.checked })}
+                      className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                    />
+                    <label htmlFor="nitrox_training" className="text-sm font-medium text-slate-200">
+                      Je participe à la formation Nitrox (bloc nitrox)
+                    </label>
+                  </div>
                 )}
               </div>
 

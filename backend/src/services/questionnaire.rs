@@ -135,6 +135,7 @@ impl QuestionnaireService {
                 wants_2nd_reg: q.wants_2nd_reg,
                 wants_stab: q.wants_stab,
                 stab_size: q.stab_size,
+                nitrox_training: q.nitrox_training,
                 comes_from_issoire: q.comes_from_issoire,
                 has_car: q.has_car,
                 car_seats: q.car_seats,
@@ -187,6 +188,7 @@ impl QuestionnaireService {
             active.wants_2nd_reg = Set(request.wants_2nd_reg);
             active.wants_stab = Set(request.wants_stab);
             active.stab_size = Set(request.stab_size.clone());
+            active.nitrox_training = Set(request.nitrox_training);
             active.has_car = Set(request.has_car);
             active.car_seats = Set(request.car_seats);
             active.comments = Set(request.comments.clone());
@@ -223,6 +225,7 @@ impl QuestionnaireService {
             wants_2nd_reg: questionnaire.wants_2nd_reg,
             wants_stab: questionnaire.wants_stab,
             stab_size: questionnaire.stab_size,
+            nitrox_training: questionnaire.nitrox_training,
             comes_from_issoire: questionnaire.comes_from_issoire,
             has_car: questionnaire.has_car,
             car_seats: questionnaire.car_seats,
@@ -258,6 +261,7 @@ impl QuestionnaireService {
                 wants_2nd_reg: q.wants_2nd_reg,
                 wants_stab: q.wants_stab,
                 stab_size: q.stab_size,
+                nitrox_training: q.nitrox_training,
                 comes_from_issoire: q.comes_from_issoire,
                 has_car: q.has_car,
                 car_seats: q.car_seats,
@@ -317,6 +321,7 @@ impl QuestionnaireService {
                 wants_2nd_reg: questionnaire.wants_2nd_reg,
                 wants_stab: questionnaire.wants_stab,
                 stab_size: questionnaire.stab_size,
+                nitrox_training: questionnaire.nitrox_training,
                 comes_from_issoire: questionnaire.comes_from_issoire,
                 has_car: questionnaire.has_car,
                 car_seats: questionnaire.car_seats,
@@ -352,6 +357,7 @@ impl QuestionnaireService {
         active.wants_2nd_reg = Set(payload.wants_2nd_reg);
         active.wants_stab = Set(payload.wants_stab);
         active.stab_size = Set(payload.stab_size);
+        active.nitrox_training = Set(payload.nitrox_training);
         active.comes_from_issoire = Set(payload.comes_from_issoire);
         active.has_car = Set(payload.has_car);
         active.car_seats = Set(payload.car_seats);
@@ -379,6 +385,7 @@ impl QuestionnaireService {
             wants_2nd_reg: updated.wants_2nd_reg,
             wants_stab: updated.wants_stab,
             stab_size: updated.stab_size,
+            nitrox_training: updated.nitrox_training,
             comes_from_issoire: updated.comes_from_issoire,
             has_car: updated.has_car,
             car_seats: updated.car_seats,
@@ -532,6 +539,7 @@ impl QuestionnaireService {
             wants_2nd_reg: Set(request.wants_2nd_reg),
             wants_stab: Set(request.wants_stab),
             stab_size: Set(request.stab_size),
+            nitrox_training: Set(request.nitrox_training),
             comes_from_issoire: Set(request.comes_from_issoire),
             has_car: Set(request.has_car),
             car_seats: Set(request.car_seats),
@@ -556,6 +564,7 @@ impl QuestionnaireService {
             wants_2nd_reg: created.wants_2nd_reg,
             wants_stab: created.wants_stab,
             stab_size: created.stab_size,
+            nitrox_training: created.nitrox_training,
             comes_from_issoire: created.comes_from_issoire,
             has_car: created.has_car,
             car_seats: created.car_seats,

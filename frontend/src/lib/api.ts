@@ -70,6 +70,7 @@ export interface Questionnaire {
   wants_2nd_reg: boolean
   wants_stab: boolean
   stab_size?: string
+  nitrox_training: boolean
   comes_from_issoire: boolean
   has_car: boolean
   car_seats?: number
@@ -92,6 +93,7 @@ export interface QuestionnaireDetail {
   wants_2nd_reg: boolean
   wants_stab: boolean
   stab_size?: string
+  nitrox_training: boolean
   comes_from_issoire: boolean
   has_car: boolean
   car_seats?: number
@@ -186,6 +188,7 @@ export interface ParticipantInfo {
   magic_link: string
   submitted: boolean
   is_encadrant: boolean
+  nitrox_training: boolean
   comes_from_issoire: boolean
 }
 
@@ -200,6 +203,7 @@ export interface SessionSummary {
   air_bottles: number
   regulators_count: number
   nitrox_count: number
+  nitrox_training_count: number
   second_reg_count: number
   stab_count: number
   stab_sizes: Array<{ size: string; count: number }>
@@ -235,6 +239,7 @@ export const questionnairesApi = {
     wants_2nd_reg: boolean
     wants_stab: boolean
     stab_size?: string
+    nitrox_training: boolean
     comes_from_issoire: boolean
     has_car: boolean
     car_seats?: number
@@ -252,6 +257,7 @@ export const questionnairesApi = {
     wants_2nd_reg: boolean
     wants_stab: boolean
     stab_size?: string
+    nitrox_training: boolean
     comes_from_issoire: boolean
     has_car: boolean
     car_seats?: number
@@ -268,6 +274,7 @@ export const questionnairesApi = {
     wants_2nd_reg: boolean
     wants_stab: boolean
     stab_size?: string
+    nitrox_training: boolean
     comes_from_issoire: boolean
     has_car: boolean
     car_seats?: number

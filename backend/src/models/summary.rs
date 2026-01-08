@@ -12,6 +12,7 @@ pub struct SessionSummary {
     pub air_bottles: i64,
     pub regulators_count: i64,
     pub nitrox_count: i64,
+    pub nitrox_training_count: i64,
     pub second_reg_count: i64,
     pub stab_count: i64,
     pub stab_sizes: Vec<StabSize>,
@@ -34,6 +35,7 @@ pub struct ParticipantInfo {
     pub magic_link: String,
     pub submitted: bool,
     pub is_encadrant: bool,
+    pub nitrox_training: bool,
     pub comes_from_issoire: bool,
 }
 

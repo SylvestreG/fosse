@@ -123,6 +123,7 @@ export default function SessionsPage() {
         wants_2nd_reg: questionnaire.wants_2nd_reg,
         wants_stab: questionnaire.wants_stab,
         stab_size: questionnaire.stab_size,
+        nitrox_training: questionnaire.nitrox_training,
         comes_from_issoire: questionnaire.comes_from_issoire,
         has_car: questionnaire.has_car,
         car_seats: questionnaire.car_seats,

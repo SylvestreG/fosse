@@ -15,6 +15,7 @@ pub struct Model {
     pub wants_2nd_reg: bool,
     pub wants_stab: bool,
     pub stab_size: Option<String>,
+    pub nitrox_training: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
     pub car_seats: Option<i32>,
