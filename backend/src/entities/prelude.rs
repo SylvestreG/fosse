@@ -11,4 +11,7 @@ pub use super::competency_domains::Entity as CompetencyDomains;
 pub use super::competency_modules::Entity as CompetencyModules;
 pub use super::competency_skills::Entity as CompetencySkills;
 pub use super::skill_validations::Entity as SkillValidations;
+pub use super::rotations::Entity as Rotations;
+pub use super::palanquees::Entity as Palanquees;
+pub use super::palanquee_members::Entity as PalanqueeMembers;
 

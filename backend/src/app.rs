@@ -170,6 +170,16 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .route("/api/v1/level-documents/:level/positions", get(list_skill_positions).post(set_skill_position).put(batch_update_positions))
         .route("/api/v1/level-documents/:level/positions/:skill_id", axum::routing::delete(delete_skill_position))
         .route("/api/v1/level-documents/:level/generate/:person_id", get(generate_filled_document))
+        // Palanquées et rotations
+        .route("/api/v1/sessions/:session_id/palanquees", get(get_session_palanquees))
+        .route("/api/v1/sessions/:session_id/fiche-securite", get(download_fiche_securite))
+        .route("/api/v1/rotations", post(create_rotation))
+        .route("/api/v1/sessions/:session_id/rotations", get(list_rotations))
+        .route("/api/v1/rotations/:id", axum::routing::delete(delete_rotation))
+        .route("/api/v1/palanquees", post(create_palanquee))
+        .route("/api/v1/palanquees/:id", axum::routing::put(update_palanquee).delete(delete_palanquee))
+        .route("/api/v1/palanquees/:palanquee_id/members", post(add_member))
+        .route("/api/v1/palanquee-members/:id", axum::routing::put(update_member).delete(remove_member))
         .layer(middleware::from_fn_with_state(
             acl_state.clone(),
             acl_auth_middleware,

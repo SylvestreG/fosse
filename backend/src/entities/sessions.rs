@@ -23,6 +23,8 @@ pub enum Relation {
     Questionnaires,
     #[sea_orm(has_many = "super::import_jobs::Entity")]
     ImportJobs,
+    #[sea_orm(has_many = "super::rotations::Entity")]
+    Rotations,
 }
 
 impl Related<super::questionnaires::Entity> for Entity {
@@ -34,6 +36,12 @@ impl Related<super::questionnaires::Entity> for Entity {
 impl Related<super::import_jobs::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::ImportJobs.def()
+    }
+}
+
+impl Related<super::rotations::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Rotations.def()
     }
 }
 

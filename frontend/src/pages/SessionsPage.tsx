@@ -266,6 +266,9 @@ export default function SessionsPage() {
                 />
                 <span className="text-sm text-slate-200">🔄 Mode 2 rotations</span>
               </label>
+              <Button variant="secondary" onClick={() => navigate(`/dashboard/palanquees/${selectedSession.id}`)}>
+                🤿 Palanquées
+              </Button>
               <Button onClick={() => setShowAddParticipantModal(true)}>
                 ➕ Ajouter un participant
               </Button>

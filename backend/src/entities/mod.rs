@@ -14,4 +14,7 @@ pub mod competency_skills;
 pub mod skill_validations;
 pub mod level_documents;
 pub mod skill_document_positions;
+pub mod rotations;
+pub mod palanquees;
+pub mod palanquee_members;
 

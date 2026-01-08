@@ -616,5 +616,127 @@ export const levelDocumentsApi = {
     api.get(`/level-documents/${level}/generate/${personId}`, { responseType: 'blob' }),
 }
 
+// ============ PALANQUEES ============
+
+export interface PalanqueeMember {
+  id: string
+  palanquee_id: string
+  questionnaire_id: string
+  role: string // E, P, GP
+  gas_type: string // Air, Nitrox, etc
+  person_id: string
+  first_name: string
+  last_name: string
+  diving_level?: string
+  preparing_level?: string
+  is_encadrant: boolean
+}
+
+export interface Palanquee {
+  id: string
+  rotation_id: string
+  number: number
+  call_sign?: string
+  planned_departure_time?: string
+  planned_time?: number
+  planned_depth?: number
+  actual_departure_time?: string
+  actual_return_time?: string
+  actual_time?: number
+  actual_depth?: number
+  members: PalanqueeMember[]
+}
+
+export interface Rotation {
+  id: string
+  session_id: string
+  number: number
+  palanquees: Palanquee[]
+}
+
+export interface UnassignedParticipant {
+  questionnaire_id: string
+  person_id: string
+  first_name: string
+  last_name: string
+  diving_level?: string
+  preparing_level?: string
+  is_encadrant: boolean
+  wants_nitrox: boolean
+  nitrox_training: boolean
+}
+
+export interface SessionPalanquees {
+  session_id: string
+  rotations: Rotation[]
+  unassigned_participants: UnassignedParticipant[]
+}
+
+export const palanqueesApi = {
+  // Récupérer toutes les palanquées d'une session
+  getSessionPalanquees: (sessionId: string) => 
+    api.get<SessionPalanquees>(`/sessions/${sessionId}/palanquees`),
+  
+  // Rotations
+  createRotation: (sessionId: string, number?: number) => 
+    api.post<Rotation>('/rotations', { session_id: sessionId, number }),
+  listRotations: (sessionId: string) => 
+    api.get<Rotation[]>(`/sessions/${sessionId}/rotations`),
+  deleteRotation: (id: string) => 
+    api.delete(`/rotations/${id}`),
+  
+  // Palanquées
+  createPalanquee: (rotationId: string, number?: number, callSign?: string) => 
+    api.post<Palanquee>('/palanquees', { rotation_id: rotationId, number, call_sign: callSign }),
+  updatePalanquee: (id: string, data: {
+    call_sign?: string
+    planned_departure_time?: string
+    planned_time?: number
+    planned_depth?: number
+    actual_departure_time?: string
+    actual_return_time?: string
+    actual_time?: number
+    actual_depth?: number
+  }) => api.put<Palanquee>(`/palanquees/${id}`, data),
+  deletePalanquee: (id: string) => 
+    api.delete(`/palanquees/${id}`),
+  
+  // Membres
+  addMember: (palanqueeId: string, questionnaireId: string, role: string, gasType?: string) => 
+    api.post<PalanqueeMember>(`/palanquees/${palanqueeId}/members`, { 
+      questionnaire_id: questionnaireId, 
+      role,
+      gas_type: gasType 
+    }),
+  updateMember: (id: string, role?: string, gasType?: string) => 
+    api.put<PalanqueeMember>(`/palanquee-members/${id}`, { role, gas_type: gasType }),
+  removeMember: (id: string) => 
+    api.delete(`/palanquee-members/${id}`),
+  
+  // Fiche de sécurité PDF
+  downloadFicheSecurite: (sessionId: string, options?: {
+    date?: string
+    club?: string
+    directeur_plongee?: string
+    site?: string
+    position?: string
+    securite_surface?: string
+    observations?: string
+  }) => {
+    const params = new URLSearchParams()
+    if (options?.date) params.append('date', options.date)
+    if (options?.club) params.append('club', options.club)
+    if (options?.directeur_plongee) params.append('directeur_plongee', options.directeur_plongee)
+    if (options?.site) params.append('site', options.site)
+    if (options?.position) params.append('position', options.position)
+    if (options?.securite_surface) params.append('securite_surface', options.securite_surface)
+    if (options?.observations) params.append('observations', options.observations)
+    
+    const queryString = params.toString()
+    const url = `/sessions/${sessionId}/fiche-securite${queryString ? '?' + queryString : ''}`
+    return api.get(url, { responseType: 'blob' })
+  },
+}
+
 export default api
 

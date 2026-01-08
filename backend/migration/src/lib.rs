@@ -24,6 +24,7 @@ mod m20240101_000021_create_level_documents;
 mod m20240101_000022_add_skill_description;
 mod m20240101_000023_add_nitrox_training;
 mod m20240101_000024_add_optimization_mode;
+mod m20240101_000025_create_palanquees;
 
 pub struct Migrator;
 
@@ -55,6 +56,7 @@ impl MigratorTrait for Migrator {
         Box::new(m20240101_000022_add_skill_description::Migration),
         Box::new(m20240101_000023_add_nitrox_training::Migration),
         Box::new(m20240101_000024_add_optimization_mode::Migration),
+        Box::new(m20240101_000025_create_palanquees::Migration),
         ]
     }
 }

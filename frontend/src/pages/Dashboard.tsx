@@ -8,6 +8,7 @@ import ImportPage from './ImportPage'
 import EmailsPage from './EmailsPage'
 import SessionEmailsPage from './SessionEmailsPage'
 import SummaryPage from './SummaryPage'
+import PalanqueesPage from './PalanqueesPage'
 import UsersPage from './UsersPage'
 import MyProfilePage from './MyProfilePage'
 import CompetencesPage from './CompetencesPage'
@@ -41,6 +42,9 @@ export default function Dashboard() {
             
             {/* Summary - admin seulement */}
             {isAdmin && <Route path="/summary/:id" element={<SummaryPage />} />}
+            
+            {/* Palanquées - admin seulement */}
+            {isAdmin && <Route path="/palanquees/:sessionId" element={<PalanqueesPage />} />}
             
             {/* Import - admin seulement */}
             {isAdmin && <Route path="/import" element={<ImportPage />} />}
