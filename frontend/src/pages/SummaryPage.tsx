@@ -318,6 +318,9 @@ export default function SummaryPage() {
                     Email
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Niveau
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Statut
                   </th>
                 </tr>
@@ -332,6 +335,11 @@ export default function SummaryPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-slate-400">{participant.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                        {participant.diving_level || '-'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {participant.submitted ? (
@@ -352,15 +360,29 @@ export default function SummaryPage() {
         </div>
       )}
 
-      {/* Section Élèves */}
-      {summary && summary.participants && summary.participants.filter(p => !p.is_encadrant).length > 0 && (
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4 text-white">
-            🤿 Élèves ({summary.participants.filter(p => !p.is_encadrant).length})
-          </h2>
+      {/* Section Élèves - Groupés */}
+      {summary && summary.participants && (() => {
+        const students = summary.participants.filter(p => !p.is_encadrant)
+        if (students.length === 0) return null
+
+        // Groupe 1: Formation Nitrox
+        const nitroxTrainingStudents = students.filter(p => p.nitrox_training)
+        
+        // Groupe 2: Par niveau préparé (les élèves pas en formation nitrox)
+        const remainingStudents = students.filter(p => !p.nitrox_training)
+        const preparingLevels = ['N1', 'N2', 'N3', 'N4']
+        const studentsByPreparingLevel: Record<string, typeof students> = {}
+        preparingLevels.forEach(level => {
+          studentsByPreparingLevel[level] = remainingStudents.filter(p => p.preparing_level === level)
+        })
+        
+        // Groupe 3: Autres (pas de niveau préparé)
+        const otherStudents = remainingStudents.filter(p => !p.preparing_level || !preparingLevels.includes(p.preparing_level))
+
+        const StudentTable = ({ participants, headerColor }: { participants: typeof students, headerColor: string }) => (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-700">
-              <thead className="bg-cyan-500/10">
+              <thead className={headerColor}>
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Nom
@@ -369,12 +391,18 @@ export default function SummaryPage() {
                     Email
                   </th>
                   <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Niveau
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
+                    Prépare
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
                     Statut
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-slate-700">
-                {summary.participants.filter(p => !p.is_encadrant).map((participant, idx) => (
+                {participants.map((participant, idx) => (
                   <tr key={idx} className={participant.submitted ? 'bg-green-500/10' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-white">
@@ -383,6 +411,20 @@ export default function SummaryPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-slate-400">{participant.email}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                        {participant.diving_level || '-'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      {participant.preparing_level ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          🎯 {participant.preparing_level}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {participant.submitted ? (
@@ -400,8 +442,46 @@ export default function SummaryPage() {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )
+
+        return (
+          <div className="space-y-6">
+            {/* Formation Nitrox */}
+            {nitroxTrainingStudents.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+                <h2 className="text-xl font-semibold mb-4 text-white">
+                  🎓 Formation Nitrox ({nitroxTrainingStudents.length})
+                </h2>
+                <StudentTable participants={nitroxTrainingStudents} headerColor="bg-yellow-500/10" />
+              </div>
+            )}
+
+            {/* Élèves par niveau préparé */}
+            {preparingLevels.map(level => {
+              const levelStudents = studentsByPreparingLevel[level]
+              if (levelStudents.length === 0) return null
+              return (
+                <div key={level} className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+                  <h2 className="text-xl font-semibold mb-4 text-white">
+                    🎯 Préparation {level} ({levelStudents.length})
+                  </h2>
+                  <StudentTable participants={levelStudents} headerColor="bg-cyan-500/10" />
+                </div>
+              )
+            })}
+
+            {/* Autres élèves */}
+            {otherStudents.length > 0 && (
+              <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+                <h2 className="text-xl font-semibold mb-4 text-white">
+                  🤿 Autres élèves ({otherStudents.length})
+                </h2>
+                <StudentTable participants={otherStudents} headerColor="bg-slate-500/10" />
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {toast && (
         <Toast

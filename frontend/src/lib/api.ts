@@ -190,6 +190,8 @@ export interface ParticipantInfo {
   is_encadrant: boolean
   nitrox_training: boolean
   comes_from_issoire: boolean
+  diving_level?: string
+  preparing_level?: string
 }
 
 export interface SessionSummary {

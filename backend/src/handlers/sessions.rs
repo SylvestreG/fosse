@@ -125,6 +125,7 @@ pub async fn get_session_summary(
     Path(id): Path<Uuid>,
 ) -> Result<Json<SessionSummary>, AppError> {
     use crate::entities::{email_jobs, people};
+    use crate::models::DiverLevel;
     
     // Verify session exists
     let _session = Sessions::find_by_id(id)
@@ -206,6 +207,14 @@ pub async fn get_session_summary(
                 .map(|e| format!("{}/q/{}", config.magic_link.base_url, e.questionnaire_token))
                 .unwrap_or_default();
 
+            // Extract diving level display and preparing level
+            let diving_level_display = person.diving_level.as_ref()
+                .and_then(|s| DiverLevel::from_string(s))
+                .map(|dl| dl.display())
+                .filter(|s| s != "Aucun niveau");
+            let preparing_level = person.diving_level.as_ref()
+                .and_then(|s| DiverLevel::extract_preparing_level(s));
+
             participants.push(ParticipantInfo {
                 first_name: person.first_name.clone(),
                 last_name: person.last_name.clone(),
@@ -215,6 +224,8 @@ pub async fn get_session_summary(
                 is_encadrant: q.is_encadrant,
                 nitrox_training: q.nitrox_training,
                 comes_from_issoire: q.comes_from_issoire,
+                diving_level: diving_level_display,
+                preparing_level,
             });
         }
     }
