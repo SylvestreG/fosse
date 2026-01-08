@@ -176,6 +176,28 @@ export default function SessionsPage() {
     await loadQuestionnaires(session.id)
   }
 
+  const handleToggleOptimization = async () => {
+    if (!selectedSession) return
+    
+    try {
+      const response = await sessionsApi.update(selectedSession.id, {
+        optimization_mode: !selectedSession.optimization_mode
+      })
+      setSelectedSession(response.data)
+      // Update the session in the list too
+      setSessions(prev => prev.map(s => s.id === response.data.id ? response.data : s))
+      setToast({ 
+        message: response.data.optimization_mode 
+          ? 'Mode optimisation activé (2 rotations)' 
+          : 'Mode optimisation désactivé', 
+        type: 'success' 
+      })
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Erreur lors de la modification'
+      setToast({ message: errorMessage, type: 'error' })
+    }
+  }
+
   const handleDeleteSession = async (session: Session) => {
     if (!confirm(`Êtes-vous sûr de vouloir supprimer la session "${session.name}" ?\n\nToutes les données associées (questionnaires, emails) seront supprimées.`)) {
       return
@@ -234,7 +256,16 @@ export default function SessionsPage() {
               </Button>
               <h2 className="text-2xl font-semibold text-white">{selectedSession.name}</h2>
             </div>
-            <div className="flex space-x-2 flex-wrap gap-2">
+            <div className="flex space-x-2 flex-wrap gap-2 items-center">
+              <label className="flex items-center space-x-2 cursor-pointer bg-slate-700/50 px-3 py-2 rounded-lg">
+                <input
+                  type="checkbox"
+                  checked={selectedSession.optimization_mode}
+                  onChange={handleToggleOptimization}
+                  className="rounded border-slate-600 bg-slate-700 text-green-500 focus:ring-green-500"
+                />
+                <span className="text-sm text-slate-200">🔄 Mode 2 rotations</span>
+              </label>
               <Button onClick={() => setShowAddParticipantModal(true)}>
                 ➕ Ajouter un participant
               </Button>

@@ -56,6 +56,7 @@ export interface Session {
   location?: string
   description?: string
   summary_token?: string
+  optimization_mode: boolean
   created_at: string
   updated_at: string
 }
@@ -212,6 +213,7 @@ export interface SessionSummary {
   vehicles_count: number
   total_car_seats: number
   participants: ParticipantInfo[]
+  optimization_mode: boolean
 }
 
 export const sessionsApi = {
@@ -224,6 +226,7 @@ export const sessionsApi = {
   }) => api.post<Session>('/sessions', data),
   list: () => api.get<Session[]>('/sessions'),
   get: (id: string) => api.get<Session>(`/sessions/${id}`),
+  update: (id: string, data: { optimization_mode?: boolean }) => api.put<Session>(`/sessions/${id}`, data),
   delete: (id: string) => api.delete(`/sessions/${id}`),
   getSummary: (id: string) => api.get<SessionSummary>(`/sessions/${id}/summary`),
   getSummaryByToken: (token: string) => api.get<SessionSummary>(`/sessions/summary/${token}`),

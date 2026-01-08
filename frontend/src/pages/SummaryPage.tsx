@@ -164,36 +164,71 @@ export default function SummaryPage() {
       </div>
 
       {/* Section Bouteilles */}
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-white">📦 Bouteilles</h2>
-          <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
-            Inclut +1 bloc de secours (Air)
-          </span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StatCard
-            title="Bouteilles Totales"
-            value={summary.total_bottles}
-            icon="🫧"
-            color="blue"
-            subtitle="1 par personne + secours"
-          />
-          <StatCard
-            title="Bouteilles Nitrox"
-            value={summary.nitrox_bottles}
-            icon="⚡"
-            color="yellow"
-          />
-          <StatCard
-            title="Bouteilles Air"
-            value={summary.air_bottles}
-            icon="💨"
-            color="gray"
-            subtitle="Inclut bloc de secours"
-          />
-        </div>
-      </div>
+      {(() => {
+        // Calcul des bouteilles avec optimisation si activée
+        // En mode optimisation: les élèves font 2 rotations donc on divise par 2 (arrondi sup)
+        const studentsAirCount = summary.students_count - summary.nitrox_training_count
+        const optimizedStudentBottles = summary.optimization_mode 
+          ? Math.ceil(studentsAirCount / 2) 
+          : studentsAirCount
+        
+        // Bouteilles Air = encadrants sans nitrox + élèves optimisés + 1 secours
+        const encadrantsAirCount = summary.encadrants_count - summary.nitrox_count
+        const optimizedAirBottles = encadrantsAirCount + optimizedStudentBottles + 1
+        
+        // Total = Nitrox + Air optimisé
+        const optimizedTotalBottles = summary.nitrox_bottles + optimizedAirBottles
+        
+        const savedBottles = summary.optimization_mode ? (summary.total_bottles - optimizedTotalBottles) : 0
+
+        return (
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">📦 Bouteilles</h2>
+              <div className="flex items-center gap-3">
+                {summary.optimization_mode && (
+                  <span className="text-sm text-green-400 bg-green-500/20 px-3 py-1 rounded-full border border-green-500/30">
+                    🔄 Mode 2 rotations (-{savedBottles} bouteilles)
+                  </span>
+                )}
+                <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
+                  Inclut +1 bloc de secours (Air)
+                </span>
+              </div>
+            </div>
+            {summary.optimization_mode && (
+              <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <p className="text-sm text-green-300">
+                  <strong>🔄 Optimisation activée :</strong> Les élèves font 2 rotations avec les mêmes blocs, 
+                  ce qui réduit le nombre de bouteilles Air nécessaires de {studentsAirCount} à {optimizedStudentBottles}.
+                </p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <StatCard
+                title="Bouteilles Totales"
+                value={optimizedTotalBottles}
+                icon="🫧"
+                color="blue"
+                subtitle={summary.optimization_mode ? "Optimisé (2 rotations)" : "1 par personne + secours"}
+              />
+              <StatCard
+                title="Bouteilles Nitrox"
+                value={summary.nitrox_bottles}
+                icon="⚡"
+                color="yellow"
+              />
+              <StatCard
+                title="Bouteilles Air"
+                value={optimizedAirBottles}
+                icon="💨"
+                color="gray"
+                subtitle={summary.optimization_mode ? `${savedBottles} économisées` : "Inclut bloc de secours"}
+              />
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Section Matériel */}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">

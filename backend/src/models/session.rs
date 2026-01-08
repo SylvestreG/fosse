@@ -22,7 +22,13 @@ pub struct SessionResponse {
     pub location: Option<String>,
     pub description: Option<String>,
     pub summary_token: Option<Uuid>,
+    pub optimization_mode: bool,
     pub created_at: String,
     pub updated_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateSessionRequest {
+    pub optimization_mode: Option<bool>,
 }
 

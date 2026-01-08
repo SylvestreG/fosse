@@ -1,6 +1,6 @@
 use crate::entities::{prelude::*, questionnaires, sessions};
 use crate::errors::AppError;
-use crate::models::{CreateSessionRequest, SessionResponse, SessionSummary, StabSize, ParticipantInfo};
+use crate::models::{CreateSessionRequest, SessionResponse, SessionSummary, StabSize, ParticipantInfo, UpdateSessionRequest};
 use axum::{
     extract::{Path, State},
     Json,
@@ -28,6 +28,7 @@ pub async fn create_session(
         location: Set(payload.location),
         description: Set(payload.description),
         summary_token: Set(Some(Uuid::new_v4())), // Generate unique token for public summary access
+        optimization_mode: Set(false),
         created_at: Set(now),
         updated_at: Set(now),
     };
@@ -45,6 +46,7 @@ pub async fn create_session(
         location: session.location,
         description: session.description,
         summary_token: session.summary_token,
+        optimization_mode: session.optimization_mode,
         created_at: session.created_at.to_string(),
         updated_at: session.updated_at.to_string(),
     }))
@@ -68,6 +70,7 @@ pub async fn list_sessions(
             location: s.location,
             description: s.description,
             summary_token: s.summary_token,
+            optimization_mode: s.optimization_mode,
             created_at: s.created_at.to_string(),
             updated_at: s.updated_at.to_string(),
         })
@@ -94,8 +97,47 @@ pub async fn get_session(
         location: session.location,
         description: session.description,
         summary_token: session.summary_token,
+        optimization_mode: session.optimization_mode,
         created_at: session.created_at.to_string(),
         updated_at: session.updated_at.to_string(),
+    }))
+}
+
+pub async fn update_session(
+    State(db): State<Arc<DatabaseConnection>>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateSessionRequest>,
+) -> Result<Json<SessionResponse>, AppError> {
+    let session = Sessions::find_by_id(id)
+        .one(db.as_ref())
+        .await
+        .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query session".to_string())))?
+        .ok_or(AppError::NotFound("Session not found".to_string()))?;
+
+    let now = Utc::now().naive_utc();
+    let mut active: sessions::ActiveModel = session.into();
+    
+    if let Some(optimization_mode) = payload.optimization_mode {
+        active.optimization_mode = Set(optimization_mode);
+    }
+    active.updated_at = Set(now);
+
+    let updated = active
+        .update(db.as_ref())
+        .await
+        .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to update session: {}", e))))?;
+
+    Ok(Json(SessionResponse {
+        id: updated.id,
+        name: updated.name,
+        start_date: updated.start_date,
+        end_date: updated.end_date,
+        location: updated.location,
+        description: updated.description,
+        summary_token: updated.summary_token,
+        optimization_mode: updated.optimization_mode,
+        created_at: updated.created_at.to_string(),
+        updated_at: updated.updated_at.to_string(),
     }))
 }
 
@@ -127,8 +169,8 @@ pub async fn get_session_summary(
     use crate::entities::{email_jobs, people};
     use crate::models::DiverLevel;
     
-    // Verify session exists
-    let _session = Sessions::find_by_id(id)
+    // Verify session exists and get optimization_mode
+    let session = Sessions::find_by_id(id)
         .one(db.as_ref())
         .await
         .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query session".to_string())))?
@@ -248,6 +290,7 @@ pub async fn get_session_summary(
         vehicles_count,
         total_car_seats,
         participants,
+        optimization_mode: session.optimization_mode,
     }))
 }
 

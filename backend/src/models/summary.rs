@@ -19,6 +19,7 @@ pub struct SessionSummary {
     pub vehicles_count: i64,
     pub total_car_seats: i64,
     pub participants: Vec<ParticipantInfo>,
+    pub optimization_mode: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -6,7 +6,7 @@ use crate::middleware::acl::{acl_auth_middleware, AclState};
 use crate::services::{AuthService, EmailService};
 use axum::{
     middleware,
-    routing::{get, post},
+    routing::{get, post, put},
     Router,
     response::IntoResponse,
     http::StatusCode,
@@ -125,7 +125,7 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
     // Uses ACL middleware which injects AuthUser with permissions
     let admin_routes = Router::new()
         .route("/api/v1/sessions", post(create_session).get(list_sessions))
-        .route("/api/v1/sessions/:id", get(get_session).delete(delete_session))
+        .route("/api/v1/sessions/:id", get(get_session).put(update_session).delete(delete_session))
         .route("/api/v1/questionnaires", get(list_questionnaires))
         .route("/api/v1/questionnaires/:id", axum::routing::put(update_questionnaire).delete(delete_questionnaire))
         .route("/api/v1/emails/pending", get(get_pending_emails))
