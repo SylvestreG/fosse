@@ -724,7 +724,7 @@ function RotationCard({
           <span className="sm:hidden">+ Pal. pour créer</span>
         </div>
       ) : (
-        <div className="p-2 sm:p-3 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+        <div className="p-2 sm:p-3 grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
           {rotation.palanquees.map(palanquee => (
             <PalanqueeCard
               key={palanquee.id}
@@ -775,8 +775,8 @@ function PalanqueeCard({
     <div className="rounded-lg border border-slate-600 bg-slate-700/30 overflow-hidden">
       {/* Header */}
       <div className="p-1.5 sm:p-2 bg-slate-700/60 flex items-center justify-between">
-        <span className="text-white font-medium text-xs sm:text-sm">
-          P{palanquee.number}
+        <span className="text-white font-semibold text-xs sm:text-sm">
+          Pal. {palanquee.number}
         </span>
         {canEdit && (
           <button
@@ -872,17 +872,16 @@ function MemberRow({
   onRemove: (memberId: string) => void
 }) {
   return (
-    <div className={`flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded text-[10px] sm:text-xs ${
+    <div className={`flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded text-[11px] sm:text-xs ${
       isGP ? 'bg-purple-900/40' : 'bg-slate-600/40'
     }`}>
       {isGP && (
-        <span className="bg-purple-600 text-white px-0.5 sm:px-1 rounded text-[10px] sm:text-xs">GP</span>
+        <span className="bg-purple-600 text-white px-0.5 sm:px-1 rounded text-[10px] sm:text-xs flex-shrink-0">GP</span>
       )}
       
       <div className="flex-1 min-w-0">
-        <p className="text-white truncate">
-          <span className="sm:hidden">{member.last_name.slice(0, 3).toUpperCase()}</span>
-          <span className="hidden sm:inline">{member.last_name.toUpperCase()} {member.first_name}</span>
+        <p className="text-white truncate font-medium">
+          {member.last_name.toUpperCase()} {member.first_name.charAt(0)}.
         </p>
       </div>
       
