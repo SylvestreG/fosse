@@ -346,48 +346,71 @@ export default function PalanqueesPage() {
             </div>
 
             {/* Indicateur des bouteilles disponibles */}
-            {summary && (
-              <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 border border-slate-700 flex items-center gap-4">
-                <span className="text-slate-300 text-sm">Bouteilles disponibles :</span>
-                <span className="bg-blue-600/80 text-white px-2 py-0.5 rounded text-sm">
-                  Air: {summary.air_bottles}
-                </span>
-                {summary.nitrox_bottles > 0 && (
-                  <span className="bg-yellow-600/80 text-white px-2 py-0.5 rounded text-sm">
-                    Nitrox: {summary.nitrox_bottles}
-                  </span>
-                )}
-                {session?.optimization_mode && (
-                  <span className="text-green-400 text-xs">🔄 Mode 2 rotations actif</span>
-                )}
-              </div>
-            )}
+            {summary && (() => {
+              // Calcul identique à SummaryPage pour les bouteilles optimisées
+              const studentsAirCount = summary.students_count - summary.nitrox_training_count
+              const studentsNitroxCount = summary.nitrox_training_count
+              const backupTank = 1
+              
+              const studentsAirPlusBackup = studentsAirCount + backupTank
+              const optimizedStudentAirPlusBackup = session?.optimization_mode 
+                ? Math.ceil(studentsAirPlusBackup / 2) 
+                : studentsAirPlusBackup
+              const optimizedStudentNitroxBottles = session?.optimization_mode 
+                ? Math.ceil(studentsNitroxCount / 2) 
+                : studentsNitroxCount
+              
+              const encadrantsNitroxCount = summary.nitrox_count
+              const optimizedNitroxBottles = encadrantsNitroxCount + optimizedStudentNitroxBottles
+              
+              const encadrantsAirCount = summary.encadrants_count - summary.nitrox_count
+              const optimizedAirBottles = encadrantsAirCount + optimizedStudentAirPlusBackup
 
-            {data.rotations.length === 0 ? (
-              <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-8 border border-slate-700 text-center">
-                <p className="text-slate-400 mb-2">Aucune rotation</p>
-                <p className="text-slate-500 text-sm">
-                  Créez une rotation puis ajoutez des palanquées.
-                </p>
-              </div>
-            ) : (
-              data.rotations.map(rotation => (
-                <RotationCard
-                  key={rotation.id}
-                  rotation={rotation}
-                  isDragging={!!draggedParticipant}
-                  draggedIsEncadrant={draggedParticipant?.is_encadrant || false}
-                  availableAir={summary?.air_bottles || 0}
-                  availableNitrox={summary?.nitrox_bottles || 0}
-                  onCreatePalanquee={handleCreatePalanquee}
-                  onDeleteRotation={handleDeleteRotation}
-                  onDeletePalanquee={handleDeletePalanquee}
-                  onDropGP={(palanqueeId) => handleDropGP(palanqueeId, rotation)}
-                  onDropStudent={(palanqueeId) => handleDropStudent(palanqueeId, rotation)}
-                  onRemoveMember={handleRemoveMember}
-                />
-              ))
-            )}
+              return (
+                <>
+                  <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 border border-slate-700 flex items-center gap-4">
+                    <span className="text-slate-300 text-sm">Bouteilles disponibles :</span>
+                    <span className="bg-blue-600/80 text-white px-2 py-0.5 rounded text-sm">
+                      Air: {optimizedAirBottles}
+                    </span>
+                    {optimizedNitroxBottles > 0 && (
+                      <span className="bg-yellow-600/80 text-white px-2 py-0.5 rounded text-sm">
+                        Nitrox: {optimizedNitroxBottles}
+                      </span>
+                    )}
+                    {session?.optimization_mode && (
+                      <span className="text-green-400 text-xs">🔄 Mode 2 rotations actif</span>
+                    )}
+                  </div>
+
+                  {data.rotations.length === 0 ? (
+                    <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-8 border border-slate-700 text-center">
+                      <p className="text-slate-400 mb-2">Aucune rotation</p>
+                      <p className="text-slate-500 text-sm">
+                        Créez une rotation puis ajoutez des palanquées.
+                      </p>
+                    </div>
+                  ) : (
+                    data.rotations.map(rotation => (
+                      <RotationCard
+                        key={rotation.id}
+                        rotation={rotation}
+                        isDragging={!!draggedParticipant}
+                        draggedIsEncadrant={draggedParticipant?.is_encadrant || false}
+                        availableAir={optimizedAirBottles}
+                        availableNitrox={optimizedNitroxBottles}
+                        onCreatePalanquee={handleCreatePalanquee}
+                        onDeleteRotation={handleDeleteRotation}
+                        onDeletePalanquee={handleDeletePalanquee}
+                        onDropGP={(palanqueeId) => handleDropGP(palanqueeId, rotation)}
+                        onDropStudent={(palanqueeId) => handleDropStudent(palanqueeId, rotation)}
+                        onRemoveMember={handleRemoveMember}
+                      />
+                    ))
+                  )}
+                </>
+              )
+            })()}
           </div>
         </div>
       </div>
