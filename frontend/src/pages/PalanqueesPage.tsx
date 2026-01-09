@@ -156,15 +156,37 @@ export default function PalanqueesPage() {
     setDraggedParticipant(null)
   }
 
-  const handleDropGP = (palanqueeId: string) => {
+  const handleDropGP = (palanqueeId: string, rotation: Rotation) => {
     if (draggedParticipant) {
+      // Vérifier si l'encadrant est déjà dans cette rotation
+      if (draggedParticipant.is_encadrant) {
+        const alreadyInRotation = rotation.palanquees.some(p => 
+          p.members.some(m => m.questionnaire_id === draggedParticipant.questionnaire_id)
+        )
+        if (alreadyInRotation) {
+          alert('Cet encadrant est déjà assigné à une palanquée dans cette rotation')
+          setDraggedParticipant(null)
+          return
+        }
+      }
       handleAddMember(palanqueeId, draggedParticipant, 'GP')
       setDraggedParticipant(null)
     }
   }
 
-  const handleDropStudent = (palanqueeId: string) => {
+  const handleDropStudent = (palanqueeId: string, rotation: Rotation) => {
     if (draggedParticipant) {
+      // Vérifier si l'encadrant est déjà dans cette rotation
+      if (draggedParticipant.is_encadrant) {
+        const alreadyInRotation = rotation.palanquees.some(p => 
+          p.members.some(m => m.questionnaire_id === draggedParticipant.questionnaire_id)
+        )
+        if (alreadyInRotation) {
+          alert('Cet encadrant est déjà assigné à une palanquée dans cette rotation')
+          setDraggedParticipant(null)
+          return
+        }
+      }
       handleAddMember(palanqueeId, draggedParticipant, 'P')
       setDraggedParticipant(null)
     }
@@ -336,8 +358,8 @@ export default function PalanqueesPage() {
                   onCreatePalanquee={handleCreatePalanquee}
                   onDeleteRotation={handleDeleteRotation}
                   onDeletePalanquee={handleDeletePalanquee}
-                  onDropGP={handleDropGP}
-                  onDropStudent={handleDropStudent}
+                  onDropGP={(palanqueeId) => handleDropGP(palanqueeId, rotation)}
+                  onDropStudent={(palanqueeId) => handleDropStudent(palanqueeId, rotation)}
                   onRemoveMember={handleRemoveMember}
                 />
               ))
