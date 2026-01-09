@@ -266,6 +266,25 @@ export default function StudentCompetencesPage() {
     requestValidation(skillId, skillName, stageId)
   }
 
+  // Supprimer une validation (admin uniquement)
+  const handleDeleteValidation = async (validationId: string, skillName: string) => {
+    if (!isRealAdmin) return
+    
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer la validation de "${skillName}" ?\n\nCette action est irréversible.`)) {
+      return
+    }
+    
+    try {
+      await skillValidationsApi.delete(validationId)
+      setToast({ message: 'Validation supprimée', type: 'success' })
+      await loadData()
+    } catch (error: any) {
+      console.error('Error deleting validation:', error)
+      const message = error.response?.data?.error || 'Erreur lors de la suppression'
+      setToast({ message, type: 'error' })
+    }
+  }
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -601,6 +620,17 @@ export default function StudentCompetencesPage() {
                                       )
                                     })}
                                   </div>
+                                  
+                                  {/* Bouton de suppression (admin uniquement) */}
+                                  {isRealAdmin && currentStage && (
+                                    <button
+                                      onClick={() => handleDeleteValidation(currentStage.id, skill.name)}
+                                      className="ml-1 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm bg-red-500/20 text-red-400 hover:bg-red-500/40 hover:text-red-300 transition-all"
+                                      title="Supprimer cette validation"
+                                    >
+                                      🗑️
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             )

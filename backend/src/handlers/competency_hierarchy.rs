@@ -1025,7 +1025,13 @@ pub async fn delete_skill_validation(
     State(db): State<Arc<DatabaseConnection>>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    check_permission(&auth, Permission::CompetenciesValidate)?;
+    // Seuls les vrais admins (non impersonnifiés) peuvent supprimer des validations
+    let is_real_admin = auth.claims.is_admin && auth.claims.impersonating.is_none();
+    if !is_real_admin {
+        return Err(AppError::Forbidden(
+            "Seuls les administrateurs peuvent supprimer des validations".to_string()
+        ));
+    }
 
     let validation = SkillValidations::find_by_id(id)
         .one(db.as_ref())
