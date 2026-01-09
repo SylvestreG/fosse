@@ -405,7 +405,10 @@ pub async fn get_session_palanquees(
 
     let mut unassigned_participants = vec![];
     for q in all_questionnaires {
-        if !assigned_questionnaire_ids.contains(&q.id) {
+        // Les encadrants restent toujours disponibles (ils peuvent faire plusieurs rotations)
+        // Les élèves sont retirés une fois assignés
+        let is_assigned = assigned_questionnaire_ids.contains(&q.id);
+        if q.is_encadrant || !is_assigned {
             let person = People::find_by_id(q.person_id)
                 .one(db.as_ref())
                 .await?
