@@ -816,8 +816,9 @@ pub async fn create_skill_validation(
 
             if !has_required_level {
                 return Err(AppError::Forbidden(format!(
-                    "Niveau minimum requis pour valider: {}",
-                    skill.min_validator_level
+                    "Niveau minimum requis pour valider: {} (votre niveau: {})",
+                    skill.min_validator_level,
+                    validator_level_str
                 )));
             }
         }
