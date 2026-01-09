@@ -11,7 +11,6 @@ import {
   Session
 } from '../lib/api'
 
-const GAS_TYPES = ['Air', 'Nitrox']
 const MAX_STUDENTS = 4
 
 export default function PalanqueesPage() {
@@ -124,15 +123,6 @@ export default function PalanqueesPage() {
       loadData()
     } catch (err) {
       console.error('Erreur suppression membre:', err)
-    }
-  }
-
-  const handleUpdateMember = async (memberId: string, role?: string, gasType?: string) => {
-    try {
-      await palanqueesApi.updateMember(memberId, role, gasType)
-      loadData()
-    } catch (err) {
-      console.error('Erreur mise à jour membre:', err)
     }
   }
 
@@ -349,7 +339,6 @@ export default function PalanqueesPage() {
                   onDropGP={handleDropGP}
                   onDropStudent={handleDropStudent}
                   onRemoveMember={handleRemoveMember}
-                  onUpdateMember={handleUpdateMember}
                 />
               ))
             )}
@@ -554,7 +543,6 @@ function RotationCard({
   onDropGP,
   onDropStudent,
   onRemoveMember,
-  onUpdateMember,
 }: {
   rotation: Rotation
   isDragging: boolean
@@ -565,7 +553,6 @@ function RotationCard({
   onDropGP: (palanqueeId: string) => void
   onDropStudent: (palanqueeId: string) => void
   onRemoveMember: (memberId: string) => void
-  onUpdateMember: (memberId: string, role?: string, gasType?: string) => void
 }) {
   return (
     <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow border border-slate-700">
@@ -609,7 +596,6 @@ function RotationCard({
               onDropGP={onDropGP}
               onDropStudent={onDropStudent}
               onRemoveMember={onRemoveMember}
-              onUpdateMember={onUpdateMember}
             />
           ))}
         </div>
@@ -626,7 +612,6 @@ function PalanqueeCard({
   onDropGP,
   onDropStudent,
   onRemoveMember,
-  onUpdateMember,
 }: {
   palanquee: Palanquee
   isDragging: boolean
@@ -635,7 +620,6 @@ function PalanqueeCard({
   onDropGP: (palanqueeId: string) => void
   onDropStudent: (palanqueeId: string) => void
   onRemoveMember: (memberId: string) => void
-  onUpdateMember: (memberId: string, role?: string, gasType?: string) => void
 }) {
   const [gpOver, setGpOver] = useState(false)
   const [studentsOver, setStudentsOver] = useState(false)
@@ -680,7 +664,6 @@ function PalanqueeCard({
             member={gp}
             isGP
             onRemove={onRemoveMember}
-            onUpdateGas={onUpdateMember}
           />
         ) : (
           <div className="text-slate-500 text-xs text-center py-1">
@@ -718,7 +701,6 @@ function PalanqueeCard({
               key={member.id}
               member={member}
               onRemove={onRemoveMember}
-              onUpdateGas={onUpdateMember}
             />
           ))
         )}
@@ -736,12 +718,10 @@ function MemberRow({
   member,
   isGP,
   onRemove,
-  onUpdateGas,
 }: {
   member: PalanqueeMember
   isGP?: boolean
   onRemove: (memberId: string) => void
-  onUpdateGas: (memberId: string, role?: string, gasType?: string) => void
 }) {
   return (
     <div className={`flex items-center gap-1.5 p-1.5 rounded text-xs ${
@@ -756,16 +736,6 @@ function MemberRow({
           {member.last_name.toUpperCase()} {member.first_name}
         </p>
       </div>
-      
-      <select
-        value={member.gas_type}
-        onChange={e => onUpdateGas(member.id, undefined, e.target.value)}
-        className="px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-xs w-14"
-      >
-        {GAS_TYPES.map(g => (
-          <option key={g} value={g}>{g}</option>
-        ))}
-      </select>
       
       <button
         onClick={() => onRemove(member.id)}
