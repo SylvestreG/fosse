@@ -136,6 +136,7 @@ impl QuestionnaireService {
                 wants_stab: q.wants_stab,
                 stab_size: q.stab_size,
                 nitrox_training: q.nitrox_training,
+                is_directeur_plongee: q.is_directeur_plongee,
                 comes_from_issoire: q.comes_from_issoire,
                 has_car: q.has_car,
                 car_seats: q.car_seats,
@@ -226,6 +227,7 @@ impl QuestionnaireService {
             wants_stab: questionnaire.wants_stab,
             stab_size: questionnaire.stab_size,
             nitrox_training: questionnaire.nitrox_training,
+            is_directeur_plongee: questionnaire.is_directeur_plongee,
             comes_from_issoire: questionnaire.comes_from_issoire,
             has_car: questionnaire.has_car,
             car_seats: questionnaire.car_seats,
@@ -262,6 +264,7 @@ impl QuestionnaireService {
                 wants_stab: q.wants_stab,
                 stab_size: q.stab_size,
                 nitrox_training: q.nitrox_training,
+                is_directeur_plongee: q.is_directeur_plongee,
                 comes_from_issoire: q.comes_from_issoire,
                 has_car: q.has_car,
                 car_seats: q.car_seats,
@@ -322,6 +325,7 @@ impl QuestionnaireService {
                 wants_stab: questionnaire.wants_stab,
                 stab_size: questionnaire.stab_size,
                 nitrox_training: questionnaire.nitrox_training,
+                is_directeur_plongee: questionnaire.is_directeur_plongee,
                 comes_from_issoire: questionnaire.comes_from_issoire,
                 has_car: questionnaire.has_car,
                 car_seats: questionnaire.car_seats,
@@ -386,6 +390,7 @@ impl QuestionnaireService {
             wants_stab: updated.wants_stab,
             stab_size: updated.stab_size,
             nitrox_training: updated.nitrox_training,
+            is_directeur_plongee: updated.is_directeur_plongee,
             comes_from_issoire: updated.comes_from_issoire,
             has_car: updated.has_car,
             car_seats: updated.car_seats,
@@ -540,6 +545,7 @@ impl QuestionnaireService {
             wants_stab: Set(request.wants_stab),
             stab_size: Set(request.stab_size),
             nitrox_training: Set(request.nitrox_training),
+            is_directeur_plongee: Set(false),
             comes_from_issoire: Set(request.comes_from_issoire),
             has_car: Set(request.has_car),
             car_seats: Set(request.car_seats),
@@ -565,6 +571,7 @@ impl QuestionnaireService {
             wants_stab: created.wants_stab,
             stab_size: created.stab_size,
             nitrox_training: created.nitrox_training,
+            is_directeur_plongee: created.is_directeur_plongee,
             comes_from_issoire: created.comes_from_issoire,
             has_car: created.has_car,
             car_seats: created.car_seats,
@@ -573,6 +580,59 @@ impl QuestionnaireService {
             created_at: created.created_at.to_string(),
             updated_at: created.updated_at.to_string(),
         })
+    }
+
+    /// Définit le directeur de plongée pour une session
+    /// Un seul DP par session, retire le précédent s'il existe
+    pub async fn set_directeur_plongee(
+        db: &DatabaseConnection,
+        session_id: Uuid,
+        questionnaire_id: Option<Uuid>,
+    ) -> AppResult<()> {
+        let now = Utc::now().naive_utc();
+
+        // D'abord, retirer le DP actuel s'il existe
+        let current_dps = Questionnaires::find()
+            .filter(questionnaires::Column::SessionId.eq(session_id))
+            .filter(questionnaires::Column::IsDirecteurPlongee.eq(true))
+            .all(db)
+            .await
+            .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query DPs: {}", e))))?;
+
+        for dp in current_dps {
+            let mut active: questionnaires::ActiveModel = dp.into();
+            active.is_directeur_plongee = Set(false);
+            active.updated_at = Set(now);
+            active.update(db).await
+                .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to remove DP: {}", e))))?;
+        }
+
+        // Si un questionnaire est fourni, le définir comme nouveau DP
+        if let Some(qid) = questionnaire_id {
+            let questionnaire = Questionnaires::find_by_id(qid)
+                .one(db)
+                .await
+                .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query questionnaire: {}", e))))?
+                .ok_or_else(|| AppError::NotFound("Questionnaire not found".to_string()))?;
+
+            // Vérifier que c'est un encadrant
+            if !questionnaire.is_encadrant {
+                return Err(AppError::Validation("Seul un encadrant peut être directeur de plongée".to_string()));
+            }
+
+            // Vérifier que c'est la bonne session
+            if questionnaire.session_id != session_id {
+                return Err(AppError::Validation("Le questionnaire n'appartient pas à cette session".to_string()));
+            }
+
+            let mut active: questionnaires::ActiveModel = questionnaire.into();
+            active.is_directeur_plongee = Set(true);
+            active.updated_at = Set(now);
+            active.update(db).await
+                .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to set DP: {}", e))))?;
+        }
+
+        Ok(())
     }
 }
 

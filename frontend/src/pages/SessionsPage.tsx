@@ -198,6 +198,22 @@ export default function SessionsPage() {
     }
   }
 
+  const handleSetDirecteurPlongee = async (questionnaireId: string | null) => {
+    if (!selectedSession) return
+    
+    try {
+      await sessionsApi.setDirecteurPlongee(selectedSession.id, questionnaireId)
+      await loadQuestionnaires(selectedSession.id)
+      setToast({ 
+        message: questionnaireId ? 'Directeur de plongée défini' : 'Directeur de plongée retiré', 
+        type: 'success' 
+      })
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Erreur lors de la mise à jour du DP'
+      setToast({ message: errorMessage, type: 'error' })
+    }
+  }
+
   const handleDeleteSession = async (session: Session) => {
     if (!confirm(`Êtes-vous sûr de vouloir supprimer la session "${session.name}" ?\n\nToutes les données associées (questionnaires, emails) seront supprimées.`)) {
       return
@@ -269,6 +285,21 @@ export default function SessionsPage() {
                 />
                 <span className="text-sm text-slate-200">🔄 Mode 2 rotations</span>
               </label>
+              <div className="flex items-center gap-2 bg-slate-700/50 px-3 py-2 rounded-lg">
+                <span className="text-sm text-slate-200">👤 DP:</span>
+                <select
+                  value={questionnaires.find(q => q.is_directeur_plongee)?.id || ''}
+                  onChange={(e) => handleSetDirecteurPlongee(e.target.value || null)}
+                  className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-white"
+                >
+                  <option value="">-- Aucun --</option>
+                  {questionnaires.filter(q => q.is_encadrant).map(q => (
+                    <option key={q.id} value={q.id}>
+                      {q.first_name} {q.last_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <Button onClick={() => setShowAddParticipantModal(true)}>
                 ➕ Ajouter un participant
               </Button>
@@ -287,7 +318,12 @@ export default function SessionsPage() {
                 <div key={q.id} className="bg-slate-800/50 backdrop-blur-xl p-6 rounded-lg shadow space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-lg font-semibold text-white">{q.first_name} {q.last_name}</p>
+                      <p className="text-lg font-semibold text-white">
+                        {q.first_name} {q.last_name}
+                        {q.is_directeur_plongee && (
+                          <span className="ml-2 bg-purple-600 text-white text-xs px-2 py-0.5 rounded">DP</span>
+                        )}
+                      </p>
                       <p className="text-sm text-slate-400">{q.email}</p>
                     </div>
                     <div className="flex space-x-2">

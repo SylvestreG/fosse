@@ -392,18 +392,17 @@ fn draw_rotation(content: &mut String, rotation: &RotationData, mut y: f32) -> f
     
     // En-tête du tableau - fond bleu très clair
     let cols = [160.0, 55.0, 75.0, 70.0, 55.0, 185.0, 182.0];
-    let col_headers = ["NOM Pr\\351nom", "Gaz", "Aptitude", "Pr\\351pa", "Fonction", "Param\\350tres Pr\\351vus", "Param\\350tres R\\351alis\\351s"];
+    let col_headers = ["NOM Prenom", "Gaz", "Aptitude", "Prepa", "Fonction", "Params Prevus", "Params Realises"];
     
     writeln!(content, "0.85 0.9 0.95 rg {} {} {} {} re f", MARGIN, y - HEADER_HEIGHT, width, HEADER_HEIGHT).unwrap();
     
+    // Dessiner chaque en-tête de colonne séparément
     let mut col_x = MARGIN;
     writeln!(content, "0.1 0.1 0.3 rg").unwrap(); // Texte bleu foncé
-    writeln!(content, "BT /F2 9 Tf").unwrap();
     for (i, &col_w) in cols.iter().enumerate() {
-        writeln!(content, "{} {} Td ({}) Tj", col_x + 5.0, y - 12.0, col_headers[i]).unwrap();
+        writeln!(content, "BT /F2 8 Tf {} {} Td ({}) Tj ET", col_x + 3.0, y - 12.0, col_headers[i]).unwrap();
         col_x += col_w;
     }
-    writeln!(content, "ET").unwrap();
     writeln!(content, "0 g").unwrap();
     
     // Lignes verticales de l'en-tête

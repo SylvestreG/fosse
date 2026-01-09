@@ -128,6 +128,7 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .route("/api/v1/sessions/:id", get(get_session).put(update_session).delete(delete_session))
         .route("/api/v1/questionnaires", get(list_questionnaires))
         .route("/api/v1/questionnaires/:id", axum::routing::put(update_questionnaire).delete(delete_questionnaire))
+        .route("/api/v1/sessions/:id/directeur-plongee", post(set_directeur_plongee))
         .route("/api/v1/emails/pending", get(get_pending_emails))
         .route("/api/v1/emails/session/:id", get(get_emails_by_session))
         .route("/api/v1/emails/:id/sent", post(mark_email_sent))

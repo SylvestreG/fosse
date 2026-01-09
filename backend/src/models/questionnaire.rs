@@ -30,6 +30,7 @@ pub struct QuestionnaireResponse {
     pub wants_stab: bool,
     pub stab_size: Option<String>,
     pub nitrox_training: bool,
+    pub is_directeur_plongee: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
     pub car_seats: Option<i32>,
@@ -62,6 +63,7 @@ pub struct QuestionnaireDetailResponse {
     pub wants_stab: bool,
     pub stab_size: Option<String>,
     pub nitrox_training: bool,
+    pub is_directeur_plongee: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
     pub car_seats: Option<i32>,
@@ -84,6 +86,12 @@ pub struct UpdateQuestionnaireRequest {
     pub car_seats: Option<i32>,
     pub comments: Option<String>,
     pub mark_as_submitted: Option<bool>, // True to mark as submitted, False to mark as not submitted
+}
+
+/// Requête pour définir le directeur de plongée
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SetDirecteurPlongeeRequest {
+    pub questionnaire_id: Option<Uuid>, // None pour retirer le DP
 }
 
 /// Requête pour créer un questionnaire directement (auto-inscription)

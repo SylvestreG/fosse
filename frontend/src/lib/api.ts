@@ -72,6 +72,7 @@ export interface Questionnaire {
   wants_stab: boolean
   stab_size?: string
   nitrox_training: boolean
+  is_directeur_plongee: boolean
   comes_from_issoire: boolean
   has_car: boolean
   car_seats?: number
@@ -95,6 +96,7 @@ export interface QuestionnaireDetail {
   wants_stab: boolean
   stab_size?: string
   nitrox_training: boolean
+  is_directeur_plongee: boolean
   comes_from_issoire: boolean
   has_car: boolean
   car_seats?: number
@@ -231,6 +233,8 @@ export const sessionsApi = {
   getSummary: (id: string) => api.get<SessionSummary>(`/sessions/${id}/summary`),
   getSummaryByToken: (token: string) => api.get<SessionSummary>(`/sessions/summary/${token}`),
   generateMagicLinks: (id: string) => api.post<{ success: boolean; generated_count: number; message: string }>(`/sessions/${id}/generate-links`),
+  setDirecteurPlongee: (sessionId: string, questionnaireId: string | null) => 
+    api.post(`/sessions/${sessionId}/directeur-plongee`, { questionnaire_id: questionnaireId }),
 }
 
 export const questionnairesApi = {

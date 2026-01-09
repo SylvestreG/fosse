@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::errors::AppError;
-use crate::models::{CreateQuestionnaireRequest, QuestionnaireDetailResponse, QuestionnaireResponse, QuestionnaireTokenData, SubmitQuestionnaireRequest, UpdateQuestionnaireRequest};
+use crate::models::{CreateQuestionnaireRequest, QuestionnaireDetailResponse, QuestionnaireResponse, QuestionnaireTokenData, SubmitQuestionnaireRequest, UpdateQuestionnaireRequest, SetDirecteurPlongeeRequest};
 use crate::services::QuestionnaireService;
 use axum::{
     extract::{Path, Query, State},
@@ -110,6 +110,18 @@ pub async fn delete_questionnaire(
     
     Ok(Json(serde_json::json!({
         "message": "Questionnaire supprimé avec succès"
+    })))
+}
+
+/// Définir le directeur de plongée pour une session
+pub async fn set_directeur_plongee(
+    State(db): State<Arc<DatabaseConnection>>,
+    Path(session_id): Path<Uuid>,
+    Json(payload): Json<SetDirecteurPlongeeRequest>,
+) -> Result<Json<serde_json::Value>, AppError> {
+    QuestionnaireService::set_directeur_plongee(db.as_ref(), session_id, payload.questionnaire_id).await?;
+    Ok(Json(serde_json::json!({
+        "message": "Directeur de plongée mis à jour"
     })))
 }
 
