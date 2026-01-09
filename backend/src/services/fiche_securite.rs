@@ -56,13 +56,11 @@ pub async fn generate_fiche_securite(
     session_id: Uuid,
     options: FicheSecuriteOptions,
 ) -> Result<Vec<u8>, AppError> {
-    // Récupérer la session
     let session = sessions::Entity::find_by_id(session_id)
         .one(db)
         .await?
         .ok_or_else(|| AppError::NotFound("Session not found".to_string()))?;
 
-    // Récupérer toutes les rotations et palanquées
     let rotations_list = rotations::Entity::find()
         .filter(rotations::Column::SessionId.eq(session_id))
         .order_by_asc(rotations::Column::Number)
@@ -89,7 +87,6 @@ pub async fn generate_fiche_securite(
 
             let mut members_data = vec![];
             for member in members_list {
-                // Compter les participants uniques
                 unique_questionnaire_ids.insert(member.questionnaire_id);
 
                 let questionnaire = questionnaires::Entity::find_by_id(member.questionnaire_id)
@@ -121,7 +118,6 @@ pub async fn generate_fiche_securite(
                 }
             }
 
-            // Trier : encadrants d'abord
             members_data.sort_by(|a, b| {
                 let role_order = |r: &str| match r {
                     "E" => 0,
@@ -176,13 +172,18 @@ pub struct FicheSecuriteOptions {
     pub observations: Option<String>,
 }
 
-/// Génère le PDF de la fiche de sécurité
+// Constantes de mise en page
+const PAGE_WIDTH: f32 = 842.0;
+const PAGE_HEIGHT: f32 = 595.0;
+const MARGIN: f32 = 25.0;
+const ROW_HEIGHT: f32 = 16.0;
+const HEADER_HEIGHT: f32 = 18.0;
+const ROTATION_HEADER_HEIGHT: f32 = 22.0;
+const MIN_Y: f32 = 40.0; // Marge basse minimum
+
+/// Génère le PDF de la fiche de sécurité avec support multi-pages
 fn generate_pdf(data: &FicheSecuriteData) -> Result<Vec<u8>, AppError> {
     let mut doc = Document::with_version("1.5");
-    
-    // A4 paysage
-    let page_width = 842.0_f32;
-    let page_height = 595.0_f32;
     
     let font_helvetica = create_font(&mut doc, "Helvetica");
     let font_helvetica_bold = create_font(&mut doc, "Helvetica-Bold");
@@ -195,33 +196,42 @@ fn generate_pdf(data: &FicheSecuriteData) -> Result<Vec<u8>, AppError> {
     resources.set("Font", Object::Dictionary(font_dict));
     let resources_id = doc.add_object(resources);
     
-    // Générer le contenu
-    let content = generate_page_content(data, page_width, page_height);
+    // Générer toutes les pages
+    let page_contents = generate_all_pages(data);
     
-    let content_stream = Stream::new(Dictionary::new(), content.into_bytes());
-    let content_id = doc.add_object(content_stream);
+    let mut page_ids = vec![];
+    for content in page_contents {
+        let content_stream = Stream::new(Dictionary::new(), content.into_bytes());
+        let content_id = doc.add_object(content_stream);
+        
+        let mut page_dict = Dictionary::new();
+        page_dict.set("Type", Object::Name(b"Page".to_vec()));
+        page_dict.set("MediaBox", Object::Array(vec![
+            Object::Integer(0),
+            Object::Integer(0),
+            Object::Real(PAGE_WIDTH),
+            Object::Real(PAGE_HEIGHT),
+        ]));
+        page_dict.set("Resources", Object::Reference(resources_id));
+        page_dict.set("Contents", Object::Reference(content_id));
+        
+        let page_id = doc.add_object(page_dict);
+        page_ids.push(page_id);
+    }
     
-    let mut page_dict = Dictionary::new();
-    page_dict.set("Type", Object::Name(b"Page".to_vec()));
-    page_dict.set("MediaBox", Object::Array(vec![
-        Object::Integer(0),
-        Object::Integer(0),
-        Object::Real(page_width),
-        Object::Real(page_height),
-    ]));
-    page_dict.set("Resources", Object::Reference(resources_id));
-    page_dict.set("Contents", Object::Reference(content_id));
-    
-    let page_id = doc.add_object(page_dict);
-    
+    // Pages node
+    let kids: Vec<Object> = page_ids.iter().map(|&id| Object::Reference(id)).collect();
     let mut pages_dict = Dictionary::new();
     pages_dict.set("Type", Object::Name(b"Pages".to_vec()));
-    pages_dict.set("Kids", Object::Array(vec![Object::Reference(page_id)]));
-    pages_dict.set("Count", Object::Integer(1));
+    pages_dict.set("Kids", Object::Array(kids));
+    pages_dict.set("Count", Object::Integer(page_ids.len() as i64));
     let pages_id = doc.add_object(pages_dict);
     
-    if let Ok(Object::Dictionary(ref mut page)) = doc.get_object_mut(page_id) {
-        page.set("Parent", Object::Reference(pages_id));
+    // Mettre à jour le parent de chaque page
+    for page_id in &page_ids {
+        if let Ok(Object::Dictionary(ref mut page)) = doc.get_object_mut(*page_id) {
+            page.set("Parent", Object::Reference(pages_id));
+        }
     }
     
     let mut catalog_dict = Dictionary::new();
@@ -248,204 +258,287 @@ fn create_font(doc: &mut Document, name: &str) -> lopdf::ObjectId {
     doc.add_object(font_dict)
 }
 
-fn generate_page_content(data: &FicheSecuriteData, width: f32, height: f32) -> String {
-    let mut content = String::new();
-    let margin = 25.0;
-    let mut y = height - margin;
-    
-    // ===== EN-TÊTE =====
-    // Cadre titre
-    let header_height = 30.0;
-    writeln!(content, "0.2 0.4 0.8 RG 2 w").unwrap(); // Bleu
-    writeln!(content, "{} {} {} {} re S", margin, y - header_height, width - 2.0 * margin, header_height).unwrap();
-    
-    // Titre centré
-    writeln!(content, "BT /F2 18 Tf {} {} Td (FICHE DE SECURITE) Tj ET", 
-        width / 2.0 - 80.0, y - 20.0).unwrap();
-    y -= header_height + 10.0;
-    
-    // ===== INFOS GÉNÉRALES =====
-    let info_box_height = 60.0;
-    writeln!(content, "0.9 0.9 0.95 rg {} {} {} {} re f", margin, y - info_box_height, width - 2.0 * margin, info_box_height).unwrap();
-    writeln!(content, "0 G 0.5 w {} {} {} {} re S", margin, y - info_box_height, width - 2.0 * margin, info_box_height).unwrap();
-    
-    let col1 = margin + 10.0;
-    let col2 = margin + 200.0;
-    let col3 = margin + 450.0;
-    let col4 = margin + 650.0;
-    
-    // Ligne 1
-    writeln!(content, "BT /F2 10 Tf {} {} Td (Date:) Tj ET", col1, y - 15.0).unwrap();
-    writeln!(content, "BT /F1 10 Tf {} {} Td ({}) Tj ET", col1 + 35.0, y - 15.0, escape_pdf(&data.date)).unwrap();
-    
-    writeln!(content, "BT /F2 10 Tf {} {} Td (Club:) Tj ET", col2, y - 15.0).unwrap();
-    writeln!(content, "BT /F1 10 Tf {} {} Td ({}) Tj ET", col2 + 35.0, y - 15.0, escape_pdf(&data.club)).unwrap();
-    
-    writeln!(content, "BT /F2 10 Tf {} {} Td (Effectif:) Tj ET", col4, y - 15.0).unwrap();
-    writeln!(content, "BT /F1 12 Tf {} {} Td ({}) Tj ET", col4 + 50.0, y - 15.0, data.effectif_unique).unwrap();
-    
-    // Ligne 2
-    writeln!(content, "BT /F2 10 Tf {} {} Td (Site:) Tj ET", col1, y - 32.0).unwrap();
-    writeln!(content, "BT /F1 10 Tf {} {} Td ({}) Tj ET", col1 + 35.0, y - 32.0, escape_pdf(&data.site)).unwrap();
-    
-    writeln!(content, "BT /F2 10 Tf {} {} Td (DP:) Tj ET", col2, y - 32.0).unwrap();
-    writeln!(content, "BT /F1 10 Tf {} {} Td ({}) Tj ET", col2 + 25.0, y - 32.0, escape_pdf(&data.directeur_plongee)).unwrap();
-    
-    writeln!(content, "BT /F2 10 Tf {} {} Td (Position:) Tj ET", col3, y - 32.0).unwrap();
-    writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col3 + 50.0, y - 32.0, escape_pdf(&data.position)).unwrap();
-    
-    // Ligne 3
-    writeln!(content, "BT /F2 10 Tf {} {} Td (S\\351curit\\351 surface:) Tj ET", col1, y - 49.0).unwrap();
-    writeln!(content, "BT /F1 10 Tf {} {} Td ({}) Tj ET", col1 + 95.0, y - 49.0, escape_pdf(&data.securite_surface)).unwrap();
-    
-    if !data.observations.is_empty() {
-        writeln!(content, "BT /F2 10 Tf {} {} Td (Obs:) Tj ET", col3, y - 49.0).unwrap();
-        writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col3 + 30.0, y - 49.0, escape_pdf(&data.observations)).unwrap();
+/// Calcule la hauteur nécessaire pour une rotation
+fn calculate_rotation_height(rotation: &RotationData) -> f32 {
+    let mut height = ROTATION_HEADER_HEIGHT + HEADER_HEIGHT; // Header rotation + header tableau
+    for palanquee in &rotation.palanquees {
+        height += (palanquee.members.len().max(1) as f32) * ROW_HEIGHT;
     }
+    height + 15.0 // Espacement après
+}
+
+/// Génère toutes les pages du PDF
+fn generate_all_pages(data: &FicheSecuriteData) -> Vec<String> {
+    let mut pages = vec![];
+    let mut current_page = String::new();
+    let mut y = PAGE_HEIGHT - MARGIN;
+    let mut is_first_page = true;
+    let mut page_num = 1;
     
-    y -= info_box_height + 15.0;
-    
-    // ===== ROTATIONS ET PALANQUÉES =====
-    let row_height = 16.0;
-    let pal_header_height = 18.0;
+    // En-tête sur la première page
+    y = draw_header(&mut current_page, data, y);
     
     for rotation in &data.rotations {
-        // Titre de la rotation
-        writeln!(content, "0.2 0.5 0.3 rg {} {} {} {} re f", margin, y - 20.0, width - 2.0 * margin, 20.0).unwrap();
-        writeln!(content, "1 1 1 rg").unwrap();
-        writeln!(content, "BT /F2 11 Tf {} {} Td (ROTATION {}) Tj ET", margin + 10.0, y - 14.0, rotation.numero).unwrap();
-        writeln!(content, "0 g").unwrap(); // Reset to black
-        y -= 25.0;
+        let rotation_height = calculate_rotation_height(rotation);
         
-        // En-tête du tableau pour cette rotation
-        let cols = [160.0, 50.0, 80.0, 80.0, 60.0, 180.0, 172.0];
-        let col_headers = ["NOM Pr\\351nom", "Gaz", "Aptitude", "Pr\\351pa", "Fonction", "Param. Pr\\351vus", "Param. R\\351alis\\351s"];
-        
-        // Fond en-tête
-        writeln!(content, "0.85 0.85 0.9 rg {} {} {} {} re f", margin, y - pal_header_height, width - 2.0 * margin, pal_header_height).unwrap();
-        
-        let mut col_x = margin;
-        writeln!(content, "BT /F2 9 Tf").unwrap();
-        for (i, &col_w) in cols.iter().enumerate() {
-            writeln!(content, "{} {} Td ({}) Tj", col_x + 5.0, y - 12.0, col_headers[i]).unwrap();
-            col_x += col_w;
-        }
-        writeln!(content, "ET").unwrap();
-        
-        // Lignes verticales de l'en-tête
-        writeln!(content, "0 G 0.3 w").unwrap();
-        col_x = margin;
-        for &col_w in &cols {
-            writeln!(content, "{} {} m {} {} l S", col_x, y, col_x, y - pal_header_height).unwrap();
-            col_x += col_w;
-        }
-        writeln!(content, "{} {} m {} {} l S", col_x, y, col_x, y - pal_header_height).unwrap();
-        
-        // Ligne horizontale sous l'en-tête
-        writeln!(content, "{} {} m {} {} l S", margin, y - pal_header_height, margin + width - 2.0 * margin, y - pal_header_height).unwrap();
-        
-        y -= pal_header_height;
-        
-        for (pal_idx, palanquee) in rotation.palanquees.iter().enumerate() {
-            let num_rows = palanquee.members.len().max(1);
-            let pal_height = (num_rows as f32) * row_height;
+        // Vérifier si la rotation rentre sur la page actuelle
+        if y - rotation_height < MIN_Y && !is_first_page {
+            // Nouvelle page nécessaire
+            draw_page_footer(&mut current_page, page_num);
+            pages.push(current_page);
+            current_page = String::new();
+            y = PAGE_HEIGHT - MARGIN;
+            page_num += 1;
             
-            // Fond alterné
-            if pal_idx % 2 == 1 {
-                writeln!(content, "0.95 0.95 0.97 rg {} {} {} {} re f", margin, y - pal_height, width - 2.0 * margin, pal_height).unwrap();
-            }
-            
-            // Numéro de palanquée à gauche
-            writeln!(content, "0.3 0.3 0.7 rg {} {} {} {} re f", margin - 20.0, y - pal_height, 18.0, pal_height).unwrap();
-            writeln!(content, "1 1 1 rg").unwrap();
-            writeln!(content, "BT /F2 10 Tf {} {} Td (P{}) Tj ET", margin - 17.0, y - pal_height / 2.0 - 4.0, palanquee.numero).unwrap();
-            writeln!(content, "0 g").unwrap();
-            
-            // Membres
-            let mut member_y = y - row_height + 4.0;
-            for member in &palanquee.members {
-                col_x = margin;
-                
-                // Nom
-                writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col_x + 5.0, member_y, escape_pdf(&member.name)).unwrap();
-                col_x += cols[0];
-                
-                // Gaz
-                let gas_color = if member.gas == "Nitrox" { "0.8 0.6 0 rg" } else { "0.3 0.5 0.7 rg" };
-                writeln!(content, "{}", gas_color).unwrap();
-                writeln!(content, "BT /F2 8 Tf {} {} Td ({}) Tj ET", col_x + 5.0, member_y, escape_pdf(&member.gas)).unwrap();
-                writeln!(content, "0 g").unwrap();
-                col_x += cols[1];
-                
-                // Aptitude
-                writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col_x + 5.0, member_y, escape_pdf(&member.aptitude)).unwrap();
-                col_x += cols[2];
-                
-                // Prépa
-                if let Some(ref prep) = member.preparing {
-                    writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col_x + 5.0, member_y, escape_pdf(prep)).unwrap();
-                }
-                col_x += cols[3];
-                
-                // Fonction avec couleur
-                let role_color = match member.role.as_str() {
-                    "E" | "GP" => "0.5 0.2 0.5 rg",
-                    _ => "0 g",
-                };
-                writeln!(content, "{}", role_color).unwrap();
-                writeln!(content, "BT /F2 9 Tf {} {} Td ({}) Tj ET", col_x + 20.0, member_y, escape_pdf(&member.role)).unwrap();
-                writeln!(content, "0 g").unwrap();
-                
-                member_y -= row_height;
-            }
-            
-            // Paramètres prévus (centrés dans la colonne)
-            let params_y = y - pal_height / 2.0 - 4.0;
-            col_x = margin + cols[0..5].iter().sum::<f32>();
-            
-            let planned = format!(
-                "{} - {}min - {}m",
-                palanquee.planned_departure_time.as_deref().unwrap_or("__:__"),
-                palanquee.planned_time.map_or("__".to_string(), |t| t.to_string()),
-                palanquee.planned_depth.map_or("__".to_string(), |d| d.to_string())
-            );
-            writeln!(content, "BT /F1 8 Tf {} {} Td ({}) Tj ET", col_x + 5.0, params_y, escape_pdf(&planned)).unwrap();
-            col_x += cols[5];
-            
-            // Paramètres réalisés
-            let actual = format!(
-                "{}-{} / {}min / {}m",
-                palanquee.actual_departure_time.as_deref().unwrap_or("__:__"),
-                palanquee.actual_return_time.as_deref().unwrap_or("__:__"),
-                palanquee.actual_time.map_or("__".to_string(), |t| t.to_string()),
-                palanquee.actual_depth.map_or("__".to_string(), |d| d.to_string())
-            );
-            writeln!(content, "BT /F1 8 Tf {} {} Td ({}) Tj ET", col_x + 5.0, params_y, escape_pdf(&actual)).unwrap();
-            
-            // Lignes verticales
-            writeln!(content, "0.7 G 0.3 w").unwrap();
-            col_x = margin;
-            for &col_w in &cols {
-                col_x += col_w;
-                writeln!(content, "{} {} m {} {} l S", col_x, y, col_x, y - pal_height).unwrap();
-            }
-            
-            // Ligne horizontale de séparation
-            y -= pal_height;
-            writeln!(content, "0.5 G {} {} m {} {} l S", margin, y, margin + width - 2.0 * margin, y).unwrap();
+            // En-tête simplifié sur les pages suivantes
+            y = draw_continuation_header(&mut current_page, data, y, page_num);
         }
         
-        // Cadre extérieur de la rotation
-        writeln!(content, "0 G 1 w").unwrap();
-        
-        y -= 15.0; // Espacement entre rotations
+        // Dessiner la rotation
+        y = draw_rotation(&mut current_page, rotation, y);
+        is_first_page = false;
     }
     
-    // Légende en bas
-    y -= 5.0;
-    writeln!(content, "BT /F1 8 Tf {} {} Td (E = Encadrant    GP = Guide de Palanqu\\351e    P = Plongeur) Tj ET", margin, y).unwrap();
+    // Légende et footer sur la dernière page
+    draw_legend(&mut current_page, y - 10.0);
+    draw_page_footer(&mut current_page, page_num);
+    pages.push(current_page);
     
-    content
+    pages
+}
+
+/// Dessine l'en-tête complet (première page)
+fn draw_header(content: &mut String, data: &FicheSecuriteData, mut y: f32) -> f32 {
+    let width = PAGE_WIDTH - 2.0 * MARGIN;
+    
+    // Titre avec fond bleu
+    let title_height = 28.0;
+    writeln!(content, "0.2 0.4 0.7 rg {} {} {} {} re f", MARGIN, y - title_height, width, title_height).unwrap();
+    writeln!(content, "1 1 1 rg").unwrap(); // Texte blanc
+    writeln!(content, "BT /F2 16 Tf {} {} Td (FICHE DE SECURITE) Tj ET", PAGE_WIDTH / 2.0 - 75.0, y - 19.0).unwrap();
+    writeln!(content, "0 g").unwrap();
+    y -= title_height + 8.0;
+    
+    // Cadre infos - fond très clair
+    let info_height = 55.0;
+    writeln!(content, "0.95 0.95 0.97 rg {} {} {} {} re f", MARGIN, y - info_height, width, info_height).unwrap();
+    writeln!(content, "0.7 0.7 0.7 RG 0.5 w {} {} {} {} re S", MARGIN, y - info_height, width, info_height).unwrap();
+    
+    // Infos - texte noir sur fond clair
+    let col1 = MARGIN + 10.0;
+    let col2 = MARGIN + 220.0;
+    let col3 = MARGIN + 480.0;
+    let col4 = MARGIN + 680.0;
+    
+    // Ligne 1
+    writeln!(content, "BT /F2 10 Tf {} {} Td (Date:) Tj ET", col1, y - 14.0).unwrap();
+    writeln!(content, "BT /F1 10 Tf {} {} Td ({}) Tj ET", col1 + 35.0, y - 14.0, escape_pdf(&data.date)).unwrap();
+    
+    writeln!(content, "BT /F2 10 Tf {} {} Td (Club:) Tj ET", col2, y - 14.0).unwrap();
+    writeln!(content, "BT /F1 10 Tf {} {} Td ({}) Tj ET", col2 + 35.0, y - 14.0, escape_pdf(&data.club)).unwrap();
+    
+    writeln!(content, "BT /F2 10 Tf {} {} Td (Effectif:) Tj ET", col4, y - 14.0).unwrap();
+    writeln!(content, "0.2 0.5 0.2 rg").unwrap(); // Vert
+    writeln!(content, "BT /F2 14 Tf {} {} Td ({}) Tj ET", col4 + 55.0, y - 14.0, data.effectif_unique).unwrap();
+    writeln!(content, "0 g").unwrap();
+    
+    // Ligne 2
+    writeln!(content, "BT /F2 10 Tf {} {} Td (Site:) Tj ET", col1, y - 30.0).unwrap();
+    writeln!(content, "BT /F1 10 Tf {} {} Td ({}) Tj ET", col1 + 35.0, y - 30.0, escape_pdf(&data.site)).unwrap();
+    
+    writeln!(content, "BT /F2 10 Tf {} {} Td (DP:) Tj ET", col2, y - 30.0).unwrap();
+    writeln!(content, "BT /F1 10 Tf {} {} Td ({}) Tj ET", col2 + 25.0, y - 30.0, escape_pdf(&data.directeur_plongee)).unwrap();
+    
+    writeln!(content, "BT /F2 10 Tf {} {} Td (Position:) Tj ET", col3, y - 30.0).unwrap();
+    writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col3 + 55.0, y - 30.0, escape_pdf(&data.position)).unwrap();
+    
+    // Ligne 3
+    writeln!(content, "BT /F2 10 Tf {} {} Td (S\\351curit\\351 surface:) Tj ET", col1, y - 46.0).unwrap();
+    writeln!(content, "BT /F1 10 Tf {} {} Td ({}) Tj ET", col1 + 100.0, y - 46.0, escape_pdf(&data.securite_surface)).unwrap();
+    
+    if !data.observations.is_empty() {
+        writeln!(content, "BT /F2 9 Tf {} {} Td (Obs:) Tj ET", col3, y - 46.0).unwrap();
+        writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col3 + 30.0, y - 46.0, escape_pdf(&data.observations)).unwrap();
+    }
+    
+    y - info_height - 12.0
+}
+
+/// En-tête simplifié pour les pages de continuation
+fn draw_continuation_header(content: &mut String, data: &FicheSecuriteData, y: f32, page: i32) -> f32 {
+    let width = PAGE_WIDTH - 2.0 * MARGIN;
+    
+    // Bandeau simple
+    let header_height = 22.0;
+    writeln!(content, "0.2 0.4 0.7 rg {} {} {} {} re f", MARGIN, y - header_height, width, header_height).unwrap();
+    writeln!(content, "1 1 1 rg").unwrap();
+    writeln!(content, "BT /F2 12 Tf {} {} Td (FICHE DE SECURITE - {} - Page {}) Tj ET", 
+        MARGIN + 10.0, y - 15.0, escape_pdf(&data.date), page).unwrap();
+    writeln!(content, "0 g").unwrap();
+    
+    y - header_height - 10.0
+}
+
+/// Dessine une rotation complète
+fn draw_rotation(content: &mut String, rotation: &RotationData, mut y: f32) -> f32 {
+    let width = PAGE_WIDTH - 2.0 * MARGIN;
+    
+    // Bandeau de rotation - fond vert foncé avec texte blanc
+    writeln!(content, "0.15 0.45 0.25 rg {} {} {} {} re f", MARGIN, y - ROTATION_HEADER_HEIGHT, width, ROTATION_HEADER_HEIGHT).unwrap();
+    writeln!(content, "1 1 1 rg").unwrap(); // Texte blanc
+    writeln!(content, "BT /F2 12 Tf {} {} Td (ROTATION {}) Tj ET", MARGIN + 15.0, y - 15.0, rotation.numero).unwrap();
+    writeln!(content, "0 g").unwrap();
+    y -= ROTATION_HEADER_HEIGHT;
+    
+    // En-tête du tableau - fond bleu très clair
+    let cols = [160.0, 55.0, 75.0, 70.0, 55.0, 185.0, 182.0];
+    let col_headers = ["NOM Pr\\351nom", "Gaz", "Aptitude", "Pr\\351pa", "Fonction", "Param\\350tres Pr\\351vus", "Param\\350tres R\\351alis\\351s"];
+    
+    writeln!(content, "0.85 0.9 0.95 rg {} {} {} {} re f", MARGIN, y - HEADER_HEIGHT, width, HEADER_HEIGHT).unwrap();
+    
+    let mut col_x = MARGIN;
+    writeln!(content, "0.1 0.1 0.3 rg").unwrap(); // Texte bleu foncé
+    writeln!(content, "BT /F2 9 Tf").unwrap();
+    for (i, &col_w) in cols.iter().enumerate() {
+        writeln!(content, "{} {} Td ({}) Tj", col_x + 5.0, y - 12.0, col_headers[i]).unwrap();
+        col_x += col_w;
+    }
+    writeln!(content, "ET").unwrap();
+    writeln!(content, "0 g").unwrap();
+    
+    // Lignes verticales de l'en-tête
+    writeln!(content, "0.6 0.6 0.7 RG 0.3 w").unwrap();
+    col_x = MARGIN;
+    for &col_w in &cols {
+        writeln!(content, "{} {} m {} {} l S", col_x, y, col_x, y - HEADER_HEIGHT).unwrap();
+        col_x += col_w;
+    }
+    writeln!(content, "{} {} m {} {} l S", col_x, y, col_x, y - HEADER_HEIGHT).unwrap();
+    writeln!(content, "{} {} m {} {} l S", MARGIN, y - HEADER_HEIGHT, MARGIN + width, y - HEADER_HEIGHT).unwrap();
+    
+    y -= HEADER_HEIGHT;
+    
+    // Palanquées
+    for (pal_idx, palanquee) in rotation.palanquees.iter().enumerate() {
+        let num_rows = palanquee.members.len().max(1);
+        let pal_height = (num_rows as f32) * ROW_HEIGHT;
+        
+        // Fond alterné très subtil
+        if pal_idx % 2 == 1 {
+            writeln!(content, "0.97 0.97 0.98 rg {} {} {} {} re f", MARGIN, y - pal_height, width, pal_height).unwrap();
+        }
+        
+        // Badge palanquée sur le côté - fond violet
+        writeln!(content, "0.4 0.3 0.6 rg {} {} {} {} re f", MARGIN - 22.0, y - pal_height, 20.0, pal_height).unwrap();
+        writeln!(content, "1 1 1 rg").unwrap(); // Texte blanc
+        writeln!(content, "BT /F2 9 Tf {} {} Td (P{}) Tj ET", MARGIN - 19.0, y - pal_height / 2.0 - 3.0, palanquee.numero).unwrap();
+        writeln!(content, "0 g").unwrap();
+        
+        // Membres
+        let mut member_y = y - ROW_HEIGHT + 4.0;
+        for member in &palanquee.members {
+            col_x = MARGIN;
+            
+            // Nom
+            writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col_x + 5.0, member_y, escape_pdf(&member.name)).unwrap();
+            col_x += cols[0];
+            
+            // Gaz avec couleur
+            if member.gas == "Nitrox" {
+                writeln!(content, "0.7 0.5 0 rg").unwrap(); // Orange
+            } else {
+                writeln!(content, "0.2 0.4 0.6 rg").unwrap(); // Bleu
+            }
+            writeln!(content, "BT /F2 9 Tf {} {} Td ({}) Tj ET", col_x + 5.0, member_y, escape_pdf(&member.gas)).unwrap();
+            writeln!(content, "0 g").unwrap();
+            col_x += cols[1];
+            
+            // Aptitude
+            writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col_x + 5.0, member_y, escape_pdf(&member.aptitude)).unwrap();
+            col_x += cols[2];
+            
+            // Prépa
+            if let Some(ref prep) = member.preparing {
+                writeln!(content, "0.6 0.3 0 rg").unwrap(); // Orange foncé
+                writeln!(content, "BT /F2 9 Tf {} {} Td ({}) Tj ET", col_x + 5.0, member_y, escape_pdf(prep)).unwrap();
+                writeln!(content, "0 g").unwrap();
+            }
+            col_x += cols[3];
+            
+            // Fonction avec style
+            match member.role.as_str() {
+                "E" | "GP" => {
+                    writeln!(content, "0.5 0.2 0.5 rg").unwrap(); // Violet
+                    writeln!(content, "BT /F2 10 Tf {} {} Td ({}) Tj ET", col_x + 15.0, member_y, escape_pdf(&member.role)).unwrap();
+                }
+                _ => {
+                    writeln!(content, "0.3 0.3 0.3 rg").unwrap(); // Gris
+                    writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col_x + 18.0, member_y, escape_pdf(&member.role)).unwrap();
+                }
+            }
+            writeln!(content, "0 g").unwrap();
+            
+            member_y -= ROW_HEIGHT;
+        }
+        
+        // Paramètres (centrés verticalement)
+        let params_y = y - pal_height / 2.0 - 3.0;
+        col_x = MARGIN + cols[0..5].iter().sum::<f32>();
+        
+        // Prévus
+        let planned = format!(
+            "{} - {}' - {}m",
+            palanquee.planned_departure_time.as_deref().unwrap_or("__:__"),
+            palanquee.planned_time.map_or("__".to_string(), |t| t.to_string()),
+            palanquee.planned_depth.map_or("__".to_string(), |d| d.to_string())
+        );
+        writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col_x + 10.0, params_y, escape_pdf(&planned)).unwrap();
+        col_x += cols[5];
+        
+        // Réalisés
+        let actual = format!(
+            "{} - {} / {}' / {}m",
+            palanquee.actual_departure_time.as_deref().unwrap_or("__:__"),
+            palanquee.actual_return_time.as_deref().unwrap_or("__:__"),
+            palanquee.actual_time.map_or("__".to_string(), |t| t.to_string()),
+            palanquee.actual_depth.map_or("__".to_string(), |d| d.to_string())
+        );
+        writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col_x + 10.0, params_y, escape_pdf(&actual)).unwrap();
+        
+        // Lignes verticales
+        writeln!(content, "0.8 0.8 0.85 RG 0.3 w").unwrap();
+        col_x = MARGIN;
+        for &col_w in &cols {
+            col_x += col_w;
+            writeln!(content, "{} {} m {} {} l S", col_x, y, col_x, y - pal_height).unwrap();
+        }
+        
+        // Ligne de séparation
+        y -= pal_height;
+        writeln!(content, "0.7 0.7 0.75 RG {} {} m {} {} l S", MARGIN, y, MARGIN + width, y).unwrap();
+    }
+    
+    // Cadre extérieur de la rotation
+    let total_height = ROTATION_HEADER_HEIGHT + HEADER_HEIGHT + 
+        rotation.palanquees.iter().map(|p| (p.members.len().max(1) as f32) * ROW_HEIGHT).sum::<f32>();
+    writeln!(content, "0.3 0.3 0.4 RG 1 w {} {} {} {} re S", 
+        MARGIN, y, width, total_height).unwrap();
+    
+    y - 12.0 // Espacement après la rotation
+}
+
+/// Dessine la légende
+fn draw_legend(content: &mut String, y: f32) {
+    writeln!(content, "0.4 0.4 0.4 rg").unwrap();
+    writeln!(content, "BT /F1 8 Tf {} {} Td (L\\351gende: E = Encadrant    GP = Guide de Palanqu\\351e    P = Plongeur) Tj ET", MARGIN, y).unwrap();
+    writeln!(content, "0 g").unwrap();
+}
+
+/// Dessine le pied de page
+fn draw_page_footer(content: &mut String, page: i32) {
+    writeln!(content, "0.5 0.5 0.5 rg").unwrap();
+    writeln!(content, "BT /F1 8 Tf {} {} Td (Page {}) Tj ET", PAGE_WIDTH - 60.0, 20.0, page).unwrap();
+    writeln!(content, "0 g").unwrap();
 }
 
 /// Échappe une chaîne pour PDF (WinAnsi)
@@ -472,6 +565,7 @@ fn escape_pdf(s: &str) -> String {
             'Ê' => result.push_str("\\312"),
             'À' => result.push_str("\\300"),
             '°' => result.push_str("\\260"),
+            '\'' => result.push_str("'"),
             _ if c.is_ascii() => result.push(c),
             _ => result.push('?'),
         }
