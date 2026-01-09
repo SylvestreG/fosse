@@ -250,47 +250,47 @@ export default function PalanqueesPage() {
   const grouped = groupParticipants(data.unassigned_participants)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
         
         {/* Header */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 border border-slate-700">
-          <div className="flex items-center justify-between">
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 sm:p-6 border border-slate-700">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-white mb-2">🤿 Palanquées</h1>
-              <p className="text-slate-300">
+              <h1 className="text-xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">🤿 Palanquées</h1>
+              <p className="text-slate-300 text-sm sm:text-base">
                 {session?.name}
                 {canEdit ? (
-                  <span className="text-slate-400"> — Glissez-déposez les participants</span>
+                  <span className="text-slate-400 hidden sm:inline"> — Glissez-déposez les participants</span>
                 ) : (
-                  <span className="text-yellow-400"> — Mode lecture seule</span>
+                  <span className="text-yellow-400"> — Lecture seule</span>
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 to={`/dashboard/sessions`}
-                className="px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors text-sm sm:text-base"
               >
-                ← Retour
+                ← <span className="hidden sm:inline">Retour</span>
               </Link>
               <button
                 onClick={() => setShowFicheModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-2"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-1 sm:gap-2 text-sm sm:text-base"
               >
-                📄 Fiche de Sécurité
+                📄 <span className="hidden sm:inline">Fiche de Sécurité</span><span className="sm:hidden">PDF</span>
               </button>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 sm:gap-6">
           
           {/* Participants non assignés - groupés */}
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 border border-slate-700 h-fit sticky top-4 max-h-[85vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 sm:p-4 border border-slate-700 h-fit lg:sticky lg:top-4 max-h-[50vh] lg:max-h-[85vh] overflow-y-auto order-2 lg:order-1">
+            <h2 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3 flex items-center gap-2">
               👥 Non assignés
-              <span className="bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full text-sm">
+              <span className="bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full text-xs sm:text-sm">
                 {data.unassigned_participants.length}
               </span>
             </h2>
@@ -356,16 +356,16 @@ export default function PalanqueesPage() {
           </div>
 
           {/* Rotations et Palanquées */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4 order-1 lg:order-2">
             
             {/* Actions */}
             {canEdit && (
               <div className="flex justify-end">
                 <button
                   onClick={handleCreateRotation}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors"
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors text-sm sm:text-base"
                 >
-                  ➕ Rotation
+                  ➕ <span className="hidden sm:inline">Rotation</span><span className="sm:hidden">Rot.</span>
                 </button>
               </div>
             )}
@@ -393,25 +393,25 @@ export default function PalanqueesPage() {
 
               return (
                 <>
-                  <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 border border-slate-700 flex items-center gap-4">
-                    <span className="text-slate-300 text-sm">Bouteilles disponibles :</span>
-                    <span className="bg-blue-600/80 text-white px-2 py-0.5 rounded text-sm">
+                  <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-2 sm:p-3 border border-slate-700 flex flex-wrap items-center gap-2 sm:gap-4">
+                    <span className="text-slate-300 text-xs sm:text-sm">Bouteilles :</span>
+                    <span className="bg-blue-600/80 text-white px-1.5 sm:px-2 py-0.5 rounded text-xs sm:text-sm">
                       Air: {optimizedAirBottles}
                     </span>
                     {optimizedNitroxBottles > 0 && (
-                      <span className="bg-yellow-600/80 text-white px-2 py-0.5 rounded text-sm">
-                        Nitrox: {optimizedNitroxBottles}
+                      <span className="bg-yellow-600/80 text-white px-1.5 sm:px-2 py-0.5 rounded text-xs sm:text-sm">
+                        Nx: {optimizedNitroxBottles}
                       </span>
                     )}
                     {session?.optimization_mode && (
-                      <span className="text-green-400 text-xs">🔄 Mode 2 rotations actif</span>
+                      <span className="text-green-400 text-xs">🔄 <span className="hidden sm:inline">Mode</span> 2 rot.</span>
                     )}
                   </div>
 
                   {data.rotations.length === 0 ? (
-                    <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-8 border border-slate-700 text-center">
-                      <p className="text-slate-400 mb-2">Aucune rotation</p>
-                      <p className="text-slate-500 text-sm">
+                    <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 sm:p-8 border border-slate-700 text-center">
+                      <p className="text-slate-400 mb-1 sm:mb-2 text-sm sm:text-base">Aucune rotation</p>
+                      <p className="text-slate-500 text-xs sm:text-sm">
                         Créez une rotation puis ajoutez des palanquées.
                       </p>
                     </div>
@@ -443,88 +443,88 @@ export default function PalanqueesPage() {
 
       {/* Modal Fiche de Sécurité */}
       {showFicheModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-800 rounded-lg shadow-xl max-w-lg w-full p-6 border border-slate-700">
-            <h3 className="text-xl font-bold text-white mb-4">📄 Générer Fiche de Sécurité</h3>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-slate-800 rounded-lg shadow-xl max-w-lg w-full p-4 sm:p-6 border border-slate-700 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">📄 Fiche de Sécurité</h3>
             
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Date</label>
+                  <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Date</label>
                   <input
                     type="date"
                     value={ficheOptions.date}
                     onChange={e => setFicheOptions(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Club</label>
+                  <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Club</label>
                   <input
                     type="text"
                     value={ficheOptions.club}
                     onChange={e => setFicheOptions(prev => ({ ...prev, club: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
                     placeholder="PALME Issoire"
                   />
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Site</label>
+                  <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Site</label>
                   <input
                     type="text"
                     value={ficheOptions.site}
                     onChange={e => setFicheOptions(prev => ({ ...prev, site: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Position GPS</label>
+                  <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Position</label>
                   <input
                     type="text"
                     value={ficheOptions.position}
                     onChange={e => setFicheOptions(prev => ({ ...prev, position: e.target.value }))}
-                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
                   />
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Sécurité Surface</label>
+                <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Sécurité Surface</label>
                 <input
                   type="text"
                   value={ficheOptions.securite_surface}
                   onChange={e => setFicheOptions(prev => ({ ...prev, securite_surface: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1">Observations</label>
+                <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Observations</label>
                 <textarea
                   value={ficheOptions.observations}
                   onChange={e => setFicheOptions(prev => ({ ...prev, observations: e.target.value }))}
-                  className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
                   rows={2}
                 />
               </div>
             </div>
             
-            <div className="flex justify-end gap-3 mt-6">
+            <div className="flex justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
               <button
                 onClick={() => setShowFicheModal(false)}
-                className="px-4 py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors text-sm"
               >
                 Annuler
               </button>
               <button
                 onClick={handleDownloadFiche}
                 disabled={downloading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50 text-sm"
               >
-                {downloading ? 'Génération...' : '📥 Télécharger PDF'}
+                {downloading ? '...' : '📥 PDF'}
               </button>
             </div>
           </div>
@@ -559,12 +559,12 @@ function ParticipantGroup({
   }
 
   return (
-    <div className={`rounded-lg border p-2 ${colorClasses[color]}`}>
-      <h3 className="text-sm font-medium text-slate-300 mb-2 flex items-center justify-between">
+    <div className={`rounded-lg border p-1.5 sm:p-2 ${colorClasses[color]}`}>
+      <h3 className="text-xs sm:text-sm font-medium text-slate-300 mb-1.5 sm:mb-2 flex items-center justify-between">
         {title}
         <span className="text-xs text-slate-500">{participants.length}</span>
       </h3>
-      <div className="space-y-1">
+      <div className="space-y-0.5 sm:space-y-1">
         {participants.map(p => (
           <DraggableParticipant
             key={p.questionnaire_id}
@@ -604,7 +604,7 @@ function DraggableParticipant({
       draggable={canEdit}
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
-      className={`p-2 rounded border transition-all select-none text-sm ${
+      className={`p-1.5 sm:p-2 rounded border transition-all select-none text-xs sm:text-sm ${
         canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
       } ${
         participant.is_encadrant
@@ -612,16 +612,16 @@ function DraggableParticipant({
           : 'bg-slate-700/40 border-slate-600/50 hover:bg-slate-700/60'
       }`}
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-1 sm:gap-2">
         <span className="text-white truncate">
-          {participant.last_name.toUpperCase()} {participant.first_name}
+          {participant.last_name.toUpperCase()} {participant.first_name.charAt(0)}.
         </span>
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
           {participant.is_encadrant && (
-            <span className="bg-purple-600 text-white text-xs px-1 rounded">E</span>
+            <span className="bg-purple-600 text-white text-[10px] sm:text-xs px-0.5 sm:px-1 rounded">E</span>
           )}
           {(participant.wants_nitrox || participant.nitrox_training) && (
-            <span className="bg-yellow-600 text-white text-xs px-1 rounded">Nx</span>
+            <span className="bg-yellow-600 text-white text-[10px] sm:text-xs px-0.5 sm:px-1 rounded">Nx</span>
           )}
         </div>
       </div>
@@ -669,57 +669,62 @@ function RotationCard({
     <div className={`bg-slate-800/50 backdrop-blur-xl rounded-lg shadow border ${
       airExceeded || nitroxExceeded ? 'border-red-500' : 'border-slate-700'
     }`}>
-      <div className="p-3 border-b border-slate-700 flex items-center justify-between">
-        <h3 className="text-base font-semibold text-white flex items-center gap-2 flex-wrap">
-          🔄 Rotation {rotation.number}
-          <span className="text-slate-400 text-sm font-normal">
-            ({allMembers.length} plongeurs)
-          </span>
-          {allMembers.length > 0 && (
-            <span className="flex items-center gap-1.5 text-xs font-normal">
-              <span className={`px-1.5 py-0.5 rounded ${
-                airExceeded ? 'bg-red-600 text-white' : 'bg-blue-600/80 text-white'
-              }`}>
-                Air: {airCount}/{availableAir}
+      <div className="p-2 sm:p-3 border-b border-slate-700">
+        <div className="flex items-start sm:items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-wrap">
+            <h3 className="text-sm sm:text-base font-semibold text-white flex items-center gap-1 sm:gap-2">
+              🔄 Rot. {rotation.number}
+              <span className="text-slate-400 text-xs sm:text-sm font-normal">
+                ({allMembers.length})
               </span>
-              {(nitroxCount > 0 || availableNitrox > 0) && (
-                <span className={`px-1.5 py-0.5 rounded ${
-                  nitroxExceeded ? 'bg-red-600 text-white' : 'bg-yellow-600/80 text-white'
+            </h3>
+            {allMembers.length > 0 && (
+              <div className="flex items-center gap-1 text-xs font-normal">
+                <span className={`px-1 sm:px-1.5 py-0.5 rounded ${
+                  airExceeded ? 'bg-red-600 text-white' : 'bg-blue-600/80 text-white'
                 }`}>
-                  Nitrox: {nitroxCount}/{availableNitrox}
+                  Air: {airCount}/{availableAir}
                 </span>
-              )}
-            </span>
-          )}
-          {(airExceeded || nitroxExceeded) && (
-            <span className="text-red-400 text-xs">⚠️ Trop de bouteilles !</span>
-          )}
-        </h3>
-        {canEdit && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onCreatePalanquee(rotation.id)}
-              className="px-2.5 py-1 bg-green-600/80 text-white rounded hover:bg-green-600 transition-colors text-sm"
-            >
-              + Palanquée
-            </button>
-            <button
-              onClick={() => onDeleteRotation(rotation.id)}
-              className="p-1.5 text-red-400 hover:text-red-300 hover:bg-slate-700 rounded transition-colors"
-              title="Supprimer rotation"
-            >
-              🗑️
-            </button>
+                {(nitroxCount > 0 || availableNitrox > 0) && (
+                  <span className={`px-1 sm:px-1.5 py-0.5 rounded ${
+                    nitroxExceeded ? 'bg-red-600 text-white' : 'bg-yellow-600/80 text-white'
+                  }`}>
+                    Nx: {nitroxCount}/{availableNitrox}
+                  </span>
+                )}
+                {(airExceeded || nitroxExceeded) && (
+                  <span className="text-red-400 text-xs">⚠️</span>
+                )}
+              </div>
+            )}
           </div>
-        )}
+          {canEdit && (
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              <button
+                onClick={() => onCreatePalanquee(rotation.id)}
+                className="px-2 py-1 sm:px-2.5 bg-green-600/80 text-white rounded hover:bg-green-600 transition-colors text-xs sm:text-sm"
+              >
+                + <span className="hidden sm:inline">Palanquée</span><span className="sm:hidden">Pal.</span>
+              </button>
+              <button
+                onClick={() => onDeleteRotation(rotation.id)}
+                className="p-1 sm:p-1.5 text-red-400 hover:text-red-300 hover:bg-slate-700 rounded transition-colors"
+                title="Supprimer rotation"
+              >
+                🗑️
+              </button>
+            </div>
+          )}
+        </div>
       </div>
       
       {rotation.palanquees.length === 0 ? (
-        <div className="p-4 text-center text-slate-500 text-sm">
-          Cliquez sur "+ Palanquée" pour créer une palanquée
+        <div className="p-3 sm:p-4 text-center text-slate-500 text-xs sm:text-sm">
+          <span className="hidden sm:inline">Cliquez sur "+ Palanquée" pour créer une palanquée</span>
+          <span className="sm:hidden">+ Pal. pour créer</span>
         </div>
       ) : (
-        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="p-2 sm:p-3 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
           {rotation.palanquees.map(palanquee => (
             <PalanqueeCard
               key={palanquee.id}
@@ -769,14 +774,14 @@ function PalanqueeCard({
   return (
     <div className="rounded-lg border border-slate-600 bg-slate-700/30 overflow-hidden">
       {/* Header */}
-      <div className="p-2 bg-slate-700/60 flex items-center justify-between">
-        <span className="text-white font-medium text-sm">
-          Palanquée {palanquee.number}
+      <div className="p-1.5 sm:p-2 bg-slate-700/60 flex items-center justify-between">
+        <span className="text-white font-medium text-xs sm:text-sm">
+          P{palanquee.number}
         </span>
         {canEdit && (
           <button
             onClick={() => onDelete(palanquee.id)}
-            className="p-1 text-red-400 hover:text-red-300 hover:bg-slate-600 rounded transition-colors"
+            className="p-0.5 sm:p-1 text-red-400 hover:text-red-300 hover:bg-slate-600 rounded transition-colors text-xs"
             title="Supprimer"
           >
             ✕
@@ -789,7 +794,7 @@ function PalanqueeCard({
         onDragOver={e => { if (canEdit) { e.preventDefault(); if (!gp) setGpOver(true) } }}
         onDragLeave={() => setGpOver(false)}
         onDrop={e => { if (canEdit) { e.preventDefault(); setGpOver(false); if (!gp) onDropGP(palanquee.id) } }}
-        className={`p-2 border-b border-slate-600 min-h-[44px] transition-colors ${
+        className={`p-1.5 sm:p-2 border-b border-slate-600 min-h-[36px] sm:min-h-[44px] transition-colors ${
           gpOver && !gp && canEdit
             ? 'bg-purple-500/20 border-purple-500'
             : isDragging && !gp && draggedIsEncadrant && canEdit
@@ -797,7 +802,7 @@ function PalanqueeCard({
             : ''
         }`}
       >
-        <div className="text-xs text-slate-500 mb-1">Guide de Palanquée</div>
+        <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1">GP</div>
         {gp ? (
           <MemberRow
             member={gp}
@@ -806,8 +811,8 @@ function PalanqueeCard({
             onRemove={onRemoveMember}
           />
         ) : (
-          <div className="text-slate-500 text-xs text-center py-1">
-            {isDragging && draggedIsEncadrant && canEdit ? '↓ Déposez ici' : '—'}
+          <div className="text-slate-500 text-[10px] sm:text-xs text-center py-0.5 sm:py-1">
+            {isDragging && draggedIsEncadrant && canEdit ? '↓' : '—'}
           </div>
         )}
       </div>
@@ -817,7 +822,7 @@ function PalanqueeCard({
         onDragOver={e => { if (canEdit) { e.preventDefault(); if (canAddStudent) setStudentsOver(true) } }}
         onDragLeave={() => setStudentsOver(false)}
         onDrop={e => { if (canEdit) { e.preventDefault(); setStudentsOver(false); if (canAddStudent) onDropStudent(palanquee.id) } }}
-        className={`p-2 space-y-1 min-h-[100px] transition-colors ${
+        className={`p-1.5 sm:p-2 space-y-0.5 sm:space-y-1 min-h-[70px] sm:min-h-[100px] transition-colors ${
           studentsOver && canAddStudent && canEdit
             ? 'bg-cyan-500/20'
             : isDragging && canAddStudent && !draggedIsEncadrant && canEdit
@@ -825,15 +830,15 @@ function PalanqueeCard({
             : ''
         }`}
       >
-        <div className="text-xs text-slate-500 mb-1 flex items-center justify-between">
+        <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1 flex items-center justify-between">
           <span>Élèves</span>
           <span className={students.length >= MAX_STUDENTS ? 'text-orange-400' : ''}>
             {students.length}/{MAX_STUDENTS}
           </span>
         </div>
         {students.length === 0 ? (
-          <div className="text-slate-500 text-xs text-center py-3">
-            {isDragging && !draggedIsEncadrant && canEdit ? '↓ Déposez ici' : 'Aucun élève'}
+          <div className="text-slate-500 text-[10px] sm:text-xs text-center py-2 sm:py-3">
+            {isDragging && !draggedIsEncadrant && canEdit ? '↓' : '—'}
           </div>
         ) : (
           students.map(member => (
@@ -846,8 +851,8 @@ function PalanqueeCard({
           ))
         )}
         {students.length > 0 && students.length < MAX_STUDENTS && isDragging && !draggedIsEncadrant && canEdit && (
-          <div className="text-slate-500 text-xs text-center py-1 border border-dashed border-slate-600 rounded">
-            ↓ Déposez ici
+          <div className="text-slate-500 text-[10px] sm:text-xs text-center py-0.5 sm:py-1 border border-dashed border-slate-600 rounded">
+            ↓
           </div>
         )}
       </div>
@@ -867,23 +872,24 @@ function MemberRow({
   onRemove: (memberId: string) => void
 }) {
   return (
-    <div className={`flex items-center gap-1.5 p-1.5 rounded text-xs ${
+    <div className={`flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded text-[10px] sm:text-xs ${
       isGP ? 'bg-purple-900/40' : 'bg-slate-600/40'
     }`}>
       {isGP && (
-        <span className="bg-purple-600 text-white px-1 rounded text-xs">GP</span>
+        <span className="bg-purple-600 text-white px-0.5 sm:px-1 rounded text-[10px] sm:text-xs">GP</span>
       )}
       
       <div className="flex-1 min-w-0">
         <p className="text-white truncate">
-          {member.last_name.toUpperCase()} {member.first_name}
+          <span className="sm:hidden">{member.last_name.slice(0, 3).toUpperCase()}</span>
+          <span className="hidden sm:inline">{member.last_name.toUpperCase()} {member.first_name}</span>
         </p>
       </div>
       
       {canEdit && (
         <button
           onClick={() => onRemove(member.id)}
-          className="p-0.5 text-red-400 hover:text-red-300 rounded"
+          className="p-0.5 text-red-400 hover:text-red-300 rounded flex-shrink-0"
         >
           ✕
         </button>
