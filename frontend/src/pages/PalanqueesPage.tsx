@@ -8,7 +8,8 @@ import {
   Palanquee, 
   PalanqueeMember,
   UnassignedParticipant,
-  Session
+  Session,
+  SessionSummary
 } from '../lib/api'
 
 const MAX_STUDENTS = 4
@@ -16,6 +17,7 @@ const MAX_STUDENTS = 4
 export default function PalanqueesPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const [session, setSession] = useState<Session | null>(null)
+  const [summary, setSummary] = useState<SessionSummary | null>(null)
   const [data, setData] = useState<SessionPalanquees | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -44,12 +46,14 @@ export default function PalanqueesPage() {
     if (!sessionId) return
     setLoading(true)
     try {
-      const [sessionRes, palanqueesRes] = await Promise.all([
+      const [sessionRes, palanqueesRes, summaryRes] = await Promise.all([
         sessionsApi.get(sessionId),
         palanqueesApi.getSessionPalanquees(sessionId),
+        sessionsApi.getSummary(sessionId),
       ])
       setSession(sessionRes.data)
       setData(palanqueesRes.data)
+      setSummary(summaryRes.data)
       setFicheOptions(prev => ({
         ...prev,
         site: sessionRes.data.location || '',
@@ -341,6 +345,24 @@ export default function PalanqueesPage() {
               </button>
             </div>
 
+            {/* Indicateur des bouteilles disponibles */}
+            {summary && (
+              <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 border border-slate-700 flex items-center gap-4">
+                <span className="text-slate-300 text-sm">Bouteilles disponibles :</span>
+                <span className="bg-blue-600/80 text-white px-2 py-0.5 rounded text-sm">
+                  Air: {summary.air_bottles}
+                </span>
+                {summary.nitrox_bottles > 0 && (
+                  <span className="bg-yellow-600/80 text-white px-2 py-0.5 rounded text-sm">
+                    Nitrox: {summary.nitrox_bottles}
+                  </span>
+                )}
+                {session?.optimization_mode && (
+                  <span className="text-green-400 text-xs">🔄 Mode 2 rotations actif</span>
+                )}
+              </div>
+            )}
+
             {data.rotations.length === 0 ? (
               <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-8 border border-slate-700 text-center">
                 <p className="text-slate-400 mb-2">Aucune rotation</p>
@@ -355,6 +377,8 @@ export default function PalanqueesPage() {
                   rotation={rotation}
                   isDragging={!!draggedParticipant}
                   draggedIsEncadrant={draggedParticipant?.is_encadrant || false}
+                  availableAir={summary?.air_bottles || 0}
+                  availableNitrox={summary?.nitrox_bottles || 0}
                   onCreatePalanquee={handleCreatePalanquee}
                   onDeleteRotation={handleDeleteRotation}
                   onDeletePalanquee={handleDeletePalanquee}
@@ -559,6 +583,8 @@ function RotationCard({
   rotation,
   isDragging,
   draggedIsEncadrant,
+  availableAir,
+  availableNitrox,
   onCreatePalanquee,
   onDeleteRotation,
   onDeletePalanquee,
@@ -569,6 +595,8 @@ function RotationCard({
   rotation: Rotation
   isDragging: boolean
   draggedIsEncadrant: boolean
+  availableAir: number
+  availableNitrox: number
   onCreatePalanquee: (rotationId: string) => void
   onDeleteRotation: (id: string) => void
   onDeletePalanquee: (id: string) => void
@@ -581,21 +609,38 @@ function RotationCard({
   const airCount = allMembers.filter(m => m.gas_type === 'Air').length
   const nitroxCount = allMembers.filter(m => m.gas_type === 'Nitrox').length
 
+  // Vérifier si on dépasse les bouteilles disponibles
+  const airExceeded = airCount > availableAir
+  const nitroxExceeded = nitroxCount > availableNitrox
+
   return (
-    <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow border border-slate-700">
+    <div className={`bg-slate-800/50 backdrop-blur-xl rounded-lg shadow border ${
+      airExceeded || nitroxExceeded ? 'border-red-500' : 'border-slate-700'
+    }`}>
       <div className="p-3 border-b border-slate-700 flex items-center justify-between">
-        <h3 className="text-base font-semibold text-white flex items-center gap-2">
+        <h3 className="text-base font-semibold text-white flex items-center gap-2 flex-wrap">
           🔄 Rotation {rotation.number}
           <span className="text-slate-400 text-sm font-normal">
             ({allMembers.length} plongeurs)
           </span>
           {allMembers.length > 0 && (
             <span className="flex items-center gap-1.5 text-xs font-normal">
-              <span className="bg-blue-600/80 text-white px-1.5 py-0.5 rounded">Air: {airCount}</span>
-              {nitroxCount > 0 && (
-                <span className="bg-yellow-600/80 text-white px-1.5 py-0.5 rounded">Nitrox: {nitroxCount}</span>
+              <span className={`px-1.5 py-0.5 rounded ${
+                airExceeded ? 'bg-red-600 text-white' : 'bg-blue-600/80 text-white'
+              }`}>
+                Air: {airCount}/{availableAir}
+              </span>
+              {(nitroxCount > 0 || availableNitrox > 0) && (
+                <span className={`px-1.5 py-0.5 rounded ${
+                  nitroxExceeded ? 'bg-red-600 text-white' : 'bg-yellow-600/80 text-white'
+                }`}>
+                  Nitrox: {nitroxCount}/{availableNitrox}
+                </span>
               )}
             </span>
+          )}
+          {(airExceeded || nitroxExceeded) && (
+            <span className="text-red-400 text-xs">⚠️ Trop de bouteilles !</span>
           )}
         </h3>
         <div className="flex items-center gap-2">
