@@ -11,7 +11,7 @@ import {
   Session
 } from '../lib/api'
 
-const GAS_TYPES = ['Air', 'Nitrox', 'Trimix', 'Heliox']
+const GAS_TYPES = ['Air', 'Nitrox']
 const MAX_STUDENTS = 4
 
 export default function PalanqueesPage() {
@@ -26,7 +26,7 @@ export default function PalanqueesPage() {
   const [showFicheModal, setShowFicheModal] = useState(false)
   const [ficheOptions, setFicheOptions] = useState({
     date: '',
-    club: '',
+    club: 'USI Plongée',
     directeur_plongee: '',
     site: '',
     position: '',
