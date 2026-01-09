@@ -3,25 +3,38 @@ import { useParams, Link } from 'react-router-dom'
 import { 
   palanqueesApi, 
   sessionsApi,
+  questionnairesApi,
   SessionPalanquees, 
   Rotation, 
   Palanquee, 
   PalanqueeMember,
   UnassignedParticipant,
   Session,
-  SessionSummary
+  SessionSummary,
+  QuestionnaireDetail
 } from '../lib/api'
+import { useAuthStore } from '../lib/auth'
 
 const MAX_STUDENTS = 4
 
 export default function PalanqueesPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
+  const { email, impersonating, isAdmin } = useAuthStore()
   const [session, setSession] = useState<Session | null>(null)
   const [summary, setSummary] = useState<SessionSummary | null>(null)
   const [data, setData] = useState<SessionPalanquees | null>(null)
+  const [questionnaires, setQuestionnaires] = useState<QuestionnaireDetail[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [draggedParticipant, setDraggedParticipant] = useState<UnassignedParticipant | null>(null)
+  
+  // L'email de l'utilisateur actuel (impersonnifié ou non)
+  const currentEmail = impersonating?.user_email || email
+  
+  // Déterminer si l'utilisateur peut éditer
+  // Peut éditer si: admin (non impersonnifié) OU DP de la session
+  const isCurrentUserDP = questionnaires.some(q => q.email === currentEmail && q.is_directeur_plongee)
+  const canEdit = (isAdmin && !impersonating) || isCurrentUserDP
   
   // Modal states
   const [showFicheModal, setShowFicheModal] = useState(false)
@@ -46,14 +59,16 @@ export default function PalanqueesPage() {
     if (!sessionId) return
     setLoading(true)
     try {
-      const [sessionRes, palanqueesRes, summaryRes] = await Promise.all([
+      const [sessionRes, palanqueesRes, summaryRes, questionnairesRes] = await Promise.all([
         sessionsApi.get(sessionId),
         palanqueesApi.getSessionPalanquees(sessionId),
         sessionsApi.getSummary(sessionId),
+        questionnairesApi.listDetail(sessionId),
       ])
       setSession(sessionRes.data)
       setData(palanqueesRes.data)
       setSummary(summaryRes.data)
+      setQuestionnaires(questionnairesRes.data)
       setFicheOptions(prev => ({
         ...prev,
         site: sessionRes.data.location || '',
@@ -245,7 +260,12 @@ export default function PalanqueesPage() {
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">🤿 Palanquées</h1>
               <p className="text-slate-300">
-                {session?.name} — <span className="text-slate-400">Glissez-déposez les participants</span>
+                {session?.name}
+                {canEdit ? (
+                  <span className="text-slate-400"> — Glissez-déposez les participants</span>
+                ) : (
+                  <span className="text-yellow-400"> — Mode lecture seule</span>
+                )}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -286,6 +306,7 @@ export default function PalanqueesPage() {
                     title="🏅 Encadrants"
                     participants={grouped.encadrants}
                     color="purple"
+                    canEdit={canEdit}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                   />
@@ -297,6 +318,7 @@ export default function PalanqueesPage() {
                     title="⚡ Formation Nitrox"
                     participants={grouped.nitroxTraining}
                     color="yellow"
+                    canEdit={canEdit}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                   />
@@ -312,6 +334,7 @@ export default function PalanqueesPage() {
                       title={`📘 Prépa ${level}`}
                       participants={students}
                       color="cyan"
+                      canEdit={canEdit}
                       onDragStart={handleDragStart}
                       onDragEnd={handleDragEnd}
                     />
@@ -324,6 +347,7 @@ export default function PalanqueesPage() {
                     title="📋 Autres"
                     participants={grouped.others}
                     color="slate"
+                    canEdit={canEdit}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                   />
@@ -336,14 +360,16 @@ export default function PalanqueesPage() {
           <div className="lg:col-span-2 space-y-4">
             
             {/* Actions */}
-            <div className="flex justify-end">
-              <button
-                onClick={handleCreateRotation}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors"
-              >
-                ➕ Rotation
-              </button>
-            </div>
+            {canEdit && (
+              <div className="flex justify-end">
+                <button
+                  onClick={handleCreateRotation}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors"
+                >
+                  ➕ Rotation
+                </button>
+              </div>
+            )}
 
             {/* Indicateur des bouteilles disponibles */}
             {summary && (() => {
@@ -395,10 +421,11 @@ export default function PalanqueesPage() {
                       <RotationCard
                         key={rotation.id}
                         rotation={rotation}
-                        isDragging={!!draggedParticipant}
+                        isDragging={!!draggedParticipant && canEdit}
                         draggedIsEncadrant={draggedParticipant?.is_encadrant || false}
                         availableAir={optimizedAirBottles}
                         availableNitrox={optimizedNitroxBottles}
+                        canEdit={canEdit}
                         onCreatePalanquee={handleCreatePalanquee}
                         onDeleteRotation={handleDeleteRotation}
                         onDeletePalanquee={handleDeletePalanquee}
@@ -533,12 +560,14 @@ function ParticipantGroup({
   title,
   participants,
   color,
+  canEdit,
   onDragStart,
   onDragEnd,
 }: {
   title: string
   participants: UnassignedParticipant[]
   color: 'purple' | 'yellow' | 'cyan' | 'slate'
+  canEdit: boolean
   onDragStart: (p: UnassignedParticipant) => void
   onDragEnd: () => void
 }) {
@@ -560,6 +589,7 @@ function ParticipantGroup({
           <DraggableParticipant
             key={p.questionnaire_id}
             participant={p}
+            canEdit={canEdit}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
           />
@@ -571,24 +601,32 @@ function ParticipantGroup({
 
 function DraggableParticipant({
   participant,
+  canEdit,
   onDragStart,
   onDragEnd,
 }: {
   participant: UnassignedParticipant
+  canEdit: boolean
   onDragStart: (p: UnassignedParticipant) => void
   onDragEnd: () => void
 }) {
   const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
+    if (!canEdit) {
+      e.preventDefault()
+      return
+    }
     e.dataTransfer.effectAllowed = 'move'
     onDragStart(participant)
   }
 
   return (
     <div
-      draggable
+      draggable={canEdit}
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
-      className={`p-2 rounded border cursor-grab active:cursor-grabbing transition-all select-none text-sm ${
+      className={`p-2 rounded border transition-all select-none text-sm ${
+        canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
+      } ${
         participant.is_encadrant
           ? 'bg-purple-900/40 border-purple-600/50 hover:bg-purple-900/60'
           : 'bg-slate-700/40 border-slate-600/50 hover:bg-slate-700/60'
@@ -617,6 +655,7 @@ function RotationCard({
   draggedIsEncadrant,
   availableAir,
   availableNitrox,
+  canEdit,
   onCreatePalanquee,
   onDeleteRotation,
   onDeletePalanquee,
@@ -629,6 +668,7 @@ function RotationCard({
   draggedIsEncadrant: boolean
   availableAir: number
   availableNitrox: number
+  canEdit: boolean
   onCreatePalanquee: (rotationId: string) => void
   onDeleteRotation: (id: string) => void
   onDeletePalanquee: (id: string) => void
@@ -675,21 +715,23 @@ function RotationCard({
             <span className="text-red-400 text-xs">⚠️ Trop de bouteilles !</span>
           )}
         </h3>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onCreatePalanquee(rotation.id)}
-            className="px-2.5 py-1 bg-green-600/80 text-white rounded hover:bg-green-600 transition-colors text-sm"
-          >
-            + Palanquée
-          </button>
-          <button
-            onClick={() => onDeleteRotation(rotation.id)}
-            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-slate-700 rounded transition-colors"
-            title="Supprimer rotation"
-          >
-            🗑️
-          </button>
-        </div>
+        {canEdit && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onCreatePalanquee(rotation.id)}
+              className="px-2.5 py-1 bg-green-600/80 text-white rounded hover:bg-green-600 transition-colors text-sm"
+            >
+              + Palanquée
+            </button>
+            <button
+              onClick={() => onDeleteRotation(rotation.id)}
+              className="p-1.5 text-red-400 hover:text-red-300 hover:bg-slate-700 rounded transition-colors"
+              title="Supprimer rotation"
+            >
+              🗑️
+            </button>
+          </div>
+        )}
       </div>
       
       {rotation.palanquees.length === 0 ? (
@@ -704,6 +746,7 @@ function RotationCard({
               palanquee={palanquee}
               isDragging={isDragging}
               draggedIsEncadrant={draggedIsEncadrant}
+              canEdit={canEdit}
               onDelete={onDeletePalanquee}
               onDropGP={onDropGP}
               onDropStudent={onDropStudent}
@@ -720,6 +763,7 @@ function PalanqueeCard({
   palanquee,
   isDragging,
   draggedIsEncadrant,
+  canEdit,
   onDelete,
   onDropGP,
   onDropStudent,
@@ -728,6 +772,7 @@ function PalanqueeCard({
   palanquee: Palanquee
   isDragging: boolean
   draggedIsEncadrant: boolean
+  canEdit: boolean
   onDelete: (id: string) => void
   onDropGP: (palanqueeId: string) => void
   onDropStudent: (palanqueeId: string) => void
@@ -748,24 +793,26 @@ function PalanqueeCard({
         <span className="text-white font-medium text-sm">
           Palanquée {palanquee.number}
         </span>
-        <button
-          onClick={() => onDelete(palanquee.id)}
-          className="p-1 text-red-400 hover:text-red-300 hover:bg-slate-600 rounded transition-colors"
-          title="Supprimer"
-        >
-          ✕
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => onDelete(palanquee.id)}
+            className="p-1 text-red-400 hover:text-red-300 hover:bg-slate-600 rounded transition-colors"
+            title="Supprimer"
+          >
+            ✕
+          </button>
+        )}
       </div>
       
       {/* Zone GP (Guide de Palanquée) */}
       <div
-        onDragOver={e => { e.preventDefault(); if (!gp) setGpOver(true) }}
+        onDragOver={e => { if (canEdit) { e.preventDefault(); if (!gp) setGpOver(true) } }}
         onDragLeave={() => setGpOver(false)}
-        onDrop={e => { e.preventDefault(); setGpOver(false); if (!gp) onDropGP(palanquee.id) }}
+        onDrop={e => { if (canEdit) { e.preventDefault(); setGpOver(false); if (!gp) onDropGP(palanquee.id) } }}
         className={`p-2 border-b border-slate-600 min-h-[44px] transition-colors ${
-          gpOver && !gp
+          gpOver && !gp && canEdit
             ? 'bg-purple-500/20 border-purple-500'
-            : isDragging && !gp && draggedIsEncadrant
+            : isDragging && !gp && draggedIsEncadrant && canEdit
             ? 'bg-slate-600/30 border-dashed'
             : ''
         }`}
@@ -775,24 +822,25 @@ function PalanqueeCard({
           <MemberRow
             member={gp}
             isGP
+            canEdit={canEdit}
             onRemove={onRemoveMember}
           />
         ) : (
           <div className="text-slate-500 text-xs text-center py-1">
-            {isDragging && draggedIsEncadrant ? '↓ Déposez ici' : '—'}
+            {isDragging && draggedIsEncadrant && canEdit ? '↓ Déposez ici' : '—'}
           </div>
         )}
       </div>
       
       {/* Zone Élèves (4 max) */}
       <div
-        onDragOver={e => { e.preventDefault(); if (canAddStudent) setStudentsOver(true) }}
+        onDragOver={e => { if (canEdit) { e.preventDefault(); if (canAddStudent) setStudentsOver(true) } }}
         onDragLeave={() => setStudentsOver(false)}
-        onDrop={e => { e.preventDefault(); setStudentsOver(false); if (canAddStudent) onDropStudent(palanquee.id) }}
+        onDrop={e => { if (canEdit) { e.preventDefault(); setStudentsOver(false); if (canAddStudent) onDropStudent(palanquee.id) } }}
         className={`p-2 space-y-1 min-h-[100px] transition-colors ${
-          studentsOver && canAddStudent
+          studentsOver && canAddStudent && canEdit
             ? 'bg-cyan-500/20'
-            : isDragging && canAddStudent && !draggedIsEncadrant
+            : isDragging && canAddStudent && !draggedIsEncadrant && canEdit
             ? 'bg-slate-600/20'
             : ''
         }`}
@@ -805,18 +853,19 @@ function PalanqueeCard({
         </div>
         {students.length === 0 ? (
           <div className="text-slate-500 text-xs text-center py-3">
-            {isDragging && !draggedIsEncadrant ? '↓ Déposez ici' : 'Aucun élève'}
+            {isDragging && !draggedIsEncadrant && canEdit ? '↓ Déposez ici' : 'Aucun élève'}
           </div>
         ) : (
           students.map(member => (
             <MemberRow
               key={member.id}
               member={member}
+              canEdit={canEdit}
               onRemove={onRemoveMember}
             />
           ))
         )}
-        {students.length > 0 && students.length < MAX_STUDENTS && isDragging && !draggedIsEncadrant && (
+        {students.length > 0 && students.length < MAX_STUDENTS && isDragging && !draggedIsEncadrant && canEdit && (
           <div className="text-slate-500 text-xs text-center py-1 border border-dashed border-slate-600 rounded">
             ↓ Déposez ici
           </div>
@@ -829,10 +878,12 @@ function PalanqueeCard({
 function MemberRow({
   member,
   isGP,
+  canEdit,
   onRemove,
 }: {
   member: PalanqueeMember
   isGP?: boolean
+  canEdit: boolean
   onRemove: (memberId: string) => void
 }) {
   return (
@@ -849,12 +900,14 @@ function MemberRow({
         </p>
       </div>
       
-      <button
-        onClick={() => onRemove(member.id)}
-        className="p-0.5 text-red-400 hover:text-red-300 rounded"
-      >
-        ✕
-      </button>
+      {canEdit && (
+        <button
+          onClick={() => onRemove(member.id)}
+          className="p-0.5 text-red-400 hover:text-red-300 rounded"
+        >
+          ✕
+        </button>
+      )}
     </div>
   )
 }
