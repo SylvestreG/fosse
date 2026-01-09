@@ -541,7 +541,6 @@ async fn get_palanquee_members(
 pub struct FicheSecuriteQueryParams {
     pub date: Option<String>,
     pub club: Option<String>,
-    pub directeur_plongee: Option<String>,
     pub site: Option<String>,
     pub position: Option<String>,
     pub securite_surface: Option<String>,
@@ -557,7 +556,6 @@ pub async fn download_fiche_securite(
     let options = FicheSecuriteOptions {
         date: params.date,
         club: params.club,
-        directeur_plongee: params.directeur_plongee,
         site: params.site,
         position: params.position,
         securite_surface: params.securite_surface,

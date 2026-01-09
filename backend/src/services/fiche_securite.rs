@@ -146,10 +146,28 @@ pub async fn generate_fiche_securite(
         });
     }
 
+    // Récupérer le DP automatiquement depuis les questionnaires
+    let dp_questionnaire = questionnaires::Entity::find()
+        .filter(questionnaires::Column::SessionId.eq(session_id))
+        .filter(questionnaires::Column::IsDirecteurPlongee.eq(true))
+        .one(db)
+        .await?;
+    
+    let dp_name = if let Some(q) = dp_questionnaire {
+        // Récupérer le nom de la personne associée
+        let person = people::Entity::find_by_id(q.person_id)
+            .one(db)
+            .await?;
+        person.map(|p| format!("{} {}", p.first_name, p.last_name))
+            .unwrap_or_default()
+    } else {
+        String::new()
+    };
+
     let data = FicheSecuriteData {
         date: options.date.unwrap_or_else(|| session.start_date.format("%d/%m/%Y").to_string()),
         club: options.club.unwrap_or_default(),
-        directeur_plongee: options.directeur_plongee.unwrap_or_default(),
+        directeur_plongee: dp_name,
         site: options.site.unwrap_or_else(|| session.location.unwrap_or_default()),
         position: options.position.unwrap_or_default(),
         securite_surface: options.securite_surface.unwrap_or_default(),
@@ -165,7 +183,6 @@ pub async fn generate_fiche_securite(
 pub struct FicheSecuriteOptions {
     pub date: Option<String>,
     pub club: Option<String>,
-    pub directeur_plongee: Option<String>,
     pub site: Option<String>,
     pub position: Option<String>,
     pub securite_surface: Option<String>,

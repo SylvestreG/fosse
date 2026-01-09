@@ -721,7 +721,6 @@ export const palanqueesApi = {
   downloadFicheSecurite: (sessionId: string, options?: {
     date?: string
     club?: string
-    directeur_plongee?: string
     site?: string
     position?: string
     securite_surface?: string
@@ -730,7 +729,6 @@ export const palanqueesApi = {
     const params = new URLSearchParams()
     if (options?.date) params.append('date', options.date)
     if (options?.club) params.append('club', options.club)
-    if (options?.directeur_plongee) params.append('directeur_plongee', options.directeur_plongee)
     if (options?.site) params.append('site', options.site)
     if (options?.position) params.append('position', options.position)
     if (options?.securite_surface) params.append('securite_surface', options.securite_surface)
