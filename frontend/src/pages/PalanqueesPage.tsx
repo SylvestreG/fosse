@@ -423,12 +423,21 @@ export default function PalanqueesPage() {
               
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">Directeur de Plongée</label>
-                <input
-                  type="text"
+                <select
                   value={ficheOptions.directeur_plongee}
                   onChange={e => setFicheOptions(prev => ({ ...prev, directeur_plongee: e.target.value }))}
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white"
-                />
+                >
+                  <option value="">-- Sélectionner --</option>
+                  {data?.unassigned_participants
+                    .filter(p => p.is_encadrant)
+                    .map(p => (
+                      <option key={p.questionnaire_id} value={`${p.first_name} ${p.last_name}`}>
+                        {p.first_name} {p.last_name} {p.diving_level ? `(${p.diving_level})` : ''}
+                      </option>
+                    ))
+                  }
+                </select>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
