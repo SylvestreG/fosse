@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react'
-import { sessionsApi, questionnairesApi, peopleApi, Session, Person } from '@/lib/api'
+import { useNavigate } from 'react-router-dom'
+import { sessionsApi, questionnairesApi, peopleApi, Session, Person, QuestionnaireDetail } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import Toast from '@/components/Toast'
 
+interface MyRegistration {
+  questionnaire: QuestionnaireDetail
+  isEncadrant: boolean
+}
+
 export default function MySessionsPage() {
+  const navigate = useNavigate()
   const { email, impersonating } = useAuthStore()
   const [sessions, setSessions] = useState<Session[]>([])
   const [myPerson, setMyPerson] = useState<Person | null>(null)
-  const [myRegistrations, setMyRegistrations] = useState<Set<string>>(new Set())
+  const [myRegistrations, setMyRegistrations] = useState<Map<string, MyRegistration>>(new Map())
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [showRegisterModal, setShowRegisterModal] = useState(false)
@@ -40,13 +47,16 @@ export default function MySessionsPage() {
         setMyPerson(me || null)
         
         // Charger mes inscriptions pour chaque session
-        const registrations = new Set<string>()
+        const registrations = new Map<string, MyRegistration>()
         for (const session of futureSessions) {
           try {
             const questRes = await questionnairesApi.listDetail(session.id)
             const myQuest = questRes.data.find(q => q.email === targetEmail)
             if (myQuest) {
-              registrations.add(session.id)
+              registrations.set(session.id, {
+                questionnaire: myQuest,
+                isEncadrant: myQuest.is_encadrant
+              })
             }
           } catch (e) {
             // Ignorer les erreurs
@@ -85,7 +95,9 @@ export default function MySessionsPage() {
       ) : (
         <div className="grid gap-4">
           {sessions.map((session) => {
-            const isRegistered = myRegistrations.has(session.id)
+            const registration = myRegistrations.get(session.id)
+            const isRegistered = !!registration
+            const isEncadrant = registration?.isEncadrant || false
             const sessionDate = new Date(session.start_date)
             const formattedDate = sessionDate.toLocaleDateString('fr-FR', {
               weekday: 'long',
@@ -112,9 +124,20 @@ export default function MySessionsPage() {
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     {isRegistered ? (
-                      <span className="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-full font-medium">
-                        ✅ Inscrit
-                      </span>
+                      <>
+                        <span className="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-full font-medium">
+                          ✅ Inscrit
+                        </span>
+                        {isEncadrant && (
+                          <Button 
+                            variant="secondary" 
+                            size="sm"
+                            onClick={() => navigate(`/dashboard/palanquees/${session.id}`)}
+                          >
+                            🤿 Palanquées
+                          </Button>
+                        )}
+                      </>
                     ) : (
                       <Button onClick={() => handleOpenRegister(session)}>
                         📝 S'inscrire
