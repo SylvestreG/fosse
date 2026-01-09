@@ -11,13 +11,8 @@ import {
   Session
 } from '../lib/api'
 
-const ROLES = [
-  { value: 'E', label: 'Encadrant' },
-  { value: 'GP', label: 'Guide de Palanquée' },
-  { value: 'P', label: 'Plongeur' },
-]
-
 const GAS_TYPES = ['Air', 'Nitrox', 'Trimix', 'Heliox']
+const MAX_STUDENTS = 4
 
 export default function PalanqueesPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
@@ -111,9 +106,9 @@ export default function PalanqueesPage() {
 
   const handleAddMember = async (
     palanqueeId: string, 
-    participant: UnassignedParticipant
+    participant: UnassignedParticipant,
+    role: 'GP' | 'P'
   ) => {
-    const role = participant.is_encadrant ? 'E' : 'P'
     const gasType = (participant.wants_nitrox || participant.nitrox_training) ? 'Nitrox' : 'Air'
     try {
       await palanqueesApi.addMember(palanqueeId, participant.questionnaire_id, role, gasType)
@@ -171,11 +166,39 @@ export default function PalanqueesPage() {
     setDraggedParticipant(null)
   }
 
-  const handleDrop = (palanqueeId: string) => {
+  const handleDropGP = (palanqueeId: string) => {
     if (draggedParticipant) {
-      handleAddMember(palanqueeId, draggedParticipant)
+      handleAddMember(palanqueeId, draggedParticipant, 'GP')
       setDraggedParticipant(null)
     }
+  }
+
+  const handleDropStudent = (palanqueeId: string) => {
+    if (draggedParticipant) {
+      handleAddMember(palanqueeId, draggedParticipant, 'P')
+      setDraggedParticipant(null)
+    }
+  }
+
+  // Grouper les participants non assignés
+  const groupParticipants = (participants: UnassignedParticipant[]) => {
+    const encadrants = participants.filter(p => p.is_encadrant)
+    const students = participants.filter(p => !p.is_encadrant)
+    
+    const nitroxTraining = students.filter(p => p.nitrox_training)
+    const remainingStudents = students.filter(p => !p.nitrox_training)
+    
+    const preparingLevels = ['N1', 'N2', 'N3', 'N4']
+    const byPreparingLevel: Record<string, UnassignedParticipant[]> = {}
+    preparingLevels.forEach(level => {
+      byPreparingLevel[level] = remainingStudents.filter(p => p.preparing_level === level)
+    })
+    
+    const others = remainingStudents.filter(
+      p => !p.preparing_level || !preparingLevels.includes(p.preparing_level)
+    )
+    
+    return { encadrants, nitroxTraining, byPreparingLevel, others }
   }
 
   if (loading) {
@@ -194,6 +217,8 @@ export default function PalanqueesPage() {
     )
   }
 
+  const grouped = groupParticipants(data.unassigned_participants)
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -204,7 +229,7 @@ export default function PalanqueesPage() {
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">🤿 Palanquées</h1>
               <p className="text-slate-300">
-                {session?.name} — <span className="text-slate-400">Glissez-déposez les participants dans les palanquées</span>
+                {session?.name} — <span className="text-slate-400">Glissez-déposez les participants</span>
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -226,8 +251,8 @@ export default function PalanqueesPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Participants non assignés */}
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 border border-slate-700 h-fit sticky top-4">
+          {/* Participants non assignés - groupés */}
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 border border-slate-700 h-fit sticky top-4 max-h-[85vh] overflow-y-auto">
             <h2 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
               👥 Non assignés
               <span className="bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full text-sm">
@@ -238,15 +263,55 @@ export default function PalanqueesPage() {
             {data.unassigned_participants.length === 0 ? (
               <p className="text-slate-400 text-sm text-center py-4">✅ Tous assignés !</p>
             ) : (
-              <div className="space-y-1.5 max-h-[70vh] overflow-y-auto pr-1">
-                {data.unassigned_participants.map(p => (
-                  <DraggableParticipant
-                    key={p.questionnaire_id}
-                    participant={p}
+              <div className="space-y-4">
+                {/* Encadrants */}
+                {grouped.encadrants.length > 0 && (
+                  <ParticipantGroup
+                    title="🏅 Encadrants"
+                    participants={grouped.encadrants}
+                    color="purple"
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                   />
-                ))}
+                )}
+                
+                {/* Formation Nitrox */}
+                {grouped.nitroxTraining.length > 0 && (
+                  <ParticipantGroup
+                    title="⚡ Formation Nitrox"
+                    participants={grouped.nitroxTraining}
+                    color="yellow"
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                  />
+                )}
+                
+                {/* Par niveau préparé */}
+                {['N1', 'N2', 'N3', 'N4'].map(level => {
+                  const students = grouped.byPreparingLevel[level]
+                  if (!students || students.length === 0) return null
+                  return (
+                    <ParticipantGroup
+                      key={level}
+                      title={`📘 Prépa ${level}`}
+                      participants={students}
+                      color="cyan"
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                    />
+                  )
+                })}
+                
+                {/* Autres */}
+                {grouped.others.length > 0 && (
+                  <ParticipantGroup
+                    title="📋 Autres"
+                    participants={grouped.others}
+                    color="slate"
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -277,10 +342,12 @@ export default function PalanqueesPage() {
                   key={rotation.id}
                   rotation={rotation}
                   isDragging={!!draggedParticipant}
+                  draggedIsEncadrant={draggedParticipant?.is_encadrant || false}
                   onCreatePalanquee={handleCreatePalanquee}
                   onDeleteRotation={handleDeleteRotation}
                   onDeletePalanquee={handleDeletePalanquee}
-                  onDrop={handleDrop}
+                  onDropGP={handleDropGP}
+                  onDropStudent={handleDropStudent}
                   onRemoveMember={handleRemoveMember}
                   onUpdateMember={handleUpdateMember}
                 />
@@ -395,6 +462,46 @@ export default function PalanqueesPage() {
 
 // ============ COMPOSANTS ============
 
+function ParticipantGroup({
+  title,
+  participants,
+  color,
+  onDragStart,
+  onDragEnd,
+}: {
+  title: string
+  participants: UnassignedParticipant[]
+  color: 'purple' | 'yellow' | 'cyan' | 'slate'
+  onDragStart: (p: UnassignedParticipant) => void
+  onDragEnd: () => void
+}) {
+  const colorClasses = {
+    purple: 'border-purple-600/50 bg-purple-900/20',
+    yellow: 'border-yellow-600/50 bg-yellow-900/20',
+    cyan: 'border-cyan-600/50 bg-cyan-900/20',
+    slate: 'border-slate-600/50 bg-slate-700/20',
+  }
+
+  return (
+    <div className={`rounded-lg border p-2 ${colorClasses[color]}`}>
+      <h3 className="text-sm font-medium text-slate-300 mb-2 flex items-center justify-between">
+        {title}
+        <span className="text-xs text-slate-500">{participants.length}</span>
+      </h3>
+      <div className="space-y-1">
+        {participants.map(p => (
+          <DraggableParticipant
+            key={p.questionnaire_id}
+            participant={p}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function DraggableParticipant({
   participant,
   onDragStart,
@@ -414,28 +521,22 @@ function DraggableParticipant({
       draggable
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
-      className={`p-2.5 rounded-lg border cursor-grab active:cursor-grabbing transition-all select-none ${
+      className={`p-2 rounded border cursor-grab active:cursor-grabbing transition-all select-none text-sm ${
         participant.is_encadrant
-          ? 'bg-purple-900/40 border-purple-600 hover:bg-purple-900/60'
-          : 'bg-slate-700/60 border-slate-600 hover:bg-slate-700'
+          ? 'bg-purple-900/40 border-purple-600/50 hover:bg-purple-900/60'
+          : 'bg-slate-700/40 border-slate-600/50 hover:bg-slate-700/60'
       }`}
     >
       <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-white text-sm font-medium truncate">
-            {participant.last_name.toUpperCase()} {participant.first_name}
-          </p>
-          <p className="text-slate-400 text-xs">
-            {participant.diving_level || '?'}
-            {participant.preparing_level && ` → ${participant.preparing_level}`}
-          </p>
-        </div>
+        <span className="text-white truncate">
+          {participant.last_name.toUpperCase()} {participant.first_name}
+        </span>
         <div className="flex items-center gap-1 flex-shrink-0">
           {participant.is_encadrant && (
-            <span className="bg-purple-600 text-white text-xs px-1.5 py-0.5 rounded">E</span>
+            <span className="bg-purple-600 text-white text-xs px-1 rounded">E</span>
           )}
           {(participant.wants_nitrox || participant.nitrox_training) && (
-            <span className="bg-yellow-600 text-white text-xs px-1.5 py-0.5 rounded">Nx</span>
+            <span className="bg-yellow-600 text-white text-xs px-1 rounded">Nx</span>
           )}
         </div>
       </div>
@@ -446,19 +547,23 @@ function DraggableParticipant({
 function RotationCard({
   rotation,
   isDragging,
+  draggedIsEncadrant,
   onCreatePalanquee,
   onDeleteRotation,
   onDeletePalanquee,
-  onDrop,
+  onDropGP,
+  onDropStudent,
   onRemoveMember,
   onUpdateMember,
 }: {
   rotation: Rotation
   isDragging: boolean
+  draggedIsEncadrant: boolean
   onCreatePalanquee: (rotationId: string) => void
   onDeleteRotation: (id: string) => void
   onDeletePalanquee: (id: string) => void
-  onDrop: (palanqueeId: string) => void
+  onDropGP: (palanqueeId: string) => void
+  onDropStudent: (palanqueeId: string) => void
   onRemoveMember: (memberId: string) => void
   onUpdateMember: (memberId: string, role?: string, gasType?: string) => void
 }) {
@@ -493,14 +598,16 @@ function RotationCard({
           Cliquez sur "+ Palanquée" pour créer une palanquée
         </div>
       ) : (
-        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {rotation.palanquees.map(palanquee => (
             <PalanqueeCard
               key={palanquee.id}
               palanquee={palanquee}
               isDragging={isDragging}
+              draggedIsEncadrant={draggedIsEncadrant}
               onDelete={onDeletePalanquee}
-              onDrop={onDrop}
+              onDropGP={onDropGP}
+              onDropStudent={onDropStudent}
               onRemoveMember={onRemoveMember}
               onUpdateMember={onUpdateMember}
             />
@@ -514,54 +621,36 @@ function RotationCard({
 function PalanqueeCard({
   palanquee,
   isDragging,
+  draggedIsEncadrant,
   onDelete,
-  onDrop,
+  onDropGP,
+  onDropStudent,
   onRemoveMember,
   onUpdateMember,
 }: {
   palanquee: Palanquee
   isDragging: boolean
+  draggedIsEncadrant: boolean
   onDelete: (id: string) => void
-  onDrop: (palanqueeId: string) => void
+  onDropGP: (palanqueeId: string) => void
+  onDropStudent: (palanqueeId: string) => void
   onRemoveMember: (memberId: string) => void
   onUpdateMember: (memberId: string, role?: string, gasType?: string) => void
 }) {
-  const [isOver, setIsOver] = useState(false)
+  const [gpOver, setGpOver] = useState(false)
+  const [studentsOver, setStudentsOver] = useState(false)
 
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setIsOver(true)
-  }
-
-  const handleDragLeave = () => {
-    setIsOver(false)
-  }
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    setIsOver(false)
-    onDrop(palanquee.id)
-  }
+  // Séparer GP et élèves
+  const gp = palanquee.members.find(m => m.role === 'GP' || m.role === 'E')
+  const students = palanquee.members.filter(m => m.role === 'P')
+  const canAddStudent = students.length < MAX_STUDENTS
 
   return (
-    <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      className={`rounded-lg border-2 transition-all ${
-        isOver
-          ? 'border-green-500 bg-green-500/10'
-          : isDragging
-          ? 'border-dashed border-slate-500 bg-slate-700/30'
-          : 'border-slate-600 bg-slate-700/50'
-      }`}
-    >
+    <div className="rounded-lg border border-slate-600 bg-slate-700/30 overflow-hidden">
       {/* Header */}
-      <div className="p-2 bg-slate-700/60 rounded-t-lg flex items-center justify-between">
+      <div className="p-2 bg-slate-700/60 flex items-center justify-between">
         <span className="text-white font-medium text-sm">
-          P{palanquee.number}
-          <span className="text-slate-400 ml-1">({palanquee.members.length})</span>
+          Palanquée {palanquee.number}
         </span>
         <button
           onClick={() => onDelete(palanquee.id)}
@@ -572,21 +661,71 @@ function PalanqueeCard({
         </button>
       </div>
       
-      {/* Membres */}
-      <div className="p-2 space-y-1 min-h-[60px]">
-        {palanquee.members.length === 0 ? (
-          <p className="text-slate-500 text-xs text-center py-3">
-            {isDragging ? '↓ Déposez ici' : 'Vide'}
-          </p>
+      {/* Zone GP (Guide de Palanquée) */}
+      <div
+        onDragOver={e => { e.preventDefault(); if (!gp) setGpOver(true) }}
+        onDragLeave={() => setGpOver(false)}
+        onDrop={e => { e.preventDefault(); setGpOver(false); if (!gp) onDropGP(palanquee.id) }}
+        className={`p-2 border-b border-slate-600 min-h-[44px] transition-colors ${
+          gpOver && !gp
+            ? 'bg-purple-500/20 border-purple-500'
+            : isDragging && !gp && draggedIsEncadrant
+            ? 'bg-slate-600/30 border-dashed'
+            : ''
+        }`}
+      >
+        <div className="text-xs text-slate-500 mb-1">Guide de Palanquée</div>
+        {gp ? (
+          <MemberRow
+            member={gp}
+            isGP
+            onRemove={onRemoveMember}
+            onUpdateGas={onUpdateMember}
+          />
         ) : (
-          palanquee.members.map(member => (
+          <div className="text-slate-500 text-xs text-center py-1">
+            {isDragging && draggedIsEncadrant ? '↓ Déposez ici' : '—'}
+          </div>
+        )}
+      </div>
+      
+      {/* Zone Élèves (4 max) */}
+      <div
+        onDragOver={e => { e.preventDefault(); if (canAddStudent) setStudentsOver(true) }}
+        onDragLeave={() => setStudentsOver(false)}
+        onDrop={e => { e.preventDefault(); setStudentsOver(false); if (canAddStudent) onDropStudent(palanquee.id) }}
+        className={`p-2 space-y-1 min-h-[100px] transition-colors ${
+          studentsOver && canAddStudent
+            ? 'bg-cyan-500/20'
+            : isDragging && canAddStudent && !draggedIsEncadrant
+            ? 'bg-slate-600/20'
+            : ''
+        }`}
+      >
+        <div className="text-xs text-slate-500 mb-1 flex items-center justify-between">
+          <span>Élèves</span>
+          <span className={students.length >= MAX_STUDENTS ? 'text-orange-400' : ''}>
+            {students.length}/{MAX_STUDENTS}
+          </span>
+        </div>
+        {students.length === 0 ? (
+          <div className="text-slate-500 text-xs text-center py-3">
+            {isDragging && !draggedIsEncadrant ? '↓ Déposez ici' : 'Aucun élève'}
+          </div>
+        ) : (
+          students.map(member => (
             <MemberRow
               key={member.id}
               member={member}
               onRemove={onRemoveMember}
-              onUpdate={onUpdateMember}
+              onUpdateGas={onUpdateMember}
             />
           ))
+        )}
+        {students.length > 0 && students.length < MAX_STUDENTS && isDragging && !draggedIsEncadrant && (
+          <div className="text-slate-500 text-xs text-center py-1 border border-dashed border-slate-600 rounded">
+            ↓ Déposez ici
+          </div>
         )}
       </div>
     </div>
@@ -595,26 +734,22 @@ function PalanqueeCard({
 
 function MemberRow({
   member,
+  isGP,
   onRemove,
-  onUpdate,
+  onUpdateGas,
 }: {
   member: PalanqueeMember
+  isGP?: boolean
   onRemove: (memberId: string) => void
-  onUpdate: (memberId: string, role?: string, gasType?: string) => void
+  onUpdateGas: (memberId: string, role?: string, gasType?: string) => void
 }) {
   return (
     <div className={`flex items-center gap-1.5 p-1.5 rounded text-xs ${
-      member.role === 'E' ? 'bg-purple-900/40' : 'bg-slate-600/40'
+      isGP ? 'bg-purple-900/40' : 'bg-slate-600/40'
     }`}>
-      <select
-        value={member.role}
-        onChange={e => onUpdate(member.id, e.target.value, undefined)}
-        className="px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-xs w-12"
-      >
-        {ROLES.map(r => (
-          <option key={r.value} value={r.value}>{r.value}</option>
-        ))}
-      </select>
+      {isGP && (
+        <span className="bg-purple-600 text-white px-1 rounded text-xs">GP</span>
+      )}
       
       <div className="flex-1 min-w-0">
         <p className="text-white truncate">
@@ -624,7 +759,7 @@ function MemberRow({
       
       <select
         value={member.gas_type}
-        onChange={e => onUpdate(member.id, undefined, e.target.value)}
+        onChange={e => onUpdateGas(member.id, undefined, e.target.value)}
         className="px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-xs w-14"
       >
         {GAS_TYPES.map(g => (

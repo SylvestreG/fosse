@@ -397,10 +397,9 @@ pub async fn get_session_palanquees(
         });
     }
 
-    // Récupérer les questionnaires non assignés (soumis uniquement)
+    // Récupérer tous les questionnaires de la session (soumis ou non)
     let all_questionnaires = Questionnaires::find()
         .filter(questionnaires::Column::SessionId.eq(session_id))
-        .filter(questionnaires::Column::SubmittedAt.is_not_null())
         .all(db.as_ref())
         .await?;
 
