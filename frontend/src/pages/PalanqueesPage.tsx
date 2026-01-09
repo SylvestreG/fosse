@@ -554,14 +554,27 @@ function RotationCard({
   onDropStudent: (palanqueeId: string) => void
   onRemoveMember: (memberId: string) => void
 }) {
+  // Compter les bouteilles par type de gaz
+  const allMembers = rotation.palanquees.flatMap(p => p.members)
+  const airCount = allMembers.filter(m => m.gas_type === 'Air').length
+  const nitroxCount = allMembers.filter(m => m.gas_type === 'Nitrox').length
+
   return (
     <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow border border-slate-700">
       <div className="p-3 border-b border-slate-700 flex items-center justify-between">
         <h3 className="text-base font-semibold text-white flex items-center gap-2">
           🔄 Rotation {rotation.number}
           <span className="text-slate-400 text-sm font-normal">
-            ({rotation.palanquees.reduce((acc, p) => acc + p.members.length, 0)} plongeurs)
+            ({allMembers.length} plongeurs)
           </span>
+          {allMembers.length > 0 && (
+            <span className="flex items-center gap-1.5 text-xs font-normal">
+              <span className="bg-blue-600/80 text-white px-1.5 py-0.5 rounded">Air: {airCount}</span>
+              {nitroxCount > 0 && (
+                <span className="bg-yellow-600/80 text-white px-1.5 py-0.5 rounded">Nitrox: {nitroxCount}</span>
+              )}
+            </span>
+          )}
         </h3>
         <div className="flex items-center gap-2">
           <button
