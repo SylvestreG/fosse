@@ -324,6 +324,9 @@ fn draw_header(content: &mut String, data: &FicheSecuriteData, mut y: f32) -> f3
     writeln!(content, "0.95 0.95 0.97 rg {} {} {} {} re f", MARGIN, y - info_height, width, info_height).unwrap();
     writeln!(content, "0.7 0.7 0.7 RG 0.5 w {} {} {} {} re S", MARGIN, y - info_height, width, info_height).unwrap();
     
+    // Remettre le texte en noir pour les labels
+    writeln!(content, "0 0 0 rg").unwrap();
+    
     // Infos - texte noir sur fond clair
     let col1 = MARGIN + 10.0;
     let col2 = MARGIN + 220.0;
@@ -331,6 +334,7 @@ fn draw_header(content: &mut String, data: &FicheSecuriteData, mut y: f32) -> f3
     let col4 = MARGIN + 680.0;
     
     // Ligne 1
+    writeln!(content, "0 0 0 rg").unwrap(); // Noir
     writeln!(content, "BT /F2 10 Tf {} {} Td (Date:) Tj ET", col1, y - 14.0).unwrap();
     writeln!(content, "BT /F1 10 Tf {} {} Td ({}) Tj ET", col1 + 35.0, y - 14.0, escape_pdf(&data.date)).unwrap();
     
@@ -340,7 +344,7 @@ fn draw_header(content: &mut String, data: &FicheSecuriteData, mut y: f32) -> f3
     writeln!(content, "BT /F2 10 Tf {} {} Td (Effectif:) Tj ET", col4, y - 14.0).unwrap();
     writeln!(content, "0.2 0.5 0.2 rg").unwrap(); // Vert
     writeln!(content, "BT /F2 14 Tf {} {} Td ({}) Tj ET", col4 + 55.0, y - 14.0, data.effectif_unique).unwrap();
-    writeln!(content, "0 g").unwrap();
+    writeln!(content, "0 0 0 rg").unwrap(); // Remettre en noir
     
     // Ligne 2
     writeln!(content, "BT /F2 10 Tf {} {} Td (Site:) Tj ET", col1, y - 30.0).unwrap();
