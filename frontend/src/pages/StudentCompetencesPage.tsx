@@ -180,9 +180,11 @@ export default function StudentCompetencesPage() {
       
       // Recharger les données
       await loadData()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving:', error)
-      setToast({ message: 'Erreur lors de la sauvegarde', type: 'error' })
+      // Extraire le message d'erreur du backend
+      const message = error.response?.data?.error || error.message || 'Erreur lors de la sauvegarde'
+      setToast({ message, type: 'error' })
     } finally {
       setSaving(false)
     }
@@ -236,9 +238,10 @@ export default function StudentCompetencesPage() {
       setToast({ message: 'Compétence mise à jour', type: 'success' })
       setConfirmDialog(null)
       await loadData()
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error('Error:', error)
-      const message = error instanceof Error ? error.message : 'Erreur lors de la validation'
+      // Extraire le message d'erreur du backend
+      const message = error.response?.data?.error || error.message || 'Erreur lors de la validation'
       setToast({ message, type: 'error' })
       setConfirmDialog(null)
     }
