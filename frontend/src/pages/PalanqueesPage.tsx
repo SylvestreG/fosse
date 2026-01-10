@@ -16,6 +16,7 @@ import {
 import { useAuthStore } from '../lib/auth'
 
 const MAX_STUDENTS = 4
+const MAX_GPS = 2
 
 export default function PalanqueesPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
@@ -27,6 +28,9 @@ export default function PalanqueesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [draggedParticipant, setDraggedParticipant] = useState<UnassignedParticipant | null>(null)
+  
+  // Mobile: participant sélectionné pour ajout tactile
+  const [selectedParticipant, setSelectedParticipant] = useState<UnassignedParticipant | null>(null)
   
   // L'email de l'utilisateur actuel (impersonnifié ou non)
   const currentEmail = impersonating?.user_email || email
@@ -144,6 +148,54 @@ export default function PalanqueesPage() {
     }
   }
 
+  // Mobile: sélectionner un participant
+  const handleSelectParticipant = (participant: UnassignedParticipant) => {
+    if (selectedParticipant?.questionnaire_id === participant.questionnaire_id) {
+      setSelectedParticipant(null) // Désélectionner si déjà sélectionné
+    } else {
+      setSelectedParticipant(participant)
+    }
+  }
+
+  // Mobile: ajouter le participant sélectionné à une palanquée
+  const handleTapAddToGP = (palanqueeId: string, rotation: Rotation, currentGPCount: number) => {
+    if (!selectedParticipant || currentGPCount >= MAX_GPS) return
+    
+    // Vérifier si l'encadrant est déjà dans cette rotation
+    if (selectedParticipant.is_encadrant) {
+      const alreadyInRotation = rotation.palanquees.some(p => 
+        p.members.some(m => m.questionnaire_id === selectedParticipant.questionnaire_id)
+      )
+      if (alreadyInRotation) {
+        alert('Cet encadrant est déjà assigné à une palanquée dans cette rotation')
+        setSelectedParticipant(null)
+        return
+      }
+    }
+    
+    handleAddMember(palanqueeId, selectedParticipant, 'GP')
+    setSelectedParticipant(null)
+  }
+
+  const handleTapAddToStudents = (palanqueeId: string, rotation: Rotation, currentStudentCount: number) => {
+    if (!selectedParticipant || currentStudentCount >= MAX_STUDENTS) return
+    
+    // Vérifier si l'encadrant est déjà dans cette rotation
+    if (selectedParticipant.is_encadrant) {
+      const alreadyInRotation = rotation.palanquees.some(p => 
+        p.members.some(m => m.questionnaire_id === selectedParticipant.questionnaire_id)
+      )
+      if (alreadyInRotation) {
+        alert('Cet encadrant est déjà assigné à une palanquée dans cette rotation')
+        setSelectedParticipant(null)
+        return
+      }
+    }
+    
+    handleAddMember(palanqueeId, selectedParticipant, 'P')
+    setSelectedParticipant(null)
+  }
+
   const handleDownloadFiche = async () => {
     if (!sessionId) return
     setDownloading(true)
@@ -174,8 +226,15 @@ export default function PalanqueesPage() {
     setDraggedParticipant(null)
   }
 
-  const handleDropGP = (palanqueeId: string, rotation: Rotation) => {
+  const handleDropGP = (palanqueeId: string, rotation: Rotation, currentGPCount: number) => {
     if (draggedParticipant) {
+      // Vérifier si on peut encore ajouter un GP
+      if (currentGPCount >= MAX_GPS) {
+        alert('Cette palanquée a déjà 2 guides de palanquée')
+        setDraggedParticipant(null)
+        return
+      }
+      
       // Vérifier si l'encadrant est déjà dans cette rotation
       if (draggedParticipant.is_encadrant) {
         const alreadyInRotation = rotation.palanquees.some(p => 
@@ -261,7 +320,10 @@ export default function PalanqueesPage() {
               <p className="text-slate-300 text-sm sm:text-base">
                 {session?.name}
                 {canEdit ? (
-                  <span className="text-slate-400 hidden sm:inline"> — Glissez-déposez les participants</span>
+                  <>
+                    <span className="text-slate-400 hidden sm:inline"> — Glissez-déposez les participants</span>
+                    <span className="text-cyan-400 sm:hidden"> — Touchez pour sélectionner</span>
+                  </>
                 ) : (
                   <span className="text-yellow-400"> — Lecture seule</span>
                 )}
@@ -283,6 +345,26 @@ export default function PalanqueesPage() {
             </div>
           </div>
         </div>
+
+        {/* Mobile: Bannière participant sélectionné */}
+        {selectedParticipant && canEdit && (
+          <div className="sm:hidden bg-cyan-600/90 backdrop-blur rounded-lg p-3 flex items-center justify-between gap-2 sticky top-0 z-10 shadow-lg">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-white text-sm font-medium truncate">
+                {selectedParticipant.is_encadrant ? '🏅' : '👤'} {selectedParticipant.last_name.toUpperCase()} {selectedParticipant.first_name.charAt(0)}.
+              </span>
+              {selectedParticipant.is_encadrant && (
+                <span className="bg-purple-600 text-white text-xs px-1.5 py-0.5 rounded flex-shrink-0">E</span>
+              )}
+            </div>
+            <button
+              onClick={() => setSelectedParticipant(null)}
+              className="bg-white/20 text-white px-3 py-1 rounded text-sm hover:bg-white/30 flex-shrink-0"
+            >
+              ✕ Annuler
+            </button>
+          </div>
+        )}
 
         <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 sm:gap-6">
           
@@ -306,8 +388,10 @@ export default function PalanqueesPage() {
                     participants={grouped.encadrants}
                     color="purple"
                     canEdit={canEdit}
+                    selectedParticipant={selectedParticipant}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
+                    onSelect={handleSelectParticipant}
                   />
                 )}
                 
@@ -318,8 +402,10 @@ export default function PalanqueesPage() {
                     participants={grouped.nitroxTraining}
                     color="yellow"
                     canEdit={canEdit}
+                    selectedParticipant={selectedParticipant}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
+                    onSelect={handleSelectParticipant}
                   />
                 )}
                 
@@ -334,8 +420,10 @@ export default function PalanqueesPage() {
                       participants={students}
                       color="cyan"
                       canEdit={canEdit}
+                      selectedParticipant={selectedParticipant}
                       onDragStart={handleDragStart}
                       onDragEnd={handleDragEnd}
+                      onSelect={handleSelectParticipant}
                     />
                   )
                 })}
@@ -347,8 +435,10 @@ export default function PalanqueesPage() {
                     participants={grouped.others}
                     color="slate"
                     canEdit={canEdit}
+                    selectedParticipant={selectedParticipant}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
+                    onSelect={handleSelectParticipant}
                   />
                 )}
               </div>
@@ -422,14 +512,17 @@ export default function PalanqueesPage() {
                         rotation={rotation}
                         isDragging={!!draggedParticipant && canEdit}
                         draggedIsEncadrant={draggedParticipant?.is_encadrant || false}
+                        selectedParticipant={selectedParticipant}
                         availableAir={optimizedAirBottles}
                         availableNitrox={optimizedNitroxBottles}
                         canEdit={canEdit}
                         onCreatePalanquee={handleCreatePalanquee}
                         onDeleteRotation={handleDeleteRotation}
                         onDeletePalanquee={handleDeletePalanquee}
-                        onDropGP={(palanqueeId) => handleDropGP(palanqueeId, rotation)}
+                        onDropGP={(palanqueeId, gpCount) => handleDropGP(palanqueeId, rotation, gpCount)}
                         onDropStudent={(palanqueeId) => handleDropStudent(palanqueeId, rotation)}
+                        onTapAddGP={(palanqueeId, gpCount) => handleTapAddToGP(palanqueeId, rotation, gpCount)}
+                        onTapAddStudent={(palanqueeId, studentCount) => handleTapAddToStudents(palanqueeId, rotation, studentCount)}
                         onRemoveMember={handleRemoveMember}
                       />
                     ))
@@ -541,15 +634,19 @@ function ParticipantGroup({
   participants,
   color,
   canEdit,
+  selectedParticipant,
   onDragStart,
   onDragEnd,
+  onSelect,
 }: {
   title: string
   participants: UnassignedParticipant[]
   color: 'purple' | 'yellow' | 'cyan' | 'slate'
   canEdit: boolean
+  selectedParticipant: UnassignedParticipant | null
   onDragStart: (p: UnassignedParticipant) => void
   onDragEnd: () => void
+  onSelect: (p: UnassignedParticipant) => void
 }) {
   const colorClasses = {
     purple: 'border-purple-600/50 bg-purple-900/20',
@@ -570,8 +667,10 @@ function ParticipantGroup({
             key={p.questionnaire_id}
             participant={p}
             canEdit={canEdit}
+            isSelected={selectedParticipant?.questionnaire_id === p.questionnaire_id}
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
+            onSelect={onSelect}
           />
         ))}
       </div>
@@ -582,13 +681,17 @@ function ParticipantGroup({
 function DraggableParticipant({
   participant,
   canEdit,
+  isSelected,
   onDragStart,
   onDragEnd,
+  onSelect,
 }: {
   participant: UnassignedParticipant
   canEdit: boolean
+  isSelected: boolean
   onDragStart: (p: UnassignedParticipant) => void
   onDragEnd: () => void
+  onSelect: (p: UnassignedParticipant) => void
 }) {
   const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
     if (!canEdit) {
@@ -599,15 +702,24 @@ function DraggableParticipant({
     onDragStart(participant)
   }
 
+  const handleClick = () => {
+    if (canEdit) {
+      onSelect(participant)
+    }
+  }
+
   return (
     <div
       draggable={canEdit}
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
+      onClick={handleClick}
       className={`p-1.5 sm:p-2 rounded border transition-all select-none text-xs sm:text-sm ${
-        canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'
+        canEdit ? 'cursor-pointer sm:cursor-grab active:cursor-grabbing' : 'cursor-default'
       } ${
-        participant.is_encadrant
+        isSelected
+          ? 'bg-cyan-600/60 border-cyan-400 ring-2 ring-cyan-400/50'
+          : participant.is_encadrant
           ? 'bg-purple-900/40 border-purple-600/50 hover:bg-purple-900/60'
           : 'bg-slate-700/40 border-slate-600/50 hover:bg-slate-700/60'
       }`}
@@ -633,6 +745,7 @@ function RotationCard({
   rotation,
   isDragging,
   draggedIsEncadrant,
+  selectedParticipant,
   availableAir,
   availableNitrox,
   canEdit,
@@ -641,19 +754,24 @@ function RotationCard({
   onDeletePalanquee,
   onDropGP,
   onDropStudent,
+  onTapAddGP,
+  onTapAddStudent,
   onRemoveMember,
 }: {
   rotation: Rotation
   isDragging: boolean
   draggedIsEncadrant: boolean
+  selectedParticipant: UnassignedParticipant | null
   availableAir: number
   availableNitrox: number
   canEdit: boolean
   onCreatePalanquee: (rotationId: string) => void
   onDeleteRotation: (id: string) => void
   onDeletePalanquee: (id: string) => void
-  onDropGP: (palanqueeId: string) => void
+  onDropGP: (palanqueeId: string, gpCount: number) => void
   onDropStudent: (palanqueeId: string) => void
+  onTapAddGP: (palanqueeId: string, gpCount: number) => void
+  onTapAddStudent: (palanqueeId: string, studentCount: number) => void
   onRemoveMember: (memberId: string) => void
 }) {
   // Compter les bouteilles par type de gaz
@@ -731,10 +849,14 @@ function RotationCard({
               palanquee={palanquee}
               isDragging={isDragging}
               draggedIsEncadrant={draggedIsEncadrant}
+              hasSelectedParticipant={!!selectedParticipant}
+              selectedIsEncadrant={selectedParticipant?.is_encadrant || false}
               canEdit={canEdit}
               onDelete={onDeletePalanquee}
               onDropGP={onDropGP}
               onDropStudent={onDropStudent}
+              onTapAddGP={onTapAddGP}
+              onTapAddStudent={onTapAddStudent}
               onRemoveMember={onRemoveMember}
             />
           ))}
@@ -748,27 +870,36 @@ function PalanqueeCard({
   palanquee,
   isDragging,
   draggedIsEncadrant,
+  hasSelectedParticipant,
+  selectedIsEncadrant,
   canEdit,
   onDelete,
   onDropGP,
   onDropStudent,
+  onTapAddGP,
+  onTapAddStudent,
   onRemoveMember,
 }: {
   palanquee: Palanquee
   isDragging: boolean
   draggedIsEncadrant: boolean
+  hasSelectedParticipant: boolean
+  selectedIsEncadrant: boolean
   canEdit: boolean
   onDelete: (id: string) => void
-  onDropGP: (palanqueeId: string) => void
+  onDropGP: (palanqueeId: string, gpCount: number) => void
   onDropStudent: (palanqueeId: string) => void
+  onTapAddGP: (palanqueeId: string, gpCount: number) => void
+  onTapAddStudent: (palanqueeId: string, studentCount: number) => void
   onRemoveMember: (memberId: string) => void
 }) {
   const [gpOver, setGpOver] = useState(false)
   const [studentsOver, setStudentsOver] = useState(false)
 
-  // Séparer GP et élèves
-  const gp = palanquee.members.find(m => m.role === 'GP' || m.role === 'E')
+  // Séparer GP et élèves - maintenant on peut avoir jusqu'à 2 GP
+  const gps = palanquee.members.filter(m => m.role === 'GP' || m.role === 'E')
   const students = palanquee.members.filter(m => m.role === 'P')
+  const canAddGP = gps.length < MAX_GPS
   const canAddStudent = students.length < MAX_STUDENTS
 
   return (
@@ -789,46 +920,72 @@ function PalanqueeCard({
         )}
       </div>
       
-      {/* Zone GP (Guide de Palanquée) */}
+      {/* Zone GP (Guide de Palanquée) - jusqu'à 2 */}
       <div
-        onDragOver={e => { if (canEdit) { e.preventDefault(); if (!gp) setGpOver(true) } }}
+        onDragOver={e => { if (canEdit && canAddGP) { e.preventDefault(); setGpOver(true) } }}
         onDragLeave={() => setGpOver(false)}
-        onDrop={e => { if (canEdit) { e.preventDefault(); setGpOver(false); if (!gp) onDropGP(palanquee.id) } }}
+        onDrop={e => { if (canEdit && canAddGP) { e.preventDefault(); setGpOver(false); onDropGP(palanquee.id, gps.length) } }}
+        onClick={() => { if (canEdit && canAddGP && hasSelectedParticipant) onTapAddGP(palanquee.id, gps.length) }}
         className={`p-1.5 sm:p-2 border-b border-slate-600 min-h-[36px] sm:min-h-[44px] transition-colors ${
-          gpOver && !gp && canEdit
+          gpOver && canAddGP && canEdit
             ? 'bg-purple-500/20 border-purple-500'
-            : isDragging && !gp && draggedIsEncadrant && canEdit
-            ? 'bg-slate-600/30 border-dashed'
+            : (isDragging && canAddGP && draggedIsEncadrant && canEdit) || (hasSelectedParticipant && canAddGP && selectedIsEncadrant && canEdit)
+            ? 'bg-slate-600/30 border-dashed sm:bg-transparent sm:border-solid'
             : ''
-        }`}
+        } ${hasSelectedParticipant && canAddGP && canEdit ? 'cursor-pointer sm:cursor-default' : ''}`}
       >
-        <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1">GP</div>
-        {gp ? (
-          <MemberRow
-            member={gp}
-            isGP
-            canEdit={canEdit}
-            onRemove={onRemoveMember}
-          />
+        <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1 flex items-center justify-between">
+          <span>GP</span>
+          <span className={gps.length >= MAX_GPS ? 'text-orange-400' : ''}>{gps.length}/{MAX_GPS}</span>
+        </div>
+        {gps.length > 0 ? (
+          <div className="space-y-0.5 sm:space-y-1">
+            {gps.map(gp => (
+              <MemberRow
+                key={gp.id}
+                member={gp}
+                isGP
+                canEdit={canEdit}
+                onRemove={onRemoveMember}
+              />
+            ))}
+            {canAddGP && (isDragging && draggedIsEncadrant && canEdit) && (
+              <div className="text-slate-500 text-[10px] sm:text-xs text-center py-0.5 border border-dashed border-slate-600 rounded hidden sm:block">
+                ↓
+              </div>
+            )}
+            {canAddGP && hasSelectedParticipant && selectedIsEncadrant && canEdit && (
+              <div className="text-cyan-400 text-[10px] sm:text-xs text-center py-1 border border-dashed border-cyan-500/50 rounded sm:hidden">
+                + Ajouter ici
+              </div>
+            )}
+          </div>
         ) : (
-          <div className="text-slate-500 text-[10px] sm:text-xs text-center py-0.5 sm:py-1">
-            {isDragging && draggedIsEncadrant && canEdit ? '↓' : '—'}
+          <div className={`text-[10px] sm:text-xs text-center py-0.5 sm:py-1 ${
+            hasSelectedParticipant && selectedIsEncadrant && canEdit 
+              ? 'text-cyan-400 border border-dashed border-cyan-500/50 rounded sm:border-none sm:text-slate-500' 
+              : 'text-slate-500'
+          }`}>
+            {isDragging && draggedIsEncadrant && canEdit ? '↓' : 
+             hasSelectedParticipant && selectedIsEncadrant && canEdit ? <span className="sm:hidden">+ Ajouter ici</span> : '—'}
+            <span className="hidden sm:inline">{isDragging && draggedIsEncadrant && canEdit ? '' : '—'}</span>
           </div>
         )}
       </div>
       
       {/* Zone Élèves (4 max) */}
       <div
-        onDragOver={e => { if (canEdit) { e.preventDefault(); if (canAddStudent) setStudentsOver(true) } }}
+        onDragOver={e => { if (canEdit && canAddStudent) { e.preventDefault(); setStudentsOver(true) } }}
         onDragLeave={() => setStudentsOver(false)}
-        onDrop={e => { if (canEdit) { e.preventDefault(); setStudentsOver(false); if (canAddStudent) onDropStudent(palanquee.id) } }}
+        onDrop={e => { if (canEdit && canAddStudent) { e.preventDefault(); setStudentsOver(false); onDropStudent(palanquee.id) } }}
+        onClick={() => { if (canEdit && canAddStudent && hasSelectedParticipant) onTapAddStudent(palanquee.id, students.length) }}
         className={`p-1.5 sm:p-2 space-y-0.5 sm:space-y-1 min-h-[70px] sm:min-h-[100px] transition-colors ${
           studentsOver && canAddStudent && canEdit
             ? 'bg-cyan-500/20'
-            : isDragging && canAddStudent && !draggedIsEncadrant && canEdit
-            ? 'bg-slate-600/20'
+            : (isDragging && canAddStudent && !draggedIsEncadrant && canEdit) || (hasSelectedParticipant && canAddStudent && !selectedIsEncadrant && canEdit)
+            ? 'bg-slate-600/20 sm:bg-transparent'
             : ''
-        }`}
+        } ${hasSelectedParticipant && canAddStudent && canEdit ? 'cursor-pointer sm:cursor-default' : ''}`}
       >
         <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1 flex items-center justify-between">
           <span>Élèves</span>
@@ -837,22 +994,35 @@ function PalanqueeCard({
           </span>
         </div>
         {students.length === 0 ? (
-          <div className="text-slate-500 text-[10px] sm:text-xs text-center py-2 sm:py-3">
-            {isDragging && !draggedIsEncadrant && canEdit ? '↓' : '—'}
+          <div className={`text-[10px] sm:text-xs text-center py-2 sm:py-3 ${
+            hasSelectedParticipant && !selectedIsEncadrant && canEdit 
+              ? 'text-cyan-400 border border-dashed border-cyan-500/50 rounded sm:border-none sm:text-slate-500' 
+              : 'text-slate-500'
+          }`}>
+            {isDragging && !draggedIsEncadrant && canEdit ? '↓' : 
+             hasSelectedParticipant && !selectedIsEncadrant && canEdit ? <span className="sm:hidden">+ Ajouter ici</span> : '—'}
+            <span className="hidden sm:inline">{isDragging && !draggedIsEncadrant && canEdit ? '' : '—'}</span>
           </div>
         ) : (
-          students.map(member => (
-            <MemberRow
-              key={member.id}
-              member={member}
-              canEdit={canEdit}
-              onRemove={onRemoveMember}
-            />
-          ))
+          <>
+            {students.map(member => (
+              <MemberRow
+                key={member.id}
+                member={member}
+                canEdit={canEdit}
+                onRemove={onRemoveMember}
+              />
+            ))}
+          </>
         )}
-        {students.length > 0 && students.length < MAX_STUDENTS && isDragging && !draggedIsEncadrant && canEdit && (
-          <div className="text-slate-500 text-[10px] sm:text-xs text-center py-0.5 sm:py-1 border border-dashed border-slate-600 rounded">
+        {students.length > 0 && canAddStudent && isDragging && !draggedIsEncadrant && canEdit && (
+          <div className="text-slate-500 text-[10px] sm:text-xs text-center py-0.5 sm:py-1 border border-dashed border-slate-600 rounded hidden sm:block">
             ↓
+          </div>
+        )}
+        {students.length > 0 && canAddStudent && hasSelectedParticipant && !selectedIsEncadrant && canEdit && (
+          <div className="text-cyan-400 text-[10px] sm:text-xs text-center py-1 border border-dashed border-cyan-500/50 rounded sm:hidden">
+            + Ajouter ici
           </div>
         )}
       </div>
