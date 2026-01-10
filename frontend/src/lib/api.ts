@@ -193,6 +193,8 @@ export interface ParticipantInfo {
   is_encadrant: boolean
   nitrox_training: boolean
   comes_from_issoire: boolean
+  has_car: boolean
+  car_seats?: number
   diving_level?: string
   preparing_level?: string
 }

@@ -312,6 +312,66 @@ export default function SummaryPage() {
         </div>
       )}
 
+      {/* Section Départs d'Issoire */}
+      {summary && summary.participants && (() => {
+        const fromIssoire = summary.participants.filter(p => p.comes_from_issoire)
+        if (fromIssoire.length === 0) return null
+        
+        // Trier: ceux avec voiture en premier, puis par nom
+        const sorted = [...fromIssoire].sort((a, b) => {
+          if (a.has_car && !b.has_car) return -1
+          if (!a.has_car && b.has_car) return 1
+          return a.last_name.localeCompare(b.last_name)
+        })
+        
+        const totalSeats = sorted.reduce((sum, p) => sum + (p.car_seats || 0), 0)
+        const driversCount = sorted.filter(p => p.has_car).length
+
+        return (
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">
+                🚗 Départs d'Issoire ({fromIssoire.length})
+              </h2>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-green-400 bg-green-500/20 px-3 py-1 rounded-full border border-green-500/30">
+                  🚙 {driversCount} conducteur{driversCount > 1 ? 's' : ''} • {totalSeats} places
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {sorted.map((p, idx) => (
+                <div 
+                  key={idx}
+                  className={`p-3 rounded-lg border ${
+                    p.has_car 
+                      ? 'bg-green-500/10 border-green-500/30' 
+                      : 'bg-slate-700/30 border-slate-600/50'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    {p.has_car && (
+                      <span className="text-lg" title={`${p.car_seats || '?'} places`}>🚗</span>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-white font-medium truncate">
+                        {p.first_name} {p.last_name}
+                      </p>
+                      {p.has_car && p.car_seats && (
+                        <p className="text-xs text-green-400">{p.car_seats} place{p.car_seats > 1 ? 's' : ''}</p>
+                      )}
+                    </div>
+                    {p.is_encadrant && (
+                      <span className="bg-purple-500/20 text-purple-400 text-xs px-1.5 py-0.5 rounded border border-purple-500/30">E</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4 text-white">🚗 Transport</h2>

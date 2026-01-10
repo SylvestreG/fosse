@@ -266,6 +266,8 @@ pub async fn get_session_summary(
                 is_encadrant: q.is_encadrant,
                 nitrox_training: q.nitrox_training,
                 comes_from_issoire: q.comes_from_issoire,
+                has_car: q.has_car,
+                car_seats: q.car_seats,
                 diving_level: diving_level_display,
                 preparing_level,
             });

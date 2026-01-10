@@ -38,6 +38,8 @@ pub struct ParticipantInfo {
     pub is_encadrant: bool,
     pub nitrox_training: bool,
     pub comes_from_issoire: bool,
+    pub has_car: bool,
+    pub car_seats: Option<i32>,
     pub diving_level: Option<String>,
     pub preparing_level: Option<String>,
 }
