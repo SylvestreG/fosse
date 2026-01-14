@@ -437,7 +437,7 @@ export default function StudentCompetencesPage() {
         </div>
       </div>
 
-      {/* Légende des étapes */}
+      {/* Légende des étapes - toujours visible */}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 sm:p-4 border border-slate-700">
         <h3 className="text-xs sm:text-sm font-medium text-slate-200 mb-2 sm:mb-3">Étapes de validation</h3>
         <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -451,8 +451,8 @@ export default function StudentCompetencesPage() {
                 className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full"
                 style={{ backgroundColor: stage.color }}
               ></span>
-              <span>{stage.icon} <span className="hidden sm:inline">{stage.name}</span></span>
-              {stage.is_final && <span className="text-xs text-green-400 font-medium hidden sm:inline">(final)</span>}
+              <span>{stage.icon} {stage.name}</span>
+              {stage.is_final && <span className="text-xs text-green-400 font-medium">(✓)</span>}
             </div>
           ))}
         </div>
@@ -551,26 +551,27 @@ export default function StudentCompetencesPage() {
                                 </div>
                                 
                                 <div className="flex items-center gap-2 ml-7 sm:ml-0 flex-wrap sm:flex-nowrap">
-                                  {/* Statut actuel - version mobile compacte */}
+                                  {/* Statut actuel - toujours visible */}
                                   {currentStage && !pending && (
                                     <div className="flex items-center gap-1 sm:gap-2 sm:mr-2">
                                       <span 
-                                        className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs rounded flex items-center gap-1"
+                                        className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-[10px] sm:text-xs rounded flex items-center gap-1 font-medium border"
                                         style={{ 
                                           backgroundColor: currentStage.stage_color + '20', 
-                                          color: currentStage.stage_color 
+                                          color: currentStage.stage_color,
+                                          borderColor: currentStage.stage_color + '40'
                                         }}
                                       >
-                                        {currentStage.stage_icon} <span className="hidden sm:inline">{currentStage.stage_name}</span>
+                                        {currentStage.stage_icon} {currentStage.stage_name}
                                       </span>
-                                      <span className="text-xs text-slate-500 hidden sm:inline">
+                                      <span className="text-[10px] sm:text-xs text-slate-500 hidden sm:inline">
                                         par {currentStage.validated_by_name}
                                       </span>
                                     </div>
                                   )}
                                   
-                                  {/* Sélecteur rapide d'étape */}
-                                  <div className="flex gap-0.5 sm:gap-1">
+                                  {/* Sélecteur rapide d'étape - avec labels visibles */}
+                                  <div className="flex flex-wrap gap-1 sm:gap-1.5">
                                     {stages.map(stage => {
                                       const isCurrentStage = currentStage?.stage_id === stage.id
                                       const isPending = pending?.stageId === stage.id
@@ -595,27 +596,28 @@ export default function StudentCompetencesPage() {
                                             }
                                           }}
                                           className={`
-                                            w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm
-                                            transition-all transform
+                                            px-2 py-1 rounded-lg flex items-center gap-1 text-[10px] sm:text-xs font-medium
+                                            transition-all transform border
                                             ${!canSelect 
                                               ? 'opacity-20 cursor-not-allowed' 
-                                              : 'hover:scale-110'
+                                              : 'hover:scale-105 active:scale-95'
                                             }
                                             ${isCurrentStage 
-                                              ? 'ring-2 ring-offset-1 sm:ring-offset-2' 
+                                              ? 'ring-2 ring-offset-1 ring-white/50' 
                                               : isPending
-                                                ? 'ring-2 ring-offset-1 ring-blue-500 scale-110'
-                                                : canSelect ? 'opacity-40 hover:opacity-100' : ''
+                                                ? 'ring-2 ring-offset-1 ring-blue-500 scale-105'
+                                                : canSelect ? 'opacity-60 hover:opacity-100' : ''
                                             }
                                           `}
                                           style={{ 
-                                            backgroundColor: stage.color + '30',
+                                            backgroundColor: stage.color + '25',
                                             color: stage.color,
-                                            borderColor: stage.color
+                                            borderColor: stage.color + '50'
                                           }}
                                           title={`${stage.name}${isCurrentStage ? ' (actuel)' : ''}${!canSelect ? ' - Non accessible' : ''}`}
                                         >
-                                          {stage.icon}
+                                          <span>{stage.icon}</span>
+                                          <span className="hidden min-[400px]:inline">{stage.name}</span>
                                         </button>
                                       )
                                     })}
