@@ -282,8 +282,8 @@ export default function MySessionsPage() {
         if (me?.is_instructor) {
           const pastWithStudents: PastSessionWithStudents[] = []
           
-          // Limiter aux 10 dernières sessions pour la performance
-          for (const session of pastSessions.slice(0, 10)) {
+          // Charger toutes les sessions passées
+          for (const session of pastSessions) {
             try {
               // Vérifier si j'étais inscrit à cette session
               const questRes = await questionnairesApi.listDetail(session.id)
@@ -304,7 +304,7 @@ export default function MySessionsPage() {
                     )
                     
                     if (amIGP) {
-                      // Ajouter les élèves de cette palanquée
+                      // Ajouter tous les élèves de cette palanquée (pas seulement ceux en formation)
                       const students = palanquee.members.filter(m => 
                         m.role === 'P' && m.questionnaire_id !== myQuest.id
                       )
@@ -313,19 +313,17 @@ export default function MySessionsPage() {
                   }
                 }
                 
-                // Dédupliquer et garder seulement ceux qui préparent un niveau
+                // Dédupliquer les élèves (garder tous, pas seulement ceux en formation)
                 const uniqueStudents = myStudents
                   .filter((student, index, self) =>
                     index === self.findIndex(s => s.person_id === student.person_id)
                   )
-                  .filter(student => student.preparing_level) // Seulement ceux en formation
                 
-                if (uniqueStudents.length > 0) {
-                  pastWithStudents.push({
-                    session,
-                    myStudents: uniqueStudents
-                  })
-                }
+                // Ajouter la session même si elle n'a pas d'élèves (l'encadrant y a participé)
+                pastWithStudents.push({
+                  session,
+                  myStudents: uniqueStudents
+                })
               }
             } catch (e) {
               // Ignorer les erreurs
@@ -436,7 +434,7 @@ export default function MySessionsPage() {
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-white">📋 Mes fosses passées</h2>
               <p className="text-slate-300 text-sm mt-1">
-                Validez les compétences des élèves en formation que vous avez encadrés
+                Retrouvez les élèves que vous avez encadrés
               </p>
             </div>
             <Button variant="secondary" size="sm">
@@ -454,6 +452,7 @@ export default function MySessionsPage() {
                   month: 'short',
                   year: 'numeric'
                 })
+                const studentsInTraining = myStudents.filter(s => s.preparing_level).length
 
                 return (
                   <div 
@@ -465,41 +464,64 @@ export default function MySessionsPage() {
                         <h3 className="text-lg font-semibold text-white">{session.name}</h3>
                         <p className="text-sm text-slate-400">📆 {formattedDate} • 📍 {session.location}</p>
                       </div>
-                      <span className="text-sm text-cyan-400 bg-cyan-500/20 px-3 py-1 rounded-full border border-cyan-500/30 self-start sm:self-auto">
-                        {myStudents.length} élève{myStudents.length > 1 ? 's' : ''} en formation
-                      </span>
+                      <div className="flex gap-2 self-start sm:self-auto">
+                        <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full border border-slate-600">
+                          {myStudents.length} élève{myStudents.length > 1 ? 's' : ''}
+                        </span>
+                        {studentsInTraining > 0 && (
+                          <span className="text-sm text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
+                            🎯 {studentsInTraining} en formation
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-                      {myStudents.map((student) => (
-                        <div
-                          key={student.person_id}
-                          onClick={() => navigate(`/dashboard/competences/student/${student.person_id}`)}
-                          className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg border border-slate-600 hover:border-cyan-500/50 hover:bg-slate-700/50 cursor-pointer transition-all group"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="font-medium text-white truncate group-hover:text-cyan-400 transition-colors">
-                              {student.first_name} {student.last_name}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-slate-400">
-                              {student.diving_level && (
-                                <span className="bg-slate-600/50 px-1.5 py-0.5 rounded">
-                                  🤿 {student.diving_level}
-                                </span>
-                              )}
-                              {student.preparing_level && (
-                                <span className="bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">
-                                  🎯 {student.preparing_level}
+                    {myStudents.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                        {myStudents.map((student) => {
+                          const isInTraining = !!student.preparing_level
+                          
+                          return (
+                            <div
+                              key={student.person_id}
+                              onClick={() => isInTraining && navigate(`/dashboard/competences/student/${student.person_id}`)}
+                              className={`flex items-center justify-between p-3 bg-slate-700/30 rounded-lg border transition-all ${
+                                isInTraining
+                                  ? 'border-slate-600 hover:border-cyan-500/50 hover:bg-slate-700/50 cursor-pointer group'
+                                  : 'border-slate-700/50'
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className={`font-medium truncate transition-colors ${
+                                  isInTraining ? 'text-white group-hover:text-cyan-400' : 'text-slate-400'
+                                }`}>
+                                  {student.first_name} {student.last_name}
+                                </p>
+                                <div className="flex items-center gap-2 text-xs text-slate-400">
+                                  {student.diving_level && (
+                                    <span className="bg-slate-600/50 px-1.5 py-0.5 rounded">
+                                      🤿 {student.diving_level}
+                                    </span>
+                                  )}
+                                  {student.preparing_level && (
+                                    <span className="bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">
+                                      🎯 {student.preparing_level}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              {isInTraining && (
+                                <span className="text-cyan-400 group-hover:translate-x-1 transition-transform ml-2 flex-shrink-0">
+                                  →
                                 </span>
                               )}
                             </div>
-                          </div>
-                          <span className="text-cyan-400 group-hover:translate-x-1 transition-transform ml-2 flex-shrink-0">
-                            →
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-slate-500 text-sm italic">Aucun élève dans vos palanquées</p>
+                    )}
                   </div>
                 )
               })}
