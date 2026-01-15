@@ -18,7 +18,7 @@ function RegistrationDetails({
 }: { 
   registration: QuestionnaireDetail
   isEncadrant: boolean
-  onUpdate: (questId: string, data: Partial<QuestionnaireDetail>) => Promise<void>
+  onUpdate: (questId: string, data: Partial<QuestionnaireDetail> & { mark_as_submitted?: boolean }) => Promise<void>
 }) {
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -32,16 +32,7 @@ function RegistrationDetails({
     car_seats: registration.car_seats || 0,
   })
 
-  // Vérifier si quelque chose a changé
-  const hasChanges = 
-    formData.wants_regulator !== registration.wants_regulator ||
-    formData.wants_nitrox !== registration.wants_nitrox ||
-    formData.wants_2nd_reg !== registration.wants_2nd_reg ||
-    formData.wants_stab !== registration.wants_stab ||
-    formData.stab_size !== (registration.stab_size || 'M') ||
-    formData.comes_from_issoire !== registration.comes_from_issoire ||
-    formData.has_car !== registration.has_car ||
-    formData.car_seats !== (registration.car_seats || 0)
+  const isSubmitted = !!registration.submitted_at
 
   const handleSave = async () => {
     setSaving(true)
@@ -49,6 +40,7 @@ function RegistrationDetails({
       await onUpdate(registration.id, {
         ...formData,
         nitrox_training: registration.nitrox_training, // Garder la valeur actuelle
+        mark_as_submitted: true, // Marquer comme soumis
       })
     } finally {
       setSaving(false)
@@ -187,14 +179,17 @@ function RegistrationDetails({
         </div>
       </div>
 
-      {/* Bouton de sauvegarde - visible uniquement si modifications */}
-      {hasChanges && (
-        <div className="flex justify-end mt-4 pt-3 border-t border-slate-600">
-          <Button size="sm" onClick={handleSave} disabled={saving}>
-            {saving ? '⏳ Enregistrement...' : '✅ Valider les modifications'}
-          </Button>
-        </div>
-      )}
+      {/* Bouton de validation */}
+      <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-600">
+        {isSubmitted ? (
+          <span className="text-xs text-green-400">✅ Réponse validée</span>
+        ) : (
+          <span className="text-xs text-amber-400">⚠️ Réponse non validée</span>
+        )}
+        <Button size="sm" onClick={handleSave} disabled={saving}>
+          {saving ? '⏳ Enregistrement...' : '✅ Valider'}
+        </Button>
+      </div>
     </div>
   )
 }
@@ -218,7 +213,7 @@ export default function MySessionsPage() {
   // Si on impersonnifie, utiliser l'email de la personne impersonnifiée
   const targetEmail = impersonating?.user_email || email
 
-  const handleUpdateQuestionnaire = async (questId: string, data: Partial<QuestionnaireDetail>) => {
+  const handleUpdateQuestionnaire = async (questId: string, data: Partial<QuestionnaireDetail> & { mark_as_submitted?: boolean }) => {
     try {
       await questionnairesApi.update(questId, {
         wants_regulator: data.wants_regulator ?? false,
@@ -230,10 +225,11 @@ export default function MySessionsPage() {
         comes_from_issoire: data.comes_from_issoire ?? false,
         has_car: data.has_car ?? false,
         car_seats: data.car_seats,
+        mark_as_submitted: data.mark_as_submitted,
       })
       // Recharger les données pour mettre à jour l'affichage
       await loadData()
-      setToast({ message: 'Préférences mises à jour !', type: 'success' })
+      setToast({ message: 'Réponse validée !', type: 'success' })
     } catch (error) {
       console.error('Error updating questionnaire:', error)
       setToast({ message: 'Erreur lors de la mise à jour', type: 'error' })
