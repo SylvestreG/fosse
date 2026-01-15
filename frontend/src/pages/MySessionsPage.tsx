@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { sessionsApi, questionnairesApi, peopleApi, palanqueesApi, Session, Person, QuestionnaireDetail, PalanqueeMember } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth'
 import Button from '@/components/Button'
-import Modal from '@/components/Modal'
 import Toast from '@/components/Toast'
 
 interface MyRegistration {
@@ -25,8 +24,6 @@ export default function MySessionsPage() {
   const [myRegistrations, setMyRegistrations] = useState<Map<string, MyRegistration>>(new Map())
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-  const [showRegisterModal, setShowRegisterModal] = useState(false)
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [showPastSessions, setShowPastSessions] = useState(false)
 
   // Si on impersonnifie, utiliser l'email de la personne impersonnifiée
@@ -136,11 +133,6 @@ export default function MySessionsPage() {
     }
   }
 
-  const handleOpenRegister = (session: Session) => {
-    setSelectedSession(session)
-    setShowRegisterModal(true)
-  }
-
   if (loading) {
     return <div className="text-center py-12">Chargement...</div>
   }
@@ -149,7 +141,7 @@ export default function MySessionsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-white">📅 Sessions à venir</h1>
-        <p className="text-slate-300 mt-1">Inscrivez-vous aux prochaines sessions de fosse</p>
+        <p className="text-slate-300 mt-1">Consultez les prochaines sessions de fosse</p>
       </div>
 
       {sessions.length === 0 ? (
@@ -189,8 +181,8 @@ export default function MySessionsPage() {
                   <div className="flex flex-col items-end gap-2">
                     {isRegistered ? (
                       <>
-                        <span className="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-full font-medium">
-                          ✅ Inscrit
+                        <span className="inline-flex items-center px-4 py-2 bg-green-500/20 text-green-400 rounded-full font-medium border border-green-500/30">
+                          ✅ Inscrit {isEncadrant ? '(Encadrant)' : ''}
                         </span>
                         {isEncadrant && (
                           <Button 
@@ -203,9 +195,9 @@ export default function MySessionsPage() {
                         )}
                       </>
                     ) : (
-                      <Button onClick={() => handleOpenRegister(session)}>
-                        📝 S'inscrire
-                      </Button>
+                      <span className="inline-flex items-center px-4 py-2 bg-slate-500/20 text-slate-400 rounded-full font-medium border border-slate-500/30">
+                        ❌ Non inscrit
+                      </span>
                     )}
                   </div>
                 </div>
@@ -297,267 +289,9 @@ export default function MySessionsPage() {
         </div>
       )}
 
-      {showRegisterModal && selectedSession && myPerson && (
-        <RegisterModal
-          session={selectedSession}
-          person={myPerson}
-          onClose={() => {
-            setShowRegisterModal(false)
-            setSelectedSession(null)
-          }}
-          onSuccess={() => {
-            setShowRegisterModal(false)
-            setSelectedSession(null)
-            loadData()
-            setToast({ message: 'Inscription réussie !', type: 'success' })
-          }}
-        />
-      )}
-
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
     </div>
   )
 }
-
-// Modal d'inscription
-interface RegisterModalProps {
-  session: Session
-  person: Person
-  onClose: () => void
-  onSuccess: () => void
-}
-
-function RegisterModal({ session, person, onClose, onSuccess }: RegisterModalProps) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  
-  // Pré-remplir avec les préférences de l'utilisateur
-  const [formData, setFormData] = useState({
-    is_encadrant: person.is_instructor,
-    wants_regulator: person.default_wants_regulator,
-    wants_nitrox: person.is_instructor && person.default_wants_nitrox,
-    wants_2nd_reg: person.is_instructor && person.default_wants_2nd_reg,
-    wants_stab: person.default_wants_stab,
-    stab_size: person.default_stab_size || 'M',
-    nitrox_training: false,
-    comes_from_issoire: true,
-    has_car: false,
-    car_seats: 0,
-    comments: '',
-  })
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    try {
-      // Créer le questionnaire via l'API
-      await questionnairesApi.register({
-        session_id: session.id,
-        email: person.email,
-        first_name: person.first_name,
-        last_name: person.last_name,
-        ...formData,
-        stab_size: formData.wants_stab ? formData.stab_size : undefined,
-        car_seats: formData.has_car ? formData.car_seats : undefined,
-      })
-      onSuccess()
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur lors de l\'inscription')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const sessionDate = new Date(session.start_date)
-  const formattedDate = sessionDate.toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  })
-
-  return (
-    <Modal isOpen={true} onClose={onClose} title={`Inscription - ${session.name}`}>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded">{error}</div>
-        )}
-
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <p className="font-medium text-blue-900">📅 {formattedDate}</p>
-          <p className="text-blue-800">📍 {session.location}</p>
-        </div>
-
-        <div className="bg-slate-700/30 p-4 rounded-lg">
-          <p className="font-medium">Participant</p>
-          <p className="text-slate-300">{person.first_name} {person.last_name}</p>
-          <p className="text-slate-400 text-sm">{person.email}</p>
-        </div>
-
-        {/* Encadrant - seulement si la personne est instructeur */}
-        {person.is_instructor && (
-          <div className="border rounded-lg p-4">
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={formData.is_encadrant}
-                onChange={(e) => setFormData({ ...formData, is_encadrant: e.target.checked })}
-                className="w-5 h-5"
-              />
-              <div>
-                <span className="font-medium">👨‍🏫 Je serai encadrant</span>
-                <p className="text-sm text-slate-400">Je participe en tant qu'encadrant pour cette session</p>
-              </div>
-            </label>
-          </div>
-        )}
-
-        {/* Matériel */}
-        <div className="space-y-4">
-          <h3 className="font-semibold">Matériel demandé</h3>
-
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
-            <input
-              type="checkbox"
-              checked={formData.wants_regulator}
-              onChange={(e) => setFormData({ ...formData, wants_regulator: e.target.checked })}
-              className="w-5 h-5"
-            />
-            <span>Détendeur</span>
-          </label>
-
-          {person.is_instructor && formData.is_encadrant && (
-            <>
-              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
-                <input
-                  type="checkbox"
-                  checked={formData.wants_nitrox}
-                  onChange={(e) => setFormData({ ...formData, wants_nitrox: e.target.checked })}
-                  className="w-5 h-5"
-                />
-                <span>Nitrox</span>
-              </label>
-
-              <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
-                <input
-                  type="checkbox"
-                  checked={formData.wants_2nd_reg}
-                  onChange={(e) => setFormData({ ...formData, wants_2nd_reg: e.target.checked })}
-                  className="w-5 h-5"
-                />
-                <span>2ème détendeur (encadrement)</span>
-              </label>
-            </>
-          )}
-
-          {!formData.is_encadrant && (
-            <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
-              <input
-                type="checkbox"
-                checked={formData.nitrox_training}
-                onChange={(e) => setFormData({ ...formData, nitrox_training: e.target.checked })}
-                className="w-5 h-5"
-              />
-              <div>
-                <span>🎓 Formation Nitrox</span>
-                <p className="text-sm text-slate-400">Je participe à la formation nitrox (bloc nitrox)</p>
-              </div>
-            </label>
-          )}
-
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
-            <input
-              type="checkbox"
-              checked={formData.wants_stab}
-              onChange={(e) => setFormData({ ...formData, wants_stab: e.target.checked })}
-              className="w-5 h-5"
-            />
-            <span>Stab</span>
-          </label>
-
-          {formData.wants_stab && (
-            <div className="ml-8">
-              <label className="block text-sm font-medium mb-1">Taille de stab</label>
-              <select
-                value={formData.stab_size}
-                onChange={(e) => setFormData({ ...formData, stab_size: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-600 rounded-lg"
-              >
-                <option value="XS">XS</option>
-                <option value="S">S</option>
-                <option value="M">M</option>
-                <option value="L">L</option>
-                <option value="XL">XL</option>
-              </select>
-            </div>
-          )}
-        </div>
-
-        {/* Transport */}
-        <div className="space-y-4">
-          <h3 className="font-semibold">Transport</h3>
-
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
-            <input
-              type="checkbox"
-              checked={formData.comes_from_issoire}
-              onChange={(e) => setFormData({ ...formData, comes_from_issoire: e.target.checked })}
-              className="w-5 h-5"
-            />
-            <span>Je pars d'Issoire</span>
-          </label>
-
-          <label className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-700/30">
-            <input
-              type="checkbox"
-              checked={formData.has_car}
-              onChange={(e) => setFormData({ ...formData, has_car: e.target.checked, car_seats: e.target.checked ? 4 : 0 })}
-              className="w-5 h-5"
-            />
-            <span>J'ai une voiture</span>
-          </label>
-
-          {formData.has_car && (
-            <div className="ml-8">
-              <label className="block text-sm font-medium mb-1">Nombre de places disponibles</label>
-              <input
-                type="number"
-                min="0"
-                max="10"
-                value={formData.car_seats}
-                onChange={(e) => setFormData({ ...formData, car_seats: parseInt(e.target.value) || 0 })}
-                className="w-full px-3 py-2 border border-slate-600 rounded-lg"
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Commentaires */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Commentaires (optionnel)</label>
-          <textarea
-            value={formData.comments}
-            onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
-            className="w-full px-3 py-2 border border-slate-600 rounded-lg"
-            rows={3}
-            placeholder="Informations supplémentaires..."
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Annuler
-          </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Inscription...' : '✅ Confirmer mon inscription'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  )
-}
-
