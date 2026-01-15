@@ -20,7 +20,6 @@ function RegistrationDetails({
   isEncadrant: boolean
   onUpdate: (questId: string, data: Partial<QuestionnaireDetail>) => Promise<void>
 }) {
-  const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
     wants_regulator: registration.wants_regulator,
@@ -28,246 +27,174 @@ function RegistrationDetails({
     wants_2nd_reg: registration.wants_2nd_reg,
     wants_stab: registration.wants_stab,
     stab_size: registration.stab_size || 'M',
-    nitrox_training: registration.nitrox_training,
     comes_from_issoire: registration.comes_from_issoire,
     has_car: registration.has_car,
     car_seats: registration.car_seats || 0,
   })
 
+  // Vérifier si quelque chose a changé
+  const hasChanges = 
+    formData.wants_regulator !== registration.wants_regulator ||
+    formData.wants_nitrox !== registration.wants_nitrox ||
+    formData.wants_2nd_reg !== registration.wants_2nd_reg ||
+    formData.wants_stab !== registration.wants_stab ||
+    formData.stab_size !== (registration.stab_size || 'M') ||
+    formData.comes_from_issoire !== registration.comes_from_issoire ||
+    formData.has_car !== registration.has_car ||
+    formData.car_seats !== (registration.car_seats || 0)
+
   const handleSave = async () => {
     setSaving(true)
     try {
-      await onUpdate(registration.id, formData)
-      setEditing(false)
+      await onUpdate(registration.id, {
+        ...formData,
+        nitrox_training: registration.nitrox_training, // Garder la valeur actuelle
+      })
     } finally {
       setSaving(false)
     }
   }
 
-  const handleCancel = () => {
-    setFormData({
-      wants_regulator: registration.wants_regulator,
-      wants_nitrox: registration.wants_nitrox,
-      wants_2nd_reg: registration.wants_2nd_reg,
-      wants_stab: registration.wants_stab,
-      stab_size: registration.stab_size || 'M',
-      nitrox_training: registration.nitrox_training,
-      comes_from_issoire: registration.comes_from_issoire,
-      has_car: registration.has_car,
-      car_seats: registration.car_seats || 0,
-    })
-    setEditing(false)
-  }
-
-  if (!editing) {
-    // Mode affichage
-    return (
-      <div className="mt-4 p-4 bg-slate-700/30 rounded-lg border border-slate-600">
-        <div className="flex justify-between items-start mb-3">
-          <h3 className="text-sm font-medium text-slate-300">Mes préférences</h3>
-          <button 
-            onClick={() => setEditing(true)}
-            className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
-          >
-            ✏️ Modifier
-          </button>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Matériel */}
-          <div>
-            <p className="text-xs text-slate-500 mb-2">🎒 Matériel</p>
-            <div className="flex flex-wrap gap-2">
-              {registration.wants_regulator && (
-                <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">Détendeur</span>
-              )}
-              {registration.wants_stab && (
-                <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
-                  Stab {registration.stab_size}
-                </span>
-              )}
-              {isEncadrant && registration.wants_nitrox && (
-                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">Nitrox</span>
-              )}
-              {isEncadrant && registration.wants_2nd_reg && (
-                <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded">2ème détendeur</span>
-              )}
-              {!isEncadrant && registration.nitrox_training && (
-                <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded">🎓 Formation Nitrox</span>
-              )}
-              {!registration.wants_regulator && !registration.wants_stab && !registration.wants_nitrox && !registration.wants_2nd_reg && !registration.nitrox_training && (
-                <span className="text-xs text-slate-500">Aucun matériel demandé</span>
-              )}
-            </div>
-          </div>
-          
-          {/* Transport */}
-          <div>
-            <p className="text-xs text-slate-500 mb-2">🚗 Transport</p>
-            <div className="flex flex-wrap gap-2">
-              <span className={`text-xs px-2 py-1 rounded ${
-                registration.comes_from_issoire 
-                  ? 'bg-orange-500/20 text-orange-400' 
-                  : 'bg-slate-500/20 text-slate-400'
-              }`}>
-                {registration.comes_from_issoire ? '📍 Départ Issoire' : '📍 Départ Clermont'}
-              </span>
-              {registration.has_car && (
-                <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
-                  🚗 Voiture ({registration.car_seats} places)
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Mode édition
   return (
-    <div className="mt-4 p-4 bg-slate-700/50 rounded-lg border-2 border-cyan-500/50">
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-sm font-medium text-white">✏️ Modifier mes préférences</h3>
-      </div>
+    <div className="mt-4 p-4 bg-slate-700/30 rounded-lg border border-slate-600">
+      <h3 className="text-sm font-medium text-slate-300 mb-4">Mes préférences</h3>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Matériel */}
         <div className="space-y-3">
-          <p className="text-sm font-medium text-slate-300">🎒 Matériel</p>
+          <p className="text-xs text-slate-500 mb-2">🎒 Matériel</p>
           
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
             <input
               type="checkbox"
               checked={formData.wants_regulator}
               onChange={e => setFormData({ ...formData, wants_regulator: e.target.checked })}
-              className="w-4 h-4 rounded"
+              className="w-4 h-4 rounded accent-cyan-500"
             />
             <span className="text-sm text-slate-300">Détendeur</span>
           </label>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.wants_stab}
-              onChange={e => setFormData({ ...formData, wants_stab: e.target.checked })}
-              className="w-4 h-4 rounded"
-            />
-            <span className="text-sm text-slate-300">Stab</span>
-          </label>
-          
-          {formData.wants_stab && (
-            <select
-              value={formData.stab_size}
-              onChange={e => setFormData({ ...formData, stab_size: e.target.value })}
-              className="ml-6 px-2 py-1 bg-slate-600 border border-slate-500 rounded text-sm"
-            >
-              <option value="XS">XS</option>
-              <option value="S">S</option>
-              <option value="M">M</option>
-              <option value="L">L</option>
-              <option value="XL">XL</option>
-            </select>
-          )}
+          <div>
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
+              <input
+                type="checkbox"
+                checked={formData.wants_stab}
+                onChange={e => setFormData({ ...formData, wants_stab: e.target.checked })}
+                className="w-4 h-4 rounded accent-cyan-500"
+              />
+              <span className="text-sm text-slate-300">Stab</span>
+              {formData.wants_stab && (
+                <select
+                  value={formData.stab_size}
+                  onChange={e => setFormData({ ...formData, stab_size: e.target.value })}
+                  className="ml-2 px-2 py-0.5 bg-slate-600 border border-slate-500 rounded text-xs"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <option value="XS">XS</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                </select>
+              )}
+            </label>
+          </div>
 
           {isEncadrant && (
             <>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
                 <input
                   type="checkbox"
                   checked={formData.wants_nitrox}
                   onChange={e => setFormData({ ...formData, wants_nitrox: e.target.checked })}
-                  className="w-4 h-4 rounded"
+                  className="w-4 h-4 rounded accent-cyan-500"
                 />
                 <span className="text-sm text-slate-300">Nitrox</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
                 <input
                   type="checkbox"
                   checked={formData.wants_2nd_reg}
                   onChange={e => setFormData({ ...formData, wants_2nd_reg: e.target.checked })}
-                  className="w-4 h-4 rounded"
+                  className="w-4 h-4 rounded accent-cyan-500"
                 />
                 <span className="text-sm text-slate-300">2ème détendeur</span>
               </label>
             </>
           )}
 
-          {!isEncadrant && (
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.nitrox_training}
-                onChange={e => setFormData({ ...formData, nitrox_training: e.target.checked })}
-                className="w-4 h-4 rounded"
-              />
-              <span className="text-sm text-slate-300">🎓 Formation Nitrox</span>
-            </label>
+          {/* Afficher formation nitrox si active (lecture seule) */}
+          {!isEncadrant && registration.nitrox_training && (
+            <div className="flex items-center gap-2 p-1.5 -ml-1.5">
+              <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded">🎓 Formation Nitrox</span>
+            </div>
           )}
         </div>
 
         {/* Transport */}
         <div className="space-y-3">
-          <p className="text-sm font-medium text-slate-300">🚗 Transport</p>
+          <p className="text-xs text-slate-500 mb-2">🚗 Transport</p>
           
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
               <input
                 type="radio"
-                name="transport"
+                name={`transport-${registration.id}`}
                 checked={formData.comes_from_issoire}
                 onChange={() => setFormData({ ...formData, comes_from_issoire: true })}
-                className="w-4 h-4"
+                className="w-4 h-4 accent-cyan-500"
               />
-              <span className="text-sm text-slate-300">Départ Issoire</span>
+              <span className="text-sm text-slate-300">📍 Départ Issoire</span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
               <input
                 type="radio"
-                name="transport"
+                name={`transport-${registration.id}`}
                 checked={!formData.comes_from_issoire}
                 onChange={() => setFormData({ ...formData, comes_from_issoire: false })}
-                className="w-4 h-4"
+                className="w-4 h-4 accent-cyan-500"
               />
-              <span className="text-sm text-slate-300">Départ Clermont</span>
+              <span className="text-sm text-slate-300">📍 Départ Clermont</span>
             </label>
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.has_car}
-              onChange={e => setFormData({ ...formData, has_car: e.target.checked, car_seats: e.target.checked ? 4 : 0 })}
-              className="w-4 h-4 rounded"
-            />
-            <span className="text-sm text-slate-300">J'ai une voiture</span>
-          </label>
-
-          {formData.has_car && (
-            <div className="ml-6 flex items-center gap-2">
-              <span className="text-sm text-slate-400">Places :</span>
+          <div>
+            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
               <input
-                type="number"
-                min="1"
-                max="10"
-                value={formData.car_seats}
-                onChange={e => setFormData({ ...formData, car_seats: parseInt(e.target.value) || 0 })}
-                className="w-16 px-2 py-1 bg-slate-600 border border-slate-500 rounded text-sm text-center"
+                type="checkbox"
+                checked={formData.has_car}
+                onChange={e => setFormData({ ...formData, has_car: e.target.checked, car_seats: e.target.checked ? 4 : 0 })}
+                className="w-4 h-4 rounded accent-cyan-500"
               />
-            </div>
-          )}
+              <span className="text-sm text-slate-300">🚗 J'ai une voiture</span>
+              {formData.has_car && (
+                <span className="flex items-center gap-1 ml-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={formData.car_seats}
+                    onChange={e => setFormData({ ...formData, car_seats: parseInt(e.target.value) || 0 })}
+                    onClick={e => e.stopPropagation()}
+                    className="w-12 px-1 py-0.5 bg-slate-600 border border-slate-500 rounded text-xs text-center"
+                  />
+                  <span className="text-xs text-slate-400">places</span>
+                </span>
+              )}
+            </label>
+          </div>
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-600">
-        <Button variant="secondary" size="sm" onClick={handleCancel} disabled={saving}>
-          Annuler
-        </Button>
-        <Button size="sm" onClick={handleSave} disabled={saving}>
-          {saving ? '⏳ Enregistrement...' : '✅ Enregistrer'}
-        </Button>
-      </div>
+      {/* Bouton de sauvegarde - visible uniquement si modifications */}
+      {hasChanges && (
+        <div className="flex justify-end mt-4 pt-3 border-t border-slate-600">
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? '⏳ Enregistrement...' : '✅ Valider les modifications'}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
@@ -287,22 +214,9 @@ export default function MySessionsPage() {
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [showPastSessions, setShowPastSessions] = useState(false)
-  const [expandedSessions, setExpandedSessions] = useState<Set<string>>(new Set())
 
   // Si on impersonnifie, utiliser l'email de la personne impersonnifiée
   const targetEmail = impersonating?.user_email || email
-
-  const toggleSessionExpand = (sessionId: string) => {
-    setExpandedSessions(prev => {
-      const next = new Set(prev)
-      if (next.has(sessionId)) {
-        next.delete(sessionId)
-      } else {
-        next.add(sessionId)
-      }
-      return next
-    })
-  }
 
   const handleUpdateQuestionnaire = async (questId: string, data: Partial<QuestionnaireDetail>) => {
     try {
@@ -462,8 +376,6 @@ export default function MySessionsPage() {
               year: 'numeric'
             })
 
-            const isExpanded = expandedSessions.has(session.id)
-
             return (
               <div 
                 key={session.id} 
@@ -486,24 +398,15 @@ export default function MySessionsPage() {
                         <span className="inline-flex items-center px-4 py-2 bg-green-500/20 text-green-400 rounded-full font-medium border border-green-500/30">
                           ✅ Inscrit {isEncadrant ? '(Encadrant)' : ''}
                         </span>
-                        <div className="flex gap-2">
+                        {isEncadrant && (
                           <Button 
                             variant="secondary" 
                             size="sm"
-                            onClick={() => toggleSessionExpand(session.id)}
+                            onClick={() => navigate(`/dashboard/palanquees/${session.id}`)}
                           >
-                            {isExpanded ? '▲ Masquer' : '▼ Mes infos'}
+                            🤿 Palanquées
                           </Button>
-                          {isEncadrant && (
-                            <Button 
-                              variant="secondary" 
-                              size="sm"
-                              onClick={() => navigate(`/dashboard/palanquees/${session.id}`)}
-                            >
-                              🤿 Palanquées
-                            </Button>
-                          )}
-                        </div>
+                        )}
                       </>
                     ) : (
                       <span className="inline-flex items-center px-4 py-2 bg-slate-500/20 text-slate-400 rounded-full font-medium border border-slate-500/30">
@@ -513,8 +416,8 @@ export default function MySessionsPage() {
                   </div>
                 </div>
 
-                {/* Détails d'inscription */}
-                {isRegistered && isExpanded && registration && (
+                {/* Détails d'inscription - toujours visible */}
+                {isRegistered && registration && (
                   <RegistrationDetails
                     registration={registration.questionnaire}
                     isEncadrant={isEncadrant}
