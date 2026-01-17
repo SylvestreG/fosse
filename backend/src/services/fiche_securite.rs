@@ -33,10 +33,6 @@ pub struct PalanqueeData {
     pub numero: i32,
     pub planned_time: Option<i32>,
     pub planned_depth: Option<i32>,
-    pub actual_departure_time: Option<String>,
-    pub actual_return_time: Option<String>,
-    pub actual_time: Option<i32>,
-    pub actual_depth: Option<i32>,
     pub members: Vec<MemberData>,
 }
 
@@ -130,10 +126,6 @@ pub async fn generate_fiche_securite(
                 numero: palanquee.number,
                 planned_time: palanquee.planned_time,
                 planned_depth: palanquee.planned_depth,
-                actual_departure_time: palanquee.actual_departure_time.map(|t| t.format("%H:%M").to_string()),
-                actual_return_time: palanquee.actual_return_time.map(|t| t.format("%H:%M").to_string()),
-                actual_time: palanquee.actual_time,
-                actual_depth: palanquee.actual_depth,
                 members: members_data,
             });
         }
@@ -512,13 +504,9 @@ fn draw_rotation(content: &mut String, rotation: &RotationData, mut y: f32) -> f
         writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col_x + 10.0, params_y, escape_pdf(&planned)).unwrap();
         col_x += cols[5];
         
-        // Réalisés
+        // Réalisés (durée et profondeur uniquement, plus d'espace pour écrire à la main)
         let actual = format!(
-            "{} - {} / {}' / {}m",
-            palanquee.actual_departure_time.as_deref().unwrap_or("__:__"),
-            palanquee.actual_return_time.as_deref().unwrap_or("__:__"),
-            palanquee.actual_time.map_or("__".to_string(), |t| t.to_string()),
-            palanquee.actual_depth.map_or("__".to_string(), |d| d.to_string())
+            "______' / ______m"
         );
         writeln!(content, "BT /F1 9 Tf {} {} Td ({}) Tj ET", col_x + 10.0, params_y, escape_pdf(&actual)).unwrap();
         
