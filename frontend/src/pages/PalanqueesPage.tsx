@@ -148,6 +148,18 @@ export default function PalanqueesPage() {
     }
   }
 
+  const handleUpdatePalanqueeParams = async (
+    palanqueeId: string,
+    params: { planned_departure_time?: string; planned_time?: number; planned_depth?: number }
+  ) => {
+    try {
+      await palanqueesApi.updatePalanquee(palanqueeId, params)
+      loadData()
+    } catch (err) {
+      console.error('Erreur mise à jour params:', err)
+    }
+  }
+
   // Mobile: sélectionner un participant
   const handleSelectParticipant = (participant: UnassignedParticipant) => {
     if (selectedParticipant?.questionnaire_id === participant.questionnaire_id) {
@@ -524,6 +536,7 @@ export default function PalanqueesPage() {
                         onTapAddGP={(palanqueeId, gpCount) => handleTapAddToGP(palanqueeId, rotation, gpCount)}
                         onTapAddStudent={(palanqueeId, studentCount) => handleTapAddToStudents(palanqueeId, rotation, studentCount)}
                         onRemoveMember={handleRemoveMember}
+                        onUpdateParams={handleUpdatePalanqueeParams}
                       />
                     ))
                   )}
@@ -757,6 +770,7 @@ function RotationCard({
   onTapAddGP,
   onTapAddStudent,
   onRemoveMember,
+  onUpdateParams,
 }: {
   rotation: Rotation
   isDragging: boolean
@@ -773,6 +787,7 @@ function RotationCard({
   onTapAddGP: (palanqueeId: string, gpCount: number) => void
   onTapAddStudent: (palanqueeId: string, studentCount: number) => void
   onRemoveMember: (memberId: string) => void
+  onUpdateParams: (palanqueeId: string, params: { planned_departure_time?: string; planned_time?: number; planned_depth?: number }) => void
 }) {
   // Compter les bouteilles par type de gaz
   const allMembers = rotation.palanquees.flatMap(p => p.members)
@@ -858,6 +873,7 @@ function RotationCard({
               onTapAddGP={onTapAddGP}
               onTapAddStudent={onTapAddStudent}
               onRemoveMember={onRemoveMember}
+              onUpdateParams={onUpdateParams}
             />
           ))}
         </div>
@@ -879,6 +895,7 @@ function PalanqueeCard({
   onTapAddGP,
   onTapAddStudent,
   onRemoveMember,
+  onUpdateParams,
 }: {
   palanquee: Palanquee
   isDragging: boolean
@@ -892,9 +909,16 @@ function PalanqueeCard({
   onTapAddGP: (palanqueeId: string, gpCount: number) => void
   onTapAddStudent: (palanqueeId: string, studentCount: number) => void
   onRemoveMember: (memberId: string) => void
+  onUpdateParams: (palanqueeId: string, params: { planned_departure_time?: string; planned_time?: number; planned_depth?: number }) => void
 }) {
   const [gpOver, setGpOver] = useState(false)
   const [studentsOver, setStudentsOver] = useState(false)
+  const [showParams, setShowParams] = useState(false)
+  const [localParams, setLocalParams] = useState({
+    planned_departure_time: palanquee.planned_departure_time || '',
+    planned_time: palanquee.planned_time?.toString() || '',
+    planned_depth: palanquee.planned_depth?.toString() || '',
+  })
 
   // Séparer GP et élèves - maintenant on peut avoir jusqu'à 2 GP
   const gps = palanquee.members.filter(m => m.role === 'GP' || m.role === 'E')
@@ -902,13 +926,40 @@ function PalanqueeCard({
   const canAddGP = gps.length < MAX_GPS
   const canAddStudent = students.length < MAX_STUDENTS
 
+  const hasParams = palanquee.planned_departure_time || palanquee.planned_time || palanquee.planned_depth
+
+  const handleSaveParams = () => {
+    onUpdateParams(palanquee.id, {
+      planned_departure_time: localParams.planned_departure_time || undefined,
+      planned_time: localParams.planned_time ? parseInt(localParams.planned_time) : undefined,
+      planned_depth: localParams.planned_depth ? parseInt(localParams.planned_depth) : undefined,
+    })
+    setShowParams(false)
+  }
+
   return (
     <div className="rounded-lg border border-slate-600 bg-slate-700/30 overflow-hidden">
       {/* Header */}
       <div className="p-1.5 sm:p-2 bg-slate-700/60 flex items-center justify-between">
-        <span className="text-white font-semibold text-xs sm:text-sm">
-          Pal. {palanquee.number}
-        </span>
+        <div className="flex items-center gap-1">
+          <span className="text-white font-semibold text-xs sm:text-sm">
+            Pal. {palanquee.number}
+          </span>
+          {canEdit && (
+            <button
+              onClick={() => setShowParams(!showParams)}
+              className={`p-0.5 sm:p-1 rounded transition-colors text-xs ${
+                hasParams ? 'text-cyan-400 hover:text-cyan-300' : 'text-slate-400 hover:text-slate-300'
+              } hover:bg-slate-600`}
+              title="Paramètres prévus"
+            >
+              ⚙️
+            </button>
+          )}
+          {!canEdit && hasParams && (
+            <span className="text-cyan-400 text-[10px]" title="Paramètres définis">⚙️</span>
+          )}
+        </div>
         {canEdit && (
           <button
             onClick={() => onDelete(palanquee.id)}
@@ -919,6 +970,77 @@ function PalanqueeCard({
           </button>
         )}
       </div>
+
+      {/* Panneau des paramètres prévus */}
+      {showParams && canEdit && (
+        <div className="p-2 bg-slate-800/60 border-b border-slate-600 space-y-2">
+          <div className="text-[10px] sm:text-xs text-slate-400 font-medium">Params Prévus</div>
+          <div className="grid grid-cols-3 gap-1.5">
+            <div>
+              <label className="text-[9px] sm:text-[10px] text-slate-500 block mb-0.5">Heure</label>
+              <input
+                type="time"
+                value={localParams.planned_departure_time}
+                onChange={e => setLocalParams(p => ({ ...p, planned_departure_time: e.target.value }))}
+                className="w-full px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-[10px] sm:text-xs"
+              />
+            </div>
+            <div>
+              <label className="text-[9px] sm:text-[10px] text-slate-500 block mb-0.5">Durée (min)</label>
+              <input
+                type="number"
+                value={localParams.planned_time}
+                onChange={e => setLocalParams(p => ({ ...p, planned_time: e.target.value }))}
+                placeholder="40"
+                min="0"
+                max="120"
+                className="w-full px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-[10px] sm:text-xs"
+              />
+            </div>
+            <div>
+              <label className="text-[9px] sm:text-[10px] text-slate-500 block mb-0.5">Prof. (m)</label>
+              <input
+                type="number"
+                value={localParams.planned_depth}
+                onChange={e => setLocalParams(p => ({ ...p, planned_depth: e.target.value }))}
+                placeholder="20"
+                min="0"
+                max="60"
+                className="w-full px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-[10px] sm:text-xs"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-1">
+            <button
+              onClick={() => setShowParams(false)}
+              className="px-2 py-0.5 text-slate-400 hover:text-slate-300 text-[10px] sm:text-xs"
+            >
+              Annuler
+            </button>
+            <button
+              onClick={handleSaveParams}
+              className="px-2 py-0.5 bg-cyan-600 text-white rounded hover:bg-cyan-500 text-[10px] sm:text-xs"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Affichage des paramètres prévus (quand définis et panneau fermé) */}
+      {hasParams && !showParams && (
+        <div className="px-2 py-1 bg-cyan-900/30 border-b border-slate-600 flex items-center gap-2 text-[10px] sm:text-xs text-cyan-300">
+          {palanquee.planned_departure_time && (
+            <span>🕐 {palanquee.planned_departure_time}</span>
+          )}
+          {palanquee.planned_time && (
+            <span>⏱️ {palanquee.planned_time}min</span>
+          )}
+          {palanquee.planned_depth && (
+            <span>📏 {palanquee.planned_depth}m</span>
+          )}
+        </div>
+      )}
       
       {/* Zone GP (Guide de Palanquée) - jusqu'à 2 */}
       <div
