@@ -150,7 +150,7 @@ export default function PalanqueesPage() {
 
   const handleUpdatePalanqueeParams = async (
     palanqueeId: string,
-    params: { planned_departure_time?: string; planned_time?: number; planned_depth?: number }
+    params: { planned_time?: number; planned_depth?: number }
   ) => {
     try {
       await palanqueesApi.updatePalanquee(palanqueeId, params)
@@ -787,7 +787,7 @@ function RotationCard({
   onTapAddGP: (palanqueeId: string, gpCount: number) => void
   onTapAddStudent: (palanqueeId: string, studentCount: number) => void
   onRemoveMember: (memberId: string) => void
-  onUpdateParams: (palanqueeId: string, params: { planned_departure_time?: string; planned_time?: number; planned_depth?: number }) => void
+  onUpdateParams: (palanqueeId: string, params: { planned_time?: number; planned_depth?: number }) => void
 }) {
   // Compter les bouteilles par type de gaz
   const allMembers = rotation.palanquees.flatMap(p => p.members)
@@ -909,13 +909,12 @@ function PalanqueeCard({
   onTapAddGP: (palanqueeId: string, gpCount: number) => void
   onTapAddStudent: (palanqueeId: string, studentCount: number) => void
   onRemoveMember: (memberId: string) => void
-  onUpdateParams: (palanqueeId: string, params: { planned_departure_time?: string; planned_time?: number; planned_depth?: number }) => void
+  onUpdateParams: (palanqueeId: string, params: { planned_time?: number; planned_depth?: number }) => void
 }) {
   const [gpOver, setGpOver] = useState(false)
   const [studentsOver, setStudentsOver] = useState(false)
   const [showParams, setShowParams] = useState(false)
   const [localParams, setLocalParams] = useState({
-    planned_departure_time: palanquee.planned_departure_time || '',
     planned_time: palanquee.planned_time?.toString() || '',
     planned_depth: palanquee.planned_depth?.toString() || '',
   })
@@ -926,11 +925,10 @@ function PalanqueeCard({
   const canAddGP = gps.length < MAX_GPS
   const canAddStudent = students.length < MAX_STUDENTS
 
-  const hasParams = palanquee.planned_departure_time || palanquee.planned_time || palanquee.planned_depth
+  const hasParams = palanquee.planned_time || palanquee.planned_depth
 
   const handleSaveParams = () => {
     onUpdateParams(palanquee.id, {
-      planned_departure_time: localParams.planned_departure_time || undefined,
       planned_time: localParams.planned_time ? parseInt(localParams.planned_time) : undefined,
       planned_depth: localParams.planned_depth ? parseInt(localParams.planned_depth) : undefined,
     })
@@ -975,16 +973,7 @@ function PalanqueeCard({
       {showParams && canEdit && (
         <div className="p-2 bg-slate-800/60 border-b border-slate-600 space-y-2">
           <div className="text-[10px] sm:text-xs text-slate-400 font-medium">Params Prévus</div>
-          <div className="grid grid-cols-3 gap-1.5">
-            <div>
-              <label className="text-[9px] sm:text-[10px] text-slate-500 block mb-0.5">Heure</label>
-              <input
-                type="time"
-                value={localParams.planned_departure_time}
-                onChange={e => setLocalParams(p => ({ ...p, planned_departure_time: e.target.value }))}
-                className="w-full px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-[10px] sm:text-xs"
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-1.5">
             <div>
               <label className="text-[9px] sm:text-[10px] text-slate-500 block mb-0.5">Durée (min)</label>
               <input
@@ -1030,11 +1019,8 @@ function PalanqueeCard({
       {/* Affichage des paramètres prévus (quand définis et panneau fermé) */}
       {hasParams && !showParams && (
         <div className="px-2 py-1 bg-cyan-900/30 border-b border-slate-600 flex items-center gap-2 text-[10px] sm:text-xs text-cyan-300">
-          {palanquee.planned_departure_time && (
-            <span>🕐 {palanquee.planned_departure_time}</span>
-          )}
           {palanquee.planned_time && (
-            <span>⏱️ {palanquee.planned_time}min</span>
+            <span>⏱️ {palanquee.planned_time}'</span>
           )}
           {palanquee.planned_depth && (
             <span>📏 {palanquee.planned_depth}m</span>

@@ -31,7 +31,6 @@ pub struct RotationData {
 #[derive(Debug)]
 pub struct PalanqueeData {
     pub numero: i32,
-    pub planned_departure_time: Option<String>,
     pub planned_time: Option<i32>,
     pub planned_depth: Option<i32>,
     pub actual_departure_time: Option<String>,
@@ -129,7 +128,6 @@ pub async fn generate_fiche_securite(
 
             palanquees_data.push(PalanqueeData {
                 numero: palanquee.number,
-                planned_departure_time: palanquee.planned_departure_time.map(|t| t.format("%H:%M").to_string()),
                 planned_time: palanquee.planned_time,
                 planned_depth: palanquee.planned_depth,
                 actual_departure_time: palanquee.actual_departure_time.map(|t| t.format("%H:%M").to_string()),
@@ -505,10 +503,9 @@ fn draw_rotation(content: &mut String, rotation: &RotationData, mut y: f32) -> f
         let params_y = y - pal_height / 2.0 - 3.0;
         col_x = MARGIN + cols[0..5].iter().sum::<f32>();
         
-        // Prévus
+        // Prévus (durée et profondeur uniquement)
         let planned = format!(
-            "{} - {}' - {}m",
-            palanquee.planned_departure_time.as_deref().unwrap_or("__:__"),
+            "{}' / {}m",
             palanquee.planned_time.map_or("__".to_string(), |t| t.to_string()),
             palanquee.planned_depth.map_or("__".to_string(), |d| d.to_string())
         );
