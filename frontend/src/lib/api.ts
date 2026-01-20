@@ -33,15 +33,22 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Clear all auth data
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('auth-storage')
-      // Redirect to login with base path
-      const basePath = import.meta.env.BASE_URL || '/'
-      const cleanBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
-      const loginPath = `${cleanBasePath}/login`
-      if (!window.location.pathname.startsWith(loginPath)) {
-        window.location.href = loginPath
+      // Ne pas rediriger si on est en train d'impersonner quelqu'un
+      // (le token admin est toujours valide, c'est juste que l'utilisateur impersonné n'a pas les permissions)
+      const authStorage = localStorage.getItem('auth-storage')
+      const isImpersonating = authStorage && JSON.parse(authStorage)?.state?.impersonating
+      
+      if (!isImpersonating) {
+        // Clear all auth data
+        localStorage.removeItem('auth_token')
+        localStorage.removeItem('auth-storage')
+        // Redirect to login with base path
+        const basePath = import.meta.env.BASE_URL || '/'
+        const cleanBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+        const loginPath = `${cleanBasePath}/login`
+        if (!window.location.pathname.startsWith(loginPath)) {
+          window.location.href = loginPath
+        }
       }
     }
     return Promise.reject(error)

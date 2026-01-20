@@ -61,29 +61,61 @@ export default function PalanqueesPage() {
   const loadData = async () => {
     if (!sessionId) return
     setLoading(true)
+    
+    let hasData = false
+    
+    // Charger la session
     try {
-      const [sessionRes, palanqueesRes, summaryRes, questionnairesRes] = await Promise.all([
-        sessionsApi.get(sessionId),
-        palanqueesApi.getSessionPalanquees(sessionId),
-        sessionsApi.getSummary(sessionId),
-        questionnairesApi.listDetail(sessionId),
-      ])
+      const sessionRes = await sessionsApi.get(sessionId)
       setSession(sessionRes.data)
-      setData(palanqueesRes.data)
-      setSummary(summaryRes.data)
-      setQuestionnaires(questionnairesRes.data)
       setFicheOptions(prev => ({
         ...prev,
         site: sessionRes.data.location || '',
         date: sessionRes.data.start_date || '',
       }))
-      setError(null)
-    } catch (err) {
-      setError('Erreur lors du chargement des données')
-      console.error(err)
-    } finally {
-      setLoading(false)
+    } catch (sessionErr: unknown) {
+      console.log('Session non accessible:', sessionErr)
+      // Continuer même si la session n'est pas accessible
     }
+    
+    // Charger les palanquées (essentiel pour cette page)
+    try {
+      const palanqueesRes = await palanqueesApi.getSessionPalanquees(sessionId)
+      setData(palanqueesRes.data)
+      hasData = true
+    } catch (palanqueesErr: unknown) {
+      console.log('Palanquées non accessibles:', palanqueesErr)
+      setData(null)
+    }
+    
+    // Essayer de charger le summary (peut échouer pour les élèves sans permissions)
+    try {
+      const summaryRes = await sessionsApi.getSummary(sessionId)
+      setSummary(summaryRes.data)
+    } catch (summaryErr) {
+      console.log('Summary non accessible (permissions limitées)')
+      setSummary(null)
+    }
+    
+    // Essayer de charger les détails des questionnaires (pour déterminer si l'utilisateur est DP)
+    // Cet appel peut échouer pour les élèves qui n'ont pas les permissions
+    try {
+      const questionnairesRes = await questionnairesApi.listDetail(sessionId)
+      setQuestionnaires(questionnairesRes.data)
+    } catch (questErr) {
+      // Si l'utilisateur n'a pas les permissions, on continue avec un tableau vide
+      // L'utilisateur sera en lecture seule (canEdit = false)
+      console.log('Questionnaires non accessibles (permissions limitées)')
+      setQuestionnaires([])
+    }
+    
+    if (!hasData) {
+      setError('Impossible de charger les palanquées')
+    } else {
+      setError(null)
+    }
+    
+    setLoading(false)
   }
 
   const handleCreateRotation = async () => {
@@ -472,7 +504,7 @@ export default function PalanqueesPage() {
               </div>
             )}
 
-            {/* Indicateur des bouteilles disponibles */}
+            {/* Indicateur des bouteilles disponibles (seulement si summary accessible) */}
             {summary && (() => {
               // Calcul identique à SummaryPage pour les bouteilles optimisées
               const studentsAirCount = summary.students_count - summary.nitrox_training_count
@@ -494,55 +526,76 @@ export default function PalanqueesPage() {
               const optimizedAirBottles = encadrantsAirCount + optimizedStudentAirPlusBackup
 
               return (
-                <>
-                  <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-2 sm:p-3 border border-slate-700 flex flex-wrap items-center gap-2 sm:gap-4">
-                    <span className="text-slate-300 text-xs sm:text-sm">Bouteilles :</span>
-                    <span className="bg-blue-600/80 text-white px-1.5 sm:px-2 py-0.5 rounded text-xs sm:text-sm">
-                      Air: {optimizedAirBottles}
+                <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-2 sm:p-3 border border-slate-700 flex flex-wrap items-center gap-2 sm:gap-4">
+                  <span className="text-slate-300 text-xs sm:text-sm">Bouteilles :</span>
+                  <span className="bg-blue-600/80 text-white px-1.5 sm:px-2 py-0.5 rounded text-xs sm:text-sm">
+                    Air: {optimizedAirBottles}
+                  </span>
+                  {optimizedNitroxBottles > 0 && (
+                    <span className="bg-yellow-600/80 text-white px-1.5 sm:px-2 py-0.5 rounded text-xs sm:text-sm">
+                      Nx: {optimizedNitroxBottles}
                     </span>
-                    {optimizedNitroxBottles > 0 && (
-                      <span className="bg-yellow-600/80 text-white px-1.5 sm:px-2 py-0.5 rounded text-xs sm:text-sm">
-                        Nx: {optimizedNitroxBottles}
-                      </span>
-                    )}
-                    {session?.optimization_mode && (
-                      <span className="text-green-400 text-xs">🔄 <span className="hidden sm:inline">Mode</span> 2 rot.</span>
-                    )}
-                  </div>
-
-                  {data.rotations.length === 0 ? (
-                    <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 sm:p-8 border border-slate-700 text-center">
-                      <p className="text-slate-400 mb-1 sm:mb-2 text-sm sm:text-base">Aucune rotation</p>
-                      <p className="text-slate-500 text-xs sm:text-sm">
-                        Créez une rotation puis ajoutez des palanquées.
-                      </p>
-                    </div>
-                  ) : (
-                    data.rotations.map(rotation => (
-                      <RotationCard
-                        key={rotation.id}
-                        rotation={rotation}
-                        isDragging={!!draggedParticipant && canEdit}
-                        draggedIsEncadrant={draggedParticipant?.is_encadrant || false}
-                        selectedParticipant={selectedParticipant}
-                        availableAir={optimizedAirBottles}
-                        availableNitrox={optimizedNitroxBottles}
-                        canEdit={canEdit}
-                        onCreatePalanquee={handleCreatePalanquee}
-                        onDeleteRotation={handleDeleteRotation}
-                        onDeletePalanquee={handleDeletePalanquee}
-                        onDropGP={(palanqueeId, gpCount) => handleDropGP(palanqueeId, rotation, gpCount)}
-                        onDropStudent={(palanqueeId) => handleDropStudent(palanqueeId, rotation)}
-                        onTapAddGP={(palanqueeId, gpCount) => handleTapAddToGP(palanqueeId, rotation, gpCount)}
-                        onTapAddStudent={(palanqueeId, studentCount) => handleTapAddToStudents(palanqueeId, rotation, studentCount)}
-                        onRemoveMember={handleRemoveMember}
-                        onUpdateParams={handleUpdatePalanqueeParams}
-                      />
-                    ))
                   )}
-                </>
+                  {session?.optimization_mode && (
+                    <span className="text-green-400 text-xs">🔄 <span className="hidden sm:inline">Mode</span> 2 rot.</span>
+                  )}
+                </div>
               )
             })()}
+
+            {/* Rotations et palanquées */}
+            {data.rotations.length === 0 ? (
+              <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 sm:p-8 border border-slate-700 text-center">
+                <p className="text-slate-400 mb-1 sm:mb-2 text-sm sm:text-base">Aucune rotation</p>
+                <p className="text-slate-500 text-xs sm:text-sm">
+                  {canEdit ? 'Créez une rotation puis ajoutez des palanquées.' : 'Aucune palanquée créée pour cette session.'}
+                </p>
+              </div>
+            ) : (
+              data.rotations.map(rotation => {
+                // Calculer les bouteilles disponibles (valeurs par défaut si pas de summary)
+                const availableAir = summary ? (() => {
+                  const studentsAirCount = summary.students_count - summary.nitrox_training_count
+                  const backupTank = 1
+                  const studentsAirPlusBackup = studentsAirCount + backupTank
+                  const optimizedStudentAirPlusBackup = session?.optimization_mode 
+                    ? Math.ceil(studentsAirPlusBackup / 2) 
+                    : studentsAirPlusBackup
+                  const encadrantsAirCount = summary.encadrants_count - summary.nitrox_count
+                  return encadrantsAirCount + optimizedStudentAirPlusBackup
+                })() : 999 // Valeur haute pour ne pas bloquer l'affichage
+                
+                const availableNitrox = summary ? (() => {
+                  const studentsNitroxCount = summary.nitrox_training_count
+                  const optimizedStudentNitroxBottles = session?.optimization_mode 
+                    ? Math.ceil(studentsNitroxCount / 2) 
+                    : studentsNitroxCount
+                  return summary.nitrox_count + optimizedStudentNitroxBottles
+                })() : 999
+
+                return (
+                  <RotationCard
+                    key={rotation.id}
+                    rotation={rotation}
+                    isDragging={!!draggedParticipant && canEdit}
+                    draggedIsEncadrant={draggedParticipant?.is_encadrant || false}
+                    selectedParticipant={selectedParticipant}
+                    availableAir={availableAir}
+                    availableNitrox={availableNitrox}
+                    canEdit={canEdit}
+                    onCreatePalanquee={handleCreatePalanquee}
+                    onDeleteRotation={handleDeleteRotation}
+                    onDeletePalanquee={handleDeletePalanquee}
+                    onDropGP={(palanqueeId, gpCount) => handleDropGP(palanqueeId, rotation, gpCount)}
+                    onDropStudent={(palanqueeId) => handleDropStudent(palanqueeId, rotation)}
+                    onTapAddGP={(palanqueeId, gpCount) => handleTapAddToGP(palanqueeId, rotation, gpCount)}
+                    onTapAddStudent={(palanqueeId, studentCount) => handleTapAddToStudents(palanqueeId, rotation, studentCount)}
+                    onRemoveMember={handleRemoveMember}
+                    onUpdateParams={handleUpdatePalanqueeParams}
+                  />
+                )
+              })
+            )}
           </div>
         </div>
       </div>
