@@ -43,8 +43,8 @@ export default function Dashboard() {
             {/* Summary - admin seulement */}
             {isAdmin && <Route path="/summary/:id" element={<SummaryPage />} />}
             
-            {/* Palanquées - admin et encadrants */}
-            {(isAdmin || canValidateCompetencies) && <Route path="/palanquees/:sessionId" element={<PalanqueesPage />} />}
+            {/* Palanquées - accessible à tous (le backend vérifie l'inscription à la session) */}
+            <Route path="/palanquees/:sessionId" element={<PalanqueesPage />} />
             
             {/* Import - admin seulement */}
             {isAdmin && <Route path="/import" element={<ImportPage />} />}
