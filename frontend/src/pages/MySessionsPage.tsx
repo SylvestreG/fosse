@@ -196,7 +196,8 @@ function RegistrationDetails({
 
 interface PastSessionWithStudents {
   session: Session
-  myStudents: PalanqueeMember[] // Élèves que j'ai eus dans mes palanquées
+  myStudents: PalanqueeMember[] // Élèves que j'ai eus dans mes palanquées (pour encadrants)
+  myPalanquees: { rotationNumber: number; palanqueeNumber: number; members: PalanqueeMember[] }[] // Mes palanquées (pour tous)
 }
 
 export default function MySessionsPage() {
@@ -278,33 +279,43 @@ export default function MySessionsPage() {
         }
         setMyRegistrations(registrations)
 
-        // Si c'est un encadrant, charger les sessions passées avec les élèves
-        if (me?.is_instructor) {
-          const pastWithStudents: PastSessionWithStudents[] = []
-          
-          // Charger toutes les sessions passées
-          for (const session of pastSessions) {
-            try {
-              // Vérifier si j'étais inscrit à cette session
-              const questRes = await questionnairesApi.listDetail(session.id)
-              const myQuest = questRes.data.find(q => q.email === targetEmail)
+        // Charger les sessions passées pour tous les utilisateurs
+        const pastWithStudents: PastSessionWithStudents[] = []
+        
+        // Charger toutes les sessions passées
+        for (const session of pastSessions) {
+          try {
+            // Vérifier si j'étais inscrit à cette session
+            const questRes = await questionnairesApi.listDetail(session.id)
+            const myQuest = questRes.data.find(q => q.email === targetEmail)
+            
+            if (myQuest) {
+              // Charger les palanquées
+              const palanqueesRes = await palanqueesApi.getSessionPalanquees(session.id)
               
-              if (myQuest?.is_encadrant) {
-                // Charger les palanquées
-                const palanqueesRes = await palanqueesApi.getSessionPalanquees(session.id)
-                
-                // Trouver mes palanquées (où je suis GP)
-                const myStudents: PalanqueeMember[] = []
-                
-                for (const rotation of palanqueesRes.data.rotations) {
-                  for (const palanquee of rotation.palanquees) {
-                    // Vérifier si je suis dans cette palanquée comme GP
+              // Trouver mes palanquées et les élèves (pour les encadrants)
+              const myStudents: PalanqueeMember[] = []
+              const myPalanquees: { rotationNumber: number; palanqueeNumber: number; members: PalanqueeMember[] }[] = []
+              
+              for (const rotation of palanqueesRes.data.rotations) {
+                for (const palanquee of rotation.palanquees) {
+                  // Vérifier si je suis dans cette palanquée
+                  const amIMember = palanquee.members.some(m => m.questionnaire_id === myQuest.id)
+                  
+                  if (amIMember) {
+                    // Ajouter cette palanquée à mes palanquées
+                    myPalanquees.push({
+                      rotationNumber: rotation.number,
+                      palanqueeNumber: palanquee.number,
+                      members: palanquee.members
+                    })
+                    
+                    // Si je suis encadrant (GP), ajouter les élèves
                     const amIGP = palanquee.members.some(m => 
                       m.questionnaire_id === myQuest.id && (m.role === 'GP' || m.role === 'E')
                     )
                     
                     if (amIGP) {
-                      // Ajouter tous les élèves de cette palanquée (pas seulement ceux en formation)
                       const students = palanquee.members.filter(m => 
                         m.role === 'P' && m.questionnaire_id !== myQuest.id
                       )
@@ -312,26 +323,29 @@ export default function MySessionsPage() {
                     }
                   }
                 }
-                
-                // Dédupliquer les élèves (garder tous, pas seulement ceux en formation)
-                const uniqueStudents = myStudents
-                  .filter((student, index, self) =>
-                    index === self.findIndex(s => s.person_id === student.person_id)
-                  )
-                
-                // Ajouter la session même si elle n'a pas d'élèves (l'encadrant y a participé)
+              }
+              
+              // Dédupliquer les élèves
+              const uniqueStudents = myStudents
+                .filter((student, index, self) =>
+                  index === self.findIndex(s => s.person_id === student.person_id)
+                )
+              
+              // Ajouter la session si l'utilisateur avait des palanquées
+              if (myPalanquees.length > 0) {
                 pastWithStudents.push({
                   session,
-                  myStudents: uniqueStudents
+                  myStudents: uniqueStudents,
+                  myPalanquees
                 })
               }
-            } catch (e) {
-              // Ignorer les erreurs
             }
+          } catch (e) {
+            // Ignorer les erreurs
           }
-          
-          setPastSessionsWithStudents(pastWithStudents)
         }
+        
+        setPastSessionsWithStudents(pastWithStudents)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -392,15 +406,13 @@ export default function MySessionsPage() {
                         <span className="inline-flex items-center px-4 py-2 bg-green-500/20 text-green-400 rounded-full font-medium border border-green-500/30">
                           ✅ Inscrit {isEncadrant ? '(Encadrant)' : ''}
                         </span>
-                        {isEncadrant && (
-                          <Button 
-                            variant="secondary" 
-                            size="sm"
-                            onClick={() => navigate(`/dashboard/palanquees/${session.id}`)}
-                          >
-                            🤿 Palanquées
-                          </Button>
-                        )}
+                        <Button 
+                          variant="secondary" 
+                          size="sm"
+                          onClick={() => navigate(`/dashboard/palanquees/${session.id}`)}
+                        >
+                          🤿 Palanquées
+                        </Button>
                       </>
                     ) : (
                       <span className="inline-flex items-center px-4 py-2 bg-slate-500/20 text-slate-400 rounded-full font-medium border border-slate-500/30">
@@ -424,8 +436,8 @@ export default function MySessionsPage() {
         </div>
       )}
 
-      {/* Section Fosses passées pour les encadrants */}
-      {myPerson?.is_instructor && pastSessionsWithStudents.length > 0 && (
+      {/* Section Fosses passées pour tous les utilisateurs */}
+      {pastSessionsWithStudents.length > 0 && (
         <div className="space-y-4">
           <div 
             className="flex items-center justify-between cursor-pointer"
@@ -434,7 +446,9 @@ export default function MySessionsPage() {
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-white">📋 Mes fosses passées</h2>
               <p className="text-slate-300 text-sm mt-1">
-                Retrouvez les élèves que vous avez encadrés
+                {myPerson?.is_instructor 
+                  ? 'Retrouvez les élèves que vous avez encadrés'
+                  : 'Retrouvez vos palanquées passées'}
               </p>
             </div>
             <Button variant="secondary" size="sm">
@@ -444,7 +458,7 @@ export default function MySessionsPage() {
 
           {showPastSessions && (
             <div className="space-y-4">
-              {pastSessionsWithStudents.map(({ session, myStudents }) => {
+              {pastSessionsWithStudents.map(({ session, myStudents, myPalanquees }) => {
                 const sessionDate = new Date(session.start_date)
                 const formattedDate = sessionDate.toLocaleDateString('fr-FR', {
                   weekday: 'short',
@@ -453,6 +467,7 @@ export default function MySessionsPage() {
                   year: 'numeric'
                 })
                 const studentsInTraining = myStudents.filter(s => s.preparing_level).length
+                const isInstructor = myPerson?.is_instructor
 
                 return (
                   <div 
@@ -466,9 +481,9 @@ export default function MySessionsPage() {
                       </div>
                       <div className="flex gap-2 self-start sm:self-auto">
                         <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full border border-slate-600">
-                          {myStudents.length} élève{myStudents.length > 1 ? 's' : ''}
+                          {myPalanquees.length} palanquée{myPalanquees.length > 1 ? 's' : ''}
                         </span>
-                        {studentsInTraining > 0 && (
+                        {isInstructor && studentsInTraining > 0 && (
                           <span className="text-sm text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
                             🎯 {studentsInTraining} en formation
                           </span>
@@ -476,52 +491,57 @@ export default function MySessionsPage() {
                       </div>
                     </div>
 
-                    {myStudents.length > 0 ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-                        {myStudents.map((student) => {
-                          const isInTraining = !!student.preparing_level
-                          
-                          return (
-                            <div
-                              key={student.person_id}
-                              onClick={() => isInTraining && navigate(`/dashboard/competences/student/${student.person_id}`)}
-                              className={`flex items-center justify-between p-3 bg-slate-700/30 rounded-lg border transition-all ${
-                                isInTraining
-                                  ? 'border-slate-600 hover:border-cyan-500/50 hover:bg-slate-700/50 cursor-pointer group'
-                                  : 'border-slate-700/50'
-                              }`}
-                            >
-                              <div className="min-w-0 flex-1">
-                                <p className={`font-medium truncate transition-colors ${
-                                  isInTraining ? 'text-white group-hover:text-cyan-400' : 'text-slate-400'
-                                }`}>
-                                  {student.first_name} {student.last_name}
-                                </p>
-                                <div className="flex items-center gap-2 text-xs text-slate-400">
-                                  {student.diving_level && (
-                                    <span className="bg-slate-600/50 px-1.5 py-0.5 rounded">
-                                      🤿 {student.diving_level}
-                                    </span>
-                                  )}
-                                  {student.preparing_level && (
-                                    <span className="bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">
-                                      🎯 {student.preparing_level}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              {isInTraining && (
-                                <span className="text-cyan-400 group-hover:translate-x-1 transition-transform ml-2 flex-shrink-0">
-                                  →
-                                </span>
-                              )}
+                    {/* Affichage des palanquées pour tous */}
+                    <div className="space-y-3">
+                      {myPalanquees.map((pal, idx) => {
+                        const gps = pal.members.filter(m => m.role === 'GP' || m.role === 'E')
+                        const students = pal.members.filter(m => m.role === 'P')
+                        
+                        return (
+                          <div key={idx} className="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-xs text-slate-500">Rot. {pal.rotationNumber}</span>
+                              <span className="bg-purple-600/30 text-purple-300 text-xs px-2 py-0.5 rounded font-medium">
+                                Pal. {pal.palanqueeNumber}
+                              </span>
                             </div>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      <p className="text-slate-500 text-sm italic">Aucun élève dans vos palanquées</p>
-                    )}
+                            <div className="flex flex-wrap gap-2">
+                              {/* GPs */}
+                              {gps.map(gp => (
+                                <span 
+                                  key={gp.id}
+                                  className="text-sm bg-purple-500/20 text-purple-300 px-2 py-1 rounded border border-purple-500/30"
+                                >
+                                  🏅 {gp.first_name} {gp.last_name.charAt(0)}.
+                                </span>
+                              ))}
+                              {/* Élèves */}
+                              {students.map(student => {
+                                const isInTraining = !!student.preparing_level
+                                const canNavigate = isInstructor && isInTraining
+                                
+                                return (
+                                  <span 
+                                    key={student.id}
+                                    onClick={() => canNavigate && navigate(`/dashboard/competences/student/${student.person_id}`)}
+                                    className={`text-sm px-2 py-1 rounded border ${
+                                      canNavigate 
+                                        ? 'bg-slate-600/30 text-slate-300 border-slate-500/30 hover:border-cyan-500/50 hover:text-cyan-400 cursor-pointer'
+                                        : 'bg-slate-600/20 text-slate-400 border-slate-600/30'
+                                    }`}
+                                  >
+                                    {student.first_name} {student.last_name.charAt(0)}.
+                                    {student.preparing_level && (
+                                      <span className="ml-1 text-amber-400 text-xs">🎯{student.preparing_level}</span>
+                                    )}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 )
               })}
