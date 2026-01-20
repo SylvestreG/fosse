@@ -8,6 +8,7 @@ use crate::models::{
 use crate::services::{generate_fiche_securite, FicheSecuriteOptions};
 use axum::{
     extract::{Path, State, Query},
+    Extension,
     Json,
     response::IntoResponse,
     http::header,
@@ -359,8 +360,10 @@ pub async fn remove_member(
 // ============ SESSION PALANQUEES (VUE COMPLETE) ============
 
 /// Récupère toutes les palanquées d'une session avec les participants non assignés
+/// Accessible aux admins ET aux participants inscrits à la session
 pub async fn get_session_palanquees(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<crate::middleware::acl::AuthUser>,
     Path(session_id): Path<Uuid>,
 ) -> Result<Json<SessionPalanqueesResponse>, AppError> {
     // Vérifier que la session existe
@@ -368,6 +371,43 @@ pub async fn get_session_palanquees(
         .one(db.as_ref())
         .await?
         .ok_or_else(|| AppError::NotFound("Session not found".to_string()))?;
+
+    // Vérifier les permissions d'accès:
+    // - Admin ou a la permission SessionsView -> accès complet
+    // - Sinon, doit être inscrit à cette session
+    let has_admin_access = auth.has_permission(crate::models::Permission::SessionsView);
+    
+    if !has_admin_access {
+        // Récupérer l'email de l'utilisateur (impersonnifié ou réel)
+        let user_email = auth.claims.impersonating
+            .as_ref()
+            .map(|i| i.user_email.as_str())
+            .unwrap_or(&auth.claims.email);
+        
+        // Vérifier si l'utilisateur est inscrit à cette session
+        let person = crate::entities::prelude::People::find()
+            .filter(crate::entities::people::Column::Email.eq(user_email))
+            .one(db.as_ref())
+            .await?;
+        
+        let is_registered = if let Some(person) = person {
+            // Vérifier s'il a un questionnaire pour cette session
+            Questionnaires::find()
+                .filter(questionnaires::Column::SessionId.eq(session_id))
+                .filter(questionnaires::Column::PersonId.eq(person.id))
+                .one(db.as_ref())
+                .await?
+                .is_some()
+        } else {
+            false
+        };
+        
+        if !is_registered {
+            return Err(AppError::Forbidden(
+                "Vous devez être inscrit à cette session pour voir les palanquées".to_string()
+            ));
+        }
+    }
 
     // Récupérer toutes les rotations avec leurs palanquées
     let rotations_list = Rotations::find()

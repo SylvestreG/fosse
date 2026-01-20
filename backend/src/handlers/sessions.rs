@@ -1,8 +1,10 @@
-use crate::entities::{prelude::*, questionnaires, sessions};
+use crate::entities::{prelude::*, people, questionnaires, sessions};
 use crate::errors::AppError;
-use crate::models::{CreateSessionRequest, SessionResponse, SessionSummary, StabSize, ParticipantInfo, UpdateSessionRequest};
+use crate::middleware::acl::AuthUser;
+use crate::models::{CreateSessionRequest, SessionResponse, SessionSummary, StabSize, ParticipantInfo, UpdateSessionRequest, Permission};
 use axum::{
     extract::{Path, State},
+    Extension,
     Json,
 };
 use chrono::Utc;
@@ -79,8 +81,11 @@ pub async fn list_sessions(
     Ok(Json(responses))
 }
 
+/// Récupère les détails d'une session
+/// Accessible aux admins ET aux participants inscrits à la session
 pub async fn get_session(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<SessionResponse>, AppError> {
     let session = Sessions::find_by_id(id)
@@ -88,6 +93,43 @@ pub async fn get_session(
         .await
         .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query session".to_string())))?
         .ok_or(AppError::NotFound("Session not found".to_string()))?;
+
+    // Vérifier les permissions d'accès:
+    // - Admin ou a la permission SessionsView -> accès
+    // - Sinon, doit être inscrit à cette session
+    let has_admin_access = auth.has_permission(Permission::SessionsView);
+    
+    if !has_admin_access {
+        // Récupérer l'email de l'utilisateur (impersonnifié ou réel)
+        let user_email = auth.claims.impersonating
+            .as_ref()
+            .map(|i| i.user_email.as_str())
+            .unwrap_or(&auth.claims.email);
+        
+        // Vérifier si l'utilisateur est inscrit à cette session
+        let person = People::find()
+            .filter(people::Column::Email.eq(user_email))
+            .one(db.as_ref())
+            .await?;
+        
+        let is_registered = if let Some(person) = person {
+            // Vérifier s'il a un questionnaire pour cette session
+            Questionnaires::find()
+                .filter(questionnaires::Column::SessionId.eq(id))
+                .filter(questionnaires::Column::PersonId.eq(person.id))
+                .one(db.as_ref())
+                .await?
+                .is_some()
+        } else {
+            false
+        };
+        
+        if !is_registered {
+            return Err(AppError::Forbidden(
+                "Vous devez être inscrit à cette session pour voir ses détails".to_string()
+            ));
+        }
+    }
 
     Ok(Json(SessionResponse {
         id: session.id,
