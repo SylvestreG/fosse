@@ -12,7 +12,8 @@ import {
   UnassignedParticipant,
   Session,
   SessionSummary,
-  QuestionnaireDetail
+  QuestionnaireDetail,
+  DiveDirector
 } from '../lib/api'
 import { useAuthStore } from '../lib/auth'
 
@@ -26,6 +27,7 @@ export default function PalanqueesPage() {
   const [summary, setSummary] = useState<SessionSummary | null>(null)
   const [data, setData] = useState<SessionPalanquees | null>(null)
   const [questionnaires, setQuestionnaires] = useState<QuestionnaireDetail[]>([])
+  const [diveDirectors, setDiveDirectors] = useState<DiveDirector[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [draggedParticipant, setDraggedParticipant] = useState<UnassignedParticipant | null>(null)
@@ -37,8 +39,10 @@ export default function PalanqueesPage() {
   const currentEmail = impersonating?.user_email || email
   
   // Déterminer si l'utilisateur peut éditer
-  // Peut éditer si: admin (non impersonnifié) OU DP de la session
-  const isCurrentUserDP = questionnaires.some(q => q.email === currentEmail && q.is_directeur_plongee)
+  // Peut éditer si: admin (non impersonnifié) OU DP de la session (via questionnaire ou dive_directors pour les sorties)
+  const myQuestionnaire = questionnaires.find(q => q.email === currentEmail)
+  const isCurrentUserDP = !!(myQuestionnaire?.is_directeur_plongee) || 
+    !!(myQuestionnaire && diveDirectors.some(dp => dp.questionnaire_id === myQuestionnaire.id))
   const canEdit = (isAdmin && !impersonating) || isCurrentUserDP
   
   // Modal states
@@ -116,6 +120,15 @@ export default function PalanqueesPage() {
       // L'utilisateur sera en lecture seule (canEdit = false)
       console.log('Questionnaires non accessibles (permissions limitées)')
       setQuestionnaires([])
+    }
+    
+    // Charger les dive directors (pour les sorties)
+    try {
+      const dpRes = await sessionsApi.getDiveDirectors(sessionId)
+      setDiveDirectors(dpRes.data)
+    } catch (dpErr) {
+      console.log('Dive directors non accessibles')
+      setDiveDirectors([])
     }
     
     if (!hasData) {
