@@ -258,13 +258,13 @@ export default function SessionsPage() {
   ]
 
   if (loading) {
-    return <div className="text-center py-12">Chargement...</div>
+    return <div className="text-center py-12 theme-text">Chargement...</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-white">Sessions</h1>
+        <h1 className="text-3xl font-bold theme-text">Sessions</h1>
         <Button onClick={() => setShowCreateModal(true)}>Créer une session</Button>
       </div>
 
@@ -275,24 +275,24 @@ export default function SessionsPage() {
               <Button variant="secondary" onClick={() => setSelectedSession(null)}>
                 ← Retour
               </Button>
-              <h2 className="text-2xl font-semibold text-white">{selectedSession.name}</h2>
+              <h2 className="text-2xl font-semibold theme-text">{selectedSession.name}</h2>
             </div>
             <div className="flex space-x-2 flex-wrap gap-2 items-center">
-              <label className="flex items-center space-x-2 cursor-pointer bg-slate-700/50 px-3 py-2 rounded-lg">
+              <label className="flex items-center space-x-2 cursor-pointer theme-card px-3 py-2">
                 <input
                   type="checkbox"
                   checked={selectedSession.optimization_mode}
                   onChange={handleToggleOptimization}
-                  className="rounded border-slate-600 bg-slate-700 text-green-500 focus:ring-green-500"
+                  className="rounded text-green-500 focus:ring-green-500"
                 />
-                <span className="text-sm text-slate-200">🔄 Mode 2 rotations</span>
+                <span className="text-sm theme-text-secondary">🔄 Mode 2 rotations</span>
               </label>
-              <div className="flex items-center gap-2 bg-slate-700/50 px-3 py-2 rounded-lg">
-                <span className="text-sm text-slate-200">👤 DP:</span>
+              <div className="flex items-center gap-2 theme-card px-3 py-2">
+                <span className="text-sm theme-text-secondary">👤 DP:</span>
                 <select
                   value={questionnaires.find(q => q.is_directeur_plongee)?.id || ''}
                   onChange={(e) => handleSetDirecteurPlongee(e.target.value || null)}
-                  className="bg-slate-700 border border-slate-600 rounded px-2 py-1 text-sm text-white"
+                  className="theme-select px-2 py-1 text-sm"
                 >
                   <option value="">-- Aucun --</option>
                   {questionnaires.filter(q => q.is_encadrant).map(q => (
@@ -309,7 +309,7 @@ export default function SessionsPage() {
           </div>
           {questionnaires.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-slate-400 mb-4">Aucun participant pour cette session.</p>
+              <p className="theme-text-muted mb-4">Aucun participant pour cette session.</p>
               <Button onClick={() => setShowAddParticipantModal(true)}>
                 ➕ Ajouter le premier participant
               </Button>
@@ -317,16 +317,16 @@ export default function SessionsPage() {
           ) : (
             <div className="space-y-4">
               {questionnaires.map((q) => (
-                <div key={q.id} className="bg-slate-800/50 backdrop-blur-xl p-6 rounded-lg shadow space-y-3">
+                <div key={q.id} className="theme-card p-6 shadow space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-lg font-semibold text-white">
+                      <p className="text-lg font-semibold theme-text">
                         {q.first_name} {q.last_name}
                         {q.is_directeur_plongee && (
                           <span className="ml-2 bg-purple-600 text-white text-xs px-2 py-0.5 rounded">DP</span>
                         )}
                       </p>
-                      <p className="text-sm text-slate-400">{q.email}</p>
+                      <p className="text-sm theme-text-muted">{q.email}</p>
                     </div>
                     <div className="flex space-x-2">
                       <Button size="sm" onClick={() => handleEditQuestionnaire(q)}>
@@ -338,7 +338,7 @@ export default function SessionsPage() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 text-sm text-slate-200">
+                  <div className="grid grid-cols-2 gap-2 text-sm theme-text-secondary">
                     <p>Encadrant: {q.is_encadrant ? '✅' : '❌'}</p>
                     <p>Nitrox: {q.wants_nitrox ? '✅' : '❌'}</p>
                     <p>2ème détendeur: {q.wants_2nd_reg ? '✅' : '❌'}</p>
