@@ -9,6 +9,7 @@ pub mod competency_hierarchy;
 pub mod groups;
 pub mod level_documents;
 pub mod palanquees;
+pub mod sorties;
 
 pub use auth::*;
 pub use sessions::*;
@@ -21,4 +22,5 @@ pub use competency_hierarchy::*;
 pub use groups::*;
 pub use level_documents::*;
 pub use palanquees::*;
+pub use sorties::*;
 

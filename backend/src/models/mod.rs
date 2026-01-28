@@ -9,6 +9,7 @@ pub mod diving_level;
 pub mod competency;
 pub mod acl;
 pub mod palanquee;
+pub mod sortie;
 
 pub use session::*;
 pub use person::*;
@@ -21,4 +22,5 @@ pub use diving_level::*;
 pub use competency::*;
 pub use acl::*;
 pub use palanquee::*;
+pub use sortie::*;
 

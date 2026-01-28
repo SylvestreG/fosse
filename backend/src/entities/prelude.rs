@@ -14,4 +14,6 @@ pub use super::skill_validations::Entity as SkillValidations;
 pub use super::rotations::Entity as Rotations;
 pub use super::palanquees::Entity as Palanquees;
 pub use super::palanquee_members::Entity as PalanqueeMembers;
+pub use super::sorties::Entity as Sorties;
+pub use super::dive_directors::Entity as DiveDirectors;
 

@@ -259,7 +259,8 @@ impl EmailService {
         
         let email_job = email_jobs::ActiveModel {
             id: Set(Uuid::new_v4()),
-            session_id: Set(session_id),
+            session_id: Set(Some(session_id)),
+            sortie_id: Set(None),
             person_id: Set(person_id),
             questionnaire_token: Set(token),
             status: Set("generated".to_string()),
@@ -427,7 +428,8 @@ impl EmailService {
             let now = Utc::now().naive_utc();
             let email_job = email_jobs::ActiveModel {
                 id: Set(Uuid::new_v4()),
-                session_id: Set(session_id),
+                session_id: Set(Some(session_id)),
+                sortie_id: Set(None),
                 person_id: Set(person.id),
                 questionnaire_token: Set(token),
                 status: Set("generated".to_string()),

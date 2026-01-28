@@ -181,6 +181,14 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .route("/api/v1/palanquees/:id", axum::routing::put(update_palanquee).delete(delete_palanquee))
         .route("/api/v1/palanquees/:palanquee_id/members", post(add_member))
         .route("/api/v1/palanquee-members/:id", axum::routing::put(update_member).delete(remove_member))
+        // Sorties (exploration/technique outings)
+        .route("/api/v1/sorties", post(create_sortie).get(list_sorties))
+        .route("/api/v1/sorties/:id", get(get_sortie).put(update_sortie).delete(delete_sortie))
+        .route("/api/v1/sorties/:id/questionnaires", get(get_sortie_questionnaires))
+        .route("/api/v1/sorties/:id/copy-attendees", post(copy_attendees))
+        // Dive directors (for sorties)
+        .route("/api/v1/sessions/:session_id/dive-directors", get(get_dive_directors).post(add_dive_director))
+        .route("/api/v1/sessions/:session_id/dive-directors/:director_id", axum::routing::delete(remove_dive_director))
         .layer(middleware::from_fn_with_state(
             acl_state.clone(),
             acl_auth_middleware,

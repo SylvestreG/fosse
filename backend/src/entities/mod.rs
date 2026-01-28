@@ -17,4 +17,6 @@ pub mod skill_document_positions;
 pub mod rotations;
 pub mod palanquees;
 pub mod palanquee_members;
+pub mod sorties;
+pub mod dive_directors;
 

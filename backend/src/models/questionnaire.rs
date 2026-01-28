@@ -12,6 +12,8 @@ pub struct SubmitQuestionnaireRequest {
     pub wants_stab: bool,
     pub stab_size: Option<String>,
     pub nitrox_training: bool,
+    pub nitrox_base_formation: bool,
+    pub nitrox_confirmed_formation: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
     pub car_seats: Option<i32>,
@@ -21,7 +23,8 @@ pub struct SubmitQuestionnaireRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QuestionnaireResponse {
     pub id: Uuid,
-    pub session_id: Uuid,
+    pub session_id: Option<Uuid>,
+    pub sortie_id: Option<Uuid>,
     pub person_id: Uuid,
     pub is_encadrant: bool,
     pub wants_regulator: bool,
@@ -30,6 +33,8 @@ pub struct QuestionnaireResponse {
     pub wants_stab: bool,
     pub stab_size: Option<String>,
     pub nitrox_training: bool,
+    pub nitrox_base_formation: bool,
+    pub nitrox_confirmed_formation: bool,
     pub is_directeur_plongee: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
@@ -44,14 +49,16 @@ pub struct QuestionnaireResponse {
 pub struct QuestionnaireTokenData {
     pub token: Uuid,
     pub person: super::PersonResponse,
-    pub session_id: Uuid,
+    pub session_id: Option<Uuid>,
+    pub sortie_id: Option<Uuid>,
     pub questionnaire: Option<QuestionnaireResponse>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct QuestionnaireDetailResponse {
     pub id: Uuid,
-    pub session_id: Uuid,
+    pub session_id: Option<Uuid>,
+    pub sortie_id: Option<Uuid>,
     pub person_id: Uuid,
     pub first_name: String,
     pub last_name: String,
@@ -63,6 +70,8 @@ pub struct QuestionnaireDetailResponse {
     pub wants_stab: bool,
     pub stab_size: Option<String>,
     pub nitrox_training: bool,
+    pub nitrox_base_formation: bool,
+    pub nitrox_confirmed_formation: bool,
     pub is_directeur_plongee: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
@@ -81,6 +90,8 @@ pub struct UpdateQuestionnaireRequest {
     pub wants_stab: bool,
     pub stab_size: Option<String>,
     pub nitrox_training: bool,
+    pub nitrox_base_formation: bool,
+    pub nitrox_confirmed_formation: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
     pub car_seats: Option<i32>,
@@ -97,7 +108,8 @@ pub struct SetDirecteurPlongeeRequest {
 /// Requête pour créer un questionnaire directement (auto-inscription)
 #[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct CreateQuestionnaireRequest {
-    pub session_id: Uuid,
+    pub session_id: Option<Uuid>,
+    pub sortie_id: Option<Uuid>,
     #[validate(email)]
     pub email: String,
     pub first_name: String,
@@ -109,6 +121,8 @@ pub struct CreateQuestionnaireRequest {
     pub wants_stab: bool,
     pub stab_size: Option<String>,
     pub nitrox_training: bool,
+    pub nitrox_base_formation: bool,
+    pub nitrox_confirmed_formation: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
     pub car_seats: Option<i32>,

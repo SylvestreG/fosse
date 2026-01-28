@@ -223,6 +223,8 @@ export default function MySessionsPage() {
         wants_stab: data.wants_stab ?? false,
         stab_size: data.stab_size,
         nitrox_training: data.nitrox_training ?? false,
+        nitrox_base_formation: data.nitrox_base_formation ?? false,
+        nitrox_confirmed_formation: data.nitrox_confirmed_formation ?? false,
         comes_from_issoire: data.comes_from_issoire ?? false,
         has_car: data.has_car ?? false,
         car_seats: data.car_seats,

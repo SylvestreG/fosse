@@ -193,7 +193,8 @@ impl ImportService {
             .unwrap_or(false);
         let questionnaire = questionnaires::ActiveModel {
             id: Set(Uuid::new_v4()),
-            session_id: Set(session_id),
+            session_id: Set(Some(session_id)),
+            sortie_id: Set(None),
             person_id: Set(person.id),
             is_encadrant: Set(is_instructor),
             wants_regulator: Set(person.default_wants_regulator),
@@ -202,6 +203,8 @@ impl ImportService {
             wants_stab: Set(person.default_wants_stab),
             stab_size: Set(person.default_stab_size.clone()),
             nitrox_training: Set(false), // Session-specific, not a default preference
+            nitrox_base_formation: Set(false),
+            nitrox_confirmed_formation: Set(false),
             is_directeur_plongee: Set(false), // Must be set explicitly
             comes_from_issoire: Set(false), // Session-specific, no default
             has_car: Set(false), // Session-specific, no default

@@ -13,6 +13,23 @@ use std::sync::Arc;
 use uuid::Uuid;
 use validator::Validate;
 
+fn session_to_response(session: &sessions::Model) -> SessionResponse {
+    SessionResponse {
+        id: session.id,
+        name: session.name.clone(),
+        start_date: session.start_date,
+        end_date: session.end_date,
+        location: session.location.clone(),
+        description: session.description.clone(),
+        summary_token: session.summary_token,
+        optimization_mode: session.optimization_mode,
+        sortie_id: session.sortie_id,
+        dive_number: session.dive_number,
+        created_at: session.created_at.to_string(),
+        updated_at: session.updated_at.to_string(),
+    }
+}
+
 pub async fn create_session(
     State(db): State<Arc<DatabaseConnection>>,
     Json(payload): Json<CreateSessionRequest>,
@@ -31,6 +48,8 @@ pub async fn create_session(
         description: Set(payload.description),
         summary_token: Set(Some(Uuid::new_v4())), // Generate unique token for public summary access
         optimization_mode: Set(false),
+        sortie_id: Set(None),
+        dive_number: Set(None),
         created_at: Set(now),
         updated_at: Set(now),
     };
@@ -40,42 +59,23 @@ pub async fn create_session(
         .await
         .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to create session".to_string())))?;
 
-    Ok(Json(SessionResponse {
-        id: session.id,
-        name: session.name,
-        start_date: session.start_date,
-        end_date: session.end_date,
-        location: session.location,
-        description: session.description,
-        summary_token: session.summary_token,
-        optimization_mode: session.optimization_mode,
-        created_at: session.created_at.to_string(),
-        updated_at: session.updated_at.to_string(),
-    }))
+    Ok(Json(session_to_response(&session)))
 }
 
 pub async fn list_sessions(
     State(db): State<Arc<DatabaseConnection>>,
 ) -> Result<Json<Vec<SessionResponse>>, AppError> {
+    // Only list standalone sessions (fosse), not dive sessions from sorties
     let sessions = Sessions::find()
+        .filter(sessions::Column::SortieId.is_null())
+        .order_by_desc(sessions::Column::StartDate)
         .all(db.as_ref())
         .await
         .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query sessions".to_string())))?;
 
     let responses: Vec<SessionResponse> = sessions
-        .into_iter()
-        .map(|s| SessionResponse {
-            id: s.id,
-            name: s.name,
-            start_date: s.start_date,
-            end_date: s.end_date,
-            location: s.location,
-            description: s.description,
-            summary_token: s.summary_token,
-            optimization_mode: s.optimization_mode,
-            created_at: s.created_at.to_string(),
-            updated_at: s.updated_at.to_string(),
-        })
+        .iter()
+        .map(session_to_response)
         .collect();
 
     Ok(Json(responses))
@@ -131,18 +131,7 @@ pub async fn get_session(
         }
     }
 
-    Ok(Json(SessionResponse {
-        id: session.id,
-        name: session.name,
-        start_date: session.start_date,
-        end_date: session.end_date,
-        location: session.location,
-        description: session.description,
-        summary_token: session.summary_token,
-        optimization_mode: session.optimization_mode,
-        created_at: session.created_at.to_string(),
-        updated_at: session.updated_at.to_string(),
-    }))
+    Ok(Json(session_to_response(&session)))
 }
 
 pub async fn update_session(
@@ -169,18 +158,7 @@ pub async fn update_session(
         .await
         .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to update session: {}", e))))?;
 
-    Ok(Json(SessionResponse {
-        id: updated.id,
-        name: updated.name,
-        start_date: updated.start_date,
-        end_date: updated.end_date,
-        location: updated.location,
-        description: updated.description,
-        summary_token: updated.summary_token,
-        optimization_mode: updated.optimization_mode,
-        created_at: updated.created_at.to_string(),
-        updated_at: updated.updated_at.to_string(),
-    }))
+    Ok(Json(session_to_response(&updated)))
 }
 
 pub async fn delete_session(

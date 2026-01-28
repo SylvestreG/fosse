@@ -26,6 +26,11 @@ mod m20240101_000023_add_nitrox_training;
 mod m20240101_000024_add_optimization_mode;
 mod m20240101_000025_create_palanquees;
 mod m20240101_000026_add_directeur_plongee;
+mod m20240101_000027_create_sorties;
+mod m20240101_000028_add_sortie_to_sessions;
+mod m20240101_000029_add_sortie_to_questionnaires;
+mod m20240101_000030_create_dive_directors;
+mod m20240101_000031_add_sortie_to_email_jobs;
 
 pub struct Migrator;
 
@@ -59,6 +64,11 @@ impl MigratorTrait for Migrator {
         Box::new(m20240101_000024_add_optimization_mode::Migration),
         Box::new(m20240101_000025_create_palanquees::Migration),
         Box::new(m20240101_000026_add_directeur_plongee::Migration),
+        Box::new(m20240101_000027_create_sorties::Migration),
+        Box::new(m20240101_000028_add_sortie_to_sessions::Migration),
+        Box::new(m20240101_000029_add_sortie_to_questionnaires::Migration),
+        Box::new(m20240101_000030_create_dive_directors::Migration),
+        Box::new(m20240101_000031_add_sortie_to_email_jobs::Migration),
         ]
     }
 }

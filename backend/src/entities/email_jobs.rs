@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub session_id: Uuid,
+    pub session_id: Option<Uuid>,
+    pub sortie_id: Option<Uuid>,
     pub person_id: Uuid,
     pub questionnaire_token: Uuid,
     pub status: String,
@@ -30,6 +31,12 @@ pub enum Relation {
     )]
     Session,
     #[sea_orm(
+        belongs_to = "super::sorties::Entity",
+        from = "Column::SortieId",
+        to = "super::sorties::Column::Id"
+    )]
+    Sortie,
+    #[sea_orm(
         belongs_to = "super::people::Entity",
         from = "Column::PersonId",
         to = "super::people::Column::Id"
@@ -46,6 +53,12 @@ impl Related<super::sessions::Entity> for Entity {
 impl Related<super::people::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Person.def()
+    }
+}
+
+impl Related<super::sorties::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Sortie.def()
     }
 }
 

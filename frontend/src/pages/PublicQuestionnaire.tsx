@@ -77,6 +77,8 @@ export default function PublicQuestionnaire() {
         wants_stab: formData.wants_stab,
         stab_size: formData.wants_stab && formData.stab_size ? formData.stab_size : undefined,
         nitrox_training: formData.nitrox_training,
+        nitrox_base_formation: false,
+        nitrox_confirmed_formation: false,
         comes_from_issoire: formData.comes_from_issoire,
         has_car: formData.has_car,
         car_seats: formData.has_car && formData.car_seats ? parseInt(formData.car_seats) : undefined,

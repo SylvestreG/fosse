@@ -89,7 +89,7 @@ impl QuestionnaireService {
             .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query questionnaire".to_string())))?;
 
         // Get session_id from email_job
-        let session_id = email_job.session_id;
+        let _session_id = email_job.session_id;
 
         let diving_level_display = person.diving_level.as_ref().and_then(|level_str| {
             crate::models::DiverLevel::from_string(level_str).map(|diver_level| diver_level.display())
@@ -124,10 +124,12 @@ impl QuestionnaireService {
                 created_at: person.created_at.to_string(),
                 updated_at: person.updated_at.to_string(),
             },
-            session_id,
+            session_id: email_job.session_id,
+            sortie_id: email_job.sortie_id,
             questionnaire: questionnaire.map(|q| QuestionnaireResponse {
                 id: q.id,
                 session_id: q.session_id,
+                sortie_id: q.sortie_id,
                 person_id: q.person_id,
                 is_encadrant: q.is_encadrant,
                 wants_regulator: q.wants_regulator,
@@ -136,6 +138,8 @@ impl QuestionnaireService {
                 wants_stab: q.wants_stab,
                 stab_size: q.stab_size,
                 nitrox_training: q.nitrox_training,
+                nitrox_base_formation: q.nitrox_base_formation,
+                nitrox_confirmed_formation: q.nitrox_confirmed_formation,
                 is_directeur_plongee: q.is_directeur_plongee,
                 comes_from_issoire: q.comes_from_issoire,
                 has_car: q.has_car,
@@ -219,6 +223,7 @@ impl QuestionnaireService {
         Ok(QuestionnaireResponse {
             id: questionnaire.id,
             session_id: questionnaire.session_id,
+            sortie_id: questionnaire.sortie_id,
             person_id: questionnaire.person_id,
             is_encadrant: questionnaire.is_encadrant,
             wants_regulator: questionnaire.wants_regulator,
@@ -227,6 +232,8 @@ impl QuestionnaireService {
             wants_stab: questionnaire.wants_stab,
             stab_size: questionnaire.stab_size,
             nitrox_training: questionnaire.nitrox_training,
+            nitrox_base_formation: questionnaire.nitrox_base_formation,
+            nitrox_confirmed_formation: questionnaire.nitrox_confirmed_formation,
             is_directeur_plongee: questionnaire.is_directeur_plongee,
             comes_from_issoire: questionnaire.comes_from_issoire,
             has_car: questionnaire.has_car,
@@ -256,6 +263,7 @@ impl QuestionnaireService {
             .map(|q| QuestionnaireResponse {
                 id: q.id,
                 session_id: q.session_id,
+                sortie_id: q.sortie_id,
                 person_id: q.person_id,
                 is_encadrant: q.is_encadrant,
                 wants_regulator: q.wants_regulator,
@@ -264,6 +272,8 @@ impl QuestionnaireService {
                 wants_stab: q.wants_stab,
                 stab_size: q.stab_size,
                 nitrox_training: q.nitrox_training,
+                nitrox_base_formation: q.nitrox_base_formation,
+                nitrox_confirmed_formation: q.nitrox_confirmed_formation,
                 is_directeur_plongee: q.is_directeur_plongee,
                 comes_from_issoire: q.comes_from_issoire,
                 has_car: q.has_car,
@@ -314,6 +324,7 @@ impl QuestionnaireService {
             responses.push(QuestionnaireDetailResponse {
                 id: questionnaire.id,
                 session_id: questionnaire.session_id,
+                sortie_id: questionnaire.sortie_id,
                 person_id: person.id,
                 first_name: person.first_name,
                 last_name: person.last_name,
@@ -325,6 +336,8 @@ impl QuestionnaireService {
                 wants_stab: questionnaire.wants_stab,
                 stab_size: questionnaire.stab_size,
                 nitrox_training: questionnaire.nitrox_training,
+                nitrox_base_formation: questionnaire.nitrox_base_formation,
+                nitrox_confirmed_formation: questionnaire.nitrox_confirmed_formation,
                 is_directeur_plongee: questionnaire.is_directeur_plongee,
                 comes_from_issoire: questionnaire.comes_from_issoire,
                 has_car: questionnaire.has_car,
@@ -362,6 +375,8 @@ impl QuestionnaireService {
         active.wants_stab = Set(payload.wants_stab);
         active.stab_size = Set(payload.stab_size);
         active.nitrox_training = Set(payload.nitrox_training);
+        active.nitrox_base_formation = Set(payload.nitrox_base_formation);
+        active.nitrox_confirmed_formation = Set(payload.nitrox_confirmed_formation);
         active.comes_from_issoire = Set(payload.comes_from_issoire);
         active.has_car = Set(payload.has_car);
         active.car_seats = Set(payload.car_seats);
@@ -382,6 +397,7 @@ impl QuestionnaireService {
         Ok(QuestionnaireResponse {
             id: updated.id,
             session_id: updated.session_id,
+            sortie_id: updated.sortie_id,
             person_id: updated.person_id,
             is_encadrant: updated.is_encadrant,
             wants_regulator: updated.wants_regulator,
@@ -390,6 +406,8 @@ impl QuestionnaireService {
             wants_stab: updated.wants_stab,
             stab_size: updated.stab_size,
             nitrox_training: updated.nitrox_training,
+            nitrox_base_formation: updated.nitrox_base_formation,
+            nitrox_confirmed_formation: updated.nitrox_confirmed_formation,
             is_directeur_plongee: updated.is_directeur_plongee,
             comes_from_issoire: updated.comes_from_issoire,
             has_car: updated.has_car,
@@ -468,12 +486,33 @@ impl QuestionnaireService {
         db: &DatabaseConnection,
         mut request: CreateQuestionnaireRequest,
     ) -> AppResult<QuestionnaireResponse> {
-        // Vérifier que la session existe
-        let session = Sessions::find_by_id(request.session_id)
-            .one(db)
-            .await
-            .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query session: {}", e))))?
-            .ok_or_else(|| AppError::NotFound("Session not found".to_string()))?;
+        // Vérifier qu'on a soit session_id soit sortie_id
+        if request.session_id.is_none() && request.sortie_id.is_none() {
+            return Err(AppError::Validation("Either session_id or sortie_id is required".to_string()));
+        }
+
+        // Si session_id fourni, vérifier que la session existe
+        let session = if let Some(sid) = request.session_id {
+            Some(Sessions::find_by_id(sid)
+                .one(db)
+                .await
+                .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query session: {}", e))))?
+                .ok_or_else(|| AppError::NotFound("Session not found".to_string()))?)
+        } else {
+            None
+        };
+
+        // Si sortie_id fourni, vérifier que la sortie existe
+        use crate::entities::sorties;
+        let _sortie = if let Some(sortie_id) = request.sortie_id {
+            Some(sorties::Entity::find_by_id(sortie_id)
+                .one(db)
+                .await
+                .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query sortie: {}", e))))?
+                .ok_or_else(|| AppError::NotFound("Sortie not found".to_string()))?)
+        } else {
+            None
+        };
 
         // Trouver ou créer la personne
         let person = People::find()
@@ -518,16 +557,27 @@ impl QuestionnaireService {
             created_person.id
         };
 
-        // Vérifier si un questionnaire existe déjà pour cette personne et session
-        let existing = Questionnaires::find()
-            .filter(questionnaires::Column::PersonId.eq(person_id))
-            .filter(questionnaires::Column::SessionId.eq(session.id))
-            .one(db)
-            .await
-            .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query questionnaire: {}", e))))?;
+        // Vérifier si un questionnaire existe déjà pour cette personne et session/sortie
+        let existing = if let Some(ref s) = session {
+            Questionnaires::find()
+                .filter(questionnaires::Column::PersonId.eq(person_id))
+                .filter(questionnaires::Column::SessionId.eq(s.id))
+                .one(db)
+                .await
+                .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query questionnaire: {}", e))))?
+        } else if let Some(sortie_id) = request.sortie_id {
+            Questionnaires::find()
+                .filter(questionnaires::Column::PersonId.eq(person_id))
+                .filter(questionnaires::Column::SortieId.eq(sortie_id))
+                .one(db)
+                .await
+                .map_err(|e| AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query questionnaire: {}", e))))?
+        } else {
+            None
+        };
 
         if existing.is_some() {
-            return Err(AppError::Validation("Vous êtes déjà inscrit à cette session".to_string()));
+            return Err(AppError::Validation("Vous êtes déjà inscrit à cette session/sortie".to_string()));
         }
 
         // Appliquer les règles métier
@@ -536,7 +586,8 @@ impl QuestionnaireService {
         // Créer le questionnaire
         let new_questionnaire = questionnaires::ActiveModel {
             id: Set(Uuid::new_v4()),
-            session_id: Set(session.id),
+            session_id: Set(session.as_ref().map(|s| s.id)),
+            sortie_id: Set(request.sortie_id),
             person_id: Set(person_id),
             is_encadrant: Set(request.is_encadrant),
             wants_regulator: Set(request.wants_regulator),
@@ -545,6 +596,8 @@ impl QuestionnaireService {
             wants_stab: Set(request.wants_stab),
             stab_size: Set(request.stab_size),
             nitrox_training: Set(request.nitrox_training),
+            nitrox_base_formation: Set(request.nitrox_base_formation),
+            nitrox_confirmed_formation: Set(request.nitrox_confirmed_formation),
             is_directeur_plongee: Set(false),
             comes_from_issoire: Set(request.comes_from_issoire),
             has_car: Set(request.has_car),
@@ -563,6 +616,7 @@ impl QuestionnaireService {
         Ok(QuestionnaireResponse {
             id: created.id,
             session_id: created.session_id,
+            sortie_id: created.sortie_id,
             person_id: created.person_id,
             is_encadrant: created.is_encadrant,
             wants_regulator: created.wants_regulator,
@@ -571,6 +625,8 @@ impl QuestionnaireService {
             wants_stab: created.wants_stab,
             stab_size: created.stab_size,
             nitrox_training: created.nitrox_training,
+            nitrox_base_formation: created.nitrox_base_formation,
+            nitrox_confirmed_formation: created.nitrox_confirmed_formation,
             is_directeur_plongee: created.is_directeur_plongee,
             comes_from_issoire: created.comes_from_issoire,
             has_car: created.has_car,
@@ -621,7 +677,7 @@ impl QuestionnaireService {
             }
 
             // Vérifier que c'est la bonne session
-            if questionnaire.session_id != session_id {
+            if questionnaire.session_id != Some(session_id) {
                 return Err(AppError::Validation("Le questionnaire n'appartient pas à cette session".to_string()));
             }
 

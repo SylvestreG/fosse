@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    pub session_id: Uuid,
+    pub session_id: Option<Uuid>,
+    pub sortie_id: Option<Uuid>,
     pub person_id: Uuid,
     pub is_encadrant: bool,
     pub wants_regulator: bool,
@@ -16,6 +17,8 @@ pub struct Model {
     pub wants_stab: bool,
     pub stab_size: Option<String>,
     pub nitrox_training: bool,
+    pub nitrox_base_formation: bool,
+    pub nitrox_confirmed_formation: bool,
     pub is_directeur_plongee: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
@@ -35,11 +38,19 @@ pub enum Relation {
     )]
     Session,
     #[sea_orm(
+        belongs_to = "super::sorties::Entity",
+        from = "Column::SortieId",
+        to = "super::sorties::Column::Id"
+    )]
+    Sortie,
+    #[sea_orm(
         belongs_to = "super::people::Entity",
         from = "Column::PersonId",
         to = "super::people::Column::Id"
     )]
     Person,
+    #[sea_orm(has_many = "super::dive_directors::Entity")]
+    DiveDirectors,
 }
 
 impl Related<super::sessions::Entity> for Entity {
@@ -51,6 +62,18 @@ impl Related<super::sessions::Entity> for Entity {
 impl Related<super::people::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Person.def()
+    }
+}
+
+impl Related<super::sorties::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Sortie.def()
+    }
+}
+
+impl Related<super::dive_directors::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::DiveDirectors.def()
     }
 }
 

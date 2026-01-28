@@ -23,6 +23,8 @@ pub struct SessionResponse {
     pub description: Option<String>,
     pub summary_token: Option<Uuid>,
     pub optimization_mode: bool,
+    pub sortie_id: Option<Uuid>,
+    pub dive_number: Option<i32>,
     pub created_at: String,
     pub updated_at: String,
 }

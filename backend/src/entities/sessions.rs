@@ -13,6 +13,8 @@ pub struct Model {
     pub description: Option<String>,
     pub summary_token: Option<Uuid>,
     pub optimization_mode: bool,
+    pub sortie_id: Option<Uuid>,
+    pub dive_number: Option<i32>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }
@@ -25,6 +27,14 @@ pub enum Relation {
     ImportJobs,
     #[sea_orm(has_many = "super::rotations::Entity")]
     Rotations,
+    #[sea_orm(has_many = "super::dive_directors::Entity")]
+    DiveDirectors,
+    #[sea_orm(
+        belongs_to = "super::sorties::Entity",
+        from = "Column::SortieId",
+        to = "super::sorties::Column::Id"
+    )]
+    Sortie,
 }
 
 impl Related<super::questionnaires::Entity> for Entity {
@@ -42,6 +52,18 @@ impl Related<super::import_jobs::Entity> for Entity {
 impl Related<super::rotations::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Rotations.def()
+    }
+}
+
+impl Related<super::dive_directors::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::DiveDirectors.def()
+    }
+}
+
+impl Related<super::sorties::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Sortie.def()
     }
 }
 

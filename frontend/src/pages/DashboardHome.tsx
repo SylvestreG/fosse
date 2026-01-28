@@ -11,10 +11,12 @@ import {
 import Button from '@/components/Button'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/lib/auth'
+import { useThemeStore } from '@/lib/theme'
 
 export default function DashboardHome() {
   const navigate = useNavigate()
   const { email, impersonating } = useAuthStore()
+  const { theme } = useThemeStore()
   const targetEmail = impersonating?.user_email || email
   
   const [person, setPerson] = useState<Person | null>(null)
@@ -108,6 +110,15 @@ export default function DashboardHome() {
     { total: 0, validated: 0, inProgress: 0 }
   )
 
+  // Theme-aware classes
+  const cardClass = theme === 'dark' 
+    ? 'bg-slate-800/50 backdrop-blur-xl border-slate-700/50' 
+    : 'bg-white/90 backdrop-blur-xl border-gray-200 shadow-lg'
+  const titleClass = theme === 'dark' ? 'text-white' : 'text-gray-900'
+  const subtitleClass = theme === 'dark' ? 'text-slate-400' : 'text-gray-500'
+  const mutedClass = theme === 'dark' ? 'text-slate-500' : 'text-gray-400'
+  const borderClass = theme === 'dark' ? 'border-slate-700/50' : 'border-gray-200'
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -120,10 +131,10 @@ export default function DashboardHome() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white">
+        <h1 className={`text-2xl sm:text-3xl font-bold ${titleClass}`}>
           👋 Bonjour{person ? `, ${person.first_name}` : ''} !
         </h1>
-        <p className="text-slate-400 mt-1">
+        <p className={`${subtitleClass} mt-1`}>
           Bienvenue sur votre tableau de bord
         </p>
       </div>
@@ -153,90 +164,90 @@ export default function DashboardHome() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Mes Fosses */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 sm:p-6">
+        <div className={`${cardClass} rounded-xl border p-4 sm:p-6`}>
           <div className="flex items-center gap-3 mb-2">
             <span className="text-2xl">🤿</span>
-            <h3 className="text-sm font-medium text-slate-400">Mes Fosses</h3>
+            <h3 className={`text-sm font-medium ${subtitleClass}`}>Mes Fosses</h3>
           </div>
-          <p className="text-3xl sm:text-4xl font-bold text-cyan-400">{myFossesCount}</p>
-          <p className="text-xs text-slate-500 mt-1">participations</p>
+          <p className="text-3xl sm:text-4xl font-bold text-cyan-500">{myFossesCount}</p>
+          <p className={`text-xs ${mutedClass} mt-1`}>participations</p>
         </div>
 
         {/* Niveau actuel */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 sm:p-6">
+        <div className={`${cardClass} rounded-xl border p-4 sm:p-6`}>
           <div className="flex items-center gap-3 mb-2">
             <span className="text-2xl">🎖️</span>
-            <h3 className="text-sm font-medium text-slate-400">Niveau</h3>
+            <h3 className={`text-sm font-medium ${subtitleClass}`}>Niveau</h3>
           </div>
-          <p className="text-2xl sm:text-3xl font-bold text-white">
+          <p className={`text-2xl sm:text-3xl font-bold ${titleClass}`}>
             {person?.diving_level_display || '-'}
           </p>
           {person?.preparing_level && (
-            <p className="text-xs text-amber-400 mt-1">🎯 Prépare {person.preparing_level}</p>
+            <p className="text-xs text-amber-500 mt-1">🎯 Prépare {person.preparing_level}</p>
           )}
         </div>
 
         {/* Compétences (si en préparation) */}
         {competencyStats && competencyStats.total > 0 ? (
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 sm:p-6">
+          <div className={`${cardClass} rounded-xl border p-4 sm:p-6`}>
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">📊</span>
-              <h3 className="text-sm font-medium text-slate-400">Compétences</h3>
+              <h3 className={`text-sm font-medium ${subtitleClass}`}>Compétences</h3>
             </div>
-            <p className="text-3xl sm:text-4xl font-bold text-green-400">
+            <p className="text-3xl sm:text-4xl font-bold text-green-500">
               {competencyStats.validated}/{competencyStats.total}
             </p>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className={`text-xs ${mutedClass} mt-1`}>
               {competencyStats.inProgress > 0 && `${competencyStats.inProgress} en cours`}
             </p>
           </div>
         ) : person?.is_instructor ? (
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 sm:p-6">
+          <div className={`${cardClass} rounded-xl border p-4 sm:p-6`}>
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">✅</span>
-              <h3 className="text-sm font-medium text-slate-400">Validations données</h3>
+              <h3 className={`text-sm font-medium ${subtitleClass}`}>Validations données</h3>
             </div>
-            <p className="text-3xl sm:text-4xl font-bold text-purple-400">{validationsGiven}</p>
-            <p className="text-xs text-slate-500 mt-1">compétences validées</p>
+            <p className="text-3xl sm:text-4xl font-bold text-purple-500">{validationsGiven}</p>
+            <p className={`text-xs ${mutedClass} mt-1`}>compétences validées</p>
           </div>
         ) : (
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 sm:p-6">
+          <div className={`${cardClass} rounded-xl border p-4 sm:p-6`}>
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">📚</span>
-              <h3 className="text-sm font-medium text-slate-400">Formation</h3>
+              <h3 className={`text-sm font-medium ${subtitleClass}`}>Formation</h3>
             </div>
-            <p className="text-lg font-medium text-slate-300">-</p>
-            <p className="text-xs text-slate-500 mt-1">Aucun niveau en préparation</p>
+            <p className={`text-lg font-medium ${subtitleClass}`}>-</p>
+            <p className={`text-xs ${mutedClass} mt-1`}>Aucun niveau en préparation</p>
           </div>
         )}
 
         {/* Statut encadrant */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-4 sm:p-6">
+        <div className={`${cardClass} rounded-xl border p-4 sm:p-6`}>
           <div className="flex items-center gap-3 mb-2">
             <span className="text-2xl">{person?.is_instructor ? '👨‍🏫' : '👨‍🎓'}</span>
-            <h3 className="text-sm font-medium text-slate-400">Statut</h3>
+            <h3 className={`text-sm font-medium ${subtitleClass}`}>Statut</h3>
           </div>
-          <p className="text-lg sm:text-xl font-bold text-white">
+          <p className={`text-lg sm:text-xl font-bold ${titleClass}`}>
             {person?.is_instructor ? 'Encadrant' : 'Élève'}
           </p>
           {person?.is_instructor && (
-            <p className="text-xs text-purple-400 mt-1">Peut valider des compétences</p>
+            <p className="text-xs text-purple-500 mt-1">Peut valider des compétences</p>
           )}
         </div>
       </div>
 
       {/* Prochains événements */}
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50">
-        <div className="px-4 sm:px-6 py-4 border-b border-slate-700/50 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">📅 Prochains événements</h2>
-          <Link to="/dashboard/sessions" className="text-sm text-cyan-400 hover:text-cyan-300">
+      <div className={`${cardClass} rounded-xl border`}>
+        <div className={`px-4 sm:px-6 py-4 border-b ${borderClass} flex items-center justify-between`}>
+          <h2 className={`text-lg font-semibold ${titleClass}`}>📅 Prochains événements</h2>
+          <Link to="/dashboard/sessions" className="text-sm text-cyan-500 hover:text-cyan-400">
             Voir tout →
           </Link>
         </div>
         
         {upcomingSessions.length === 0 ? (
           <div className="p-6 sm:p-8 text-center">
-            <p className="text-slate-400 mb-4">Aucun événement à venir</p>
+            <p className={`${subtitleClass} mb-4`}>Aucun événement à venir</p>
             <Button variant="secondary" onClick={() => navigate('/dashboard/sessions')}>
               Voir les sessions
             </Button>
@@ -260,18 +271,18 @@ export default function DashboardHome() {
                     isToday 
                       ? 'bg-cyan-500/10 border-cyan-500/50' 
                       : isThisWeek 
-                        ? 'bg-slate-700/30 border-slate-600/50' 
-                        : 'bg-slate-700/20 border-slate-700/30'
+                        ? theme === 'dark' ? 'bg-slate-700/30 border-slate-600/50' : 'bg-gray-100 border-gray-300'
+                        : theme === 'dark' ? 'bg-slate-700/20 border-slate-700/30' : 'bg-gray-50 border-gray-200'
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-2">
-                        {isToday && <span className="px-2 py-0.5 text-xs bg-cyan-500/20 text-cyan-300 rounded-full border border-cyan-500/30">Aujourd'hui</span>}
-                        {isTomorrow && <span className="px-2 py-0.5 text-xs bg-amber-500/20 text-amber-300 rounded-full border border-amber-500/30">Demain</span>}
-                        <h3 className="font-semibold text-white">{session.name}</h3>
+                        {isToday && <span className="px-2 py-0.5 text-xs bg-cyan-500/20 text-cyan-400 rounded-full border border-cyan-500/30">Aujourd'hui</span>}
+                        {isTomorrow && <span className="px-2 py-0.5 text-xs bg-amber-500/20 text-amber-400 rounded-full border border-amber-500/30">Demain</span>}
+                        <h3 className={`font-semibold ${titleClass}`}>{session.name}</h3>
                       </div>
-                      <p className="text-sm text-slate-400 mt-1">
+                      <p className={`text-sm ${subtitleClass} mt-1`}>
                         📅 {dateLabel}
                         {session.location && ` • 📍 ${session.location}`}
                       </p>
@@ -300,8 +311,8 @@ export default function DashboardHome() {
           <div className="flex items-center gap-4">
             <span className="text-3xl">🤿</span>
             <div>
-              <h3 className="font-semibold text-white group-hover:text-cyan-300 transition-colors">Mes Sessions</h3>
-              <p className="text-sm text-slate-400">Inscriptions aux fosses</p>
+              <h3 className={`font-semibold ${titleClass} group-hover:text-cyan-400 transition-colors`}>Mes Sessions</h3>
+              <p className={`text-sm ${subtitleClass}`}>Inscriptions aux fosses</p>
             </div>
           </div>
         </Link>
@@ -314,8 +325,8 @@ export default function DashboardHome() {
             <div className="flex items-center gap-4">
               <span className="text-3xl">📊</span>
               <div>
-                <h3 className="font-semibold text-white group-hover:text-green-300 transition-colors">Mes Compétences</h3>
-                <p className="text-sm text-slate-400">Suivi de ma progression</p>
+                <h3 className={`font-semibold ${titleClass} group-hover:text-green-400 transition-colors`}>Mes Compétences</h3>
+                <p className={`text-sm ${subtitleClass}`}>Suivi de ma progression</p>
               </div>
             </div>
           </Link>
@@ -329,8 +340,8 @@ export default function DashboardHome() {
             <div className="flex items-center gap-4">
               <span className="text-3xl">✅</span>
               <div>
-                <h3 className="font-semibold text-white group-hover:text-purple-300 transition-colors">Valider Compétences</h3>
-                <p className="text-sm text-slate-400">Validation des élèves</p>
+                <h3 className={`font-semibold ${titleClass} group-hover:text-purple-400 transition-colors`}>Valider Compétences</h3>
+                <p className={`text-sm ${subtitleClass}`}>Validation des élèves</p>
               </div>
             </div>
           </Link>
@@ -343,8 +354,8 @@ export default function DashboardHome() {
           <div className="flex items-center gap-4">
             <span className="text-3xl">👤</span>
             <div>
-              <h3 className="font-semibold text-white group-hover:text-amber-300 transition-colors">Mon Profil</h3>
-              <p className="text-sm text-slate-400">Mes préférences</p>
+              <h3 className={`font-semibold ${titleClass} group-hover:text-amber-400 transition-colors`}>Mon Profil</h3>
+              <p className={`text-sm ${subtitleClass}`}>Mes préférences</p>
             </div>
           </div>
         </Link>

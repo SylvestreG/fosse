@@ -64,13 +64,47 @@ export interface Session {
   description?: string
   summary_token?: string
   optimization_mode: boolean
+  sortie_id?: string
+  dive_number?: number
   created_at: string
   updated_at: string
 }
 
-export interface Questionnaire {
+// ============ SORTIES (Outings) ============
+
+export type SortieType = 'exploration' | 'technique'
+
+export interface Sortie {
+  id: string
+  name: string
+  location: string
+  sortie_type: SortieType
+  days_count: number
+  dives_per_day: number
+  nitrox_compatible: boolean
+  start_date: string
+  end_date: string
+  description?: string
+  summary_token?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface SortieWithDives extends Sortie {
+  dives: Session[]
+}
+
+export interface DiveDirector {
   id: string
   session_id: string
+  questionnaire_id: string
+  created_at: string
+}
+
+export interface Questionnaire {
+  id: string
+  session_id?: string
+  sortie_id?: string
   person_id: string
   is_encadrant: boolean
   wants_regulator: boolean
@@ -79,6 +113,8 @@ export interface Questionnaire {
   wants_stab: boolean
   stab_size?: string
   nitrox_training: boolean
+  nitrox_base_formation: boolean
+  nitrox_confirmed_formation: boolean
   is_directeur_plongee: boolean
   comes_from_issoire: boolean
   has_car: boolean
@@ -91,7 +127,8 @@ export interface Questionnaire {
 
 export interface QuestionnaireDetail {
   id: string
-  session_id: string
+  session_id?: string
+  sortie_id?: string
   person_id: string
   first_name: string
   last_name: string
@@ -103,6 +140,8 @@ export interface QuestionnaireDetail {
   wants_stab: boolean
   stab_size?: string
   nitrox_training: boolean
+  nitrox_base_formation: boolean
+  nitrox_confirmed_formation: boolean
   is_directeur_plongee: boolean
   comes_from_issoire: boolean
   has_car: boolean
@@ -138,7 +177,8 @@ export interface Person {
 export interface QuestionnaireTokenData {
   token: string
   person: Person
-  session_id: string
+  session_id?: string
+  sortie_id?: string
   questionnaire?: Questionnaire
 }
 
@@ -244,6 +284,36 @@ export const sessionsApi = {
   generateMagicLinks: (id: string) => api.post<{ success: boolean; generated_count: number; message: string }>(`/sessions/${id}/generate-links`),
   setDirecteurPlongee: (sessionId: string, questionnaireId: string | null) => 
     api.post(`/sessions/${sessionId}/directeur-plongee`, { questionnaire_id: questionnaireId }),
+  // Dive directors (for sortie dives)
+  getDiveDirectors: (sessionId: string) => api.get<DiveDirector[]>(`/sessions/${sessionId}/dive-directors`),
+  addDiveDirector: (sessionId: string, questionnaireId: string) =>
+    api.post<DiveDirector>(`/sessions/${sessionId}/dive-directors`, { questionnaire_id: questionnaireId }),
+  removeDiveDirector: (sessionId: string, directorId: string) =>
+    api.delete(`/sessions/${sessionId}/dive-directors/${directorId}`),
+}
+
+export const sortiesApi = {
+  create: (data: {
+    name: string
+    location: string
+    sortie_type: SortieType
+    days_count: number
+    dives_per_day: number
+    nitrox_compatible: boolean
+    start_date: string
+    description?: string
+  }) => api.post<SortieWithDives>('/sorties', data),
+  list: () => api.get<Sortie[]>('/sorties'),
+  get: (id: string) => api.get<SortieWithDives>(`/sorties/${id}`),
+  update: (id: string, data: { name?: string; location?: string; description?: string }) =>
+    api.put<Sortie>(`/sorties/${id}`, data),
+  delete: (id: string) => api.delete(`/sorties/${id}`),
+  getQuestionnaires: (id: string) => api.get<QuestionnaireDetail[]>(`/sorties/${id}/questionnaires`),
+  copyAttendees: (sortieId: string, sourceDiveId: string, targetDiveId: string) =>
+    api.post<{ copied_count: number; skipped_count: number }>(`/sorties/${sortieId}/copy-attendees`, {
+      source_dive_id: sourceDiveId,
+      target_dive_id: targetDiveId,
+    }),
 }
 
 export const questionnairesApi = {
@@ -258,6 +328,8 @@ export const questionnairesApi = {
     wants_stab: boolean
     stab_size?: string
     nitrox_training: boolean
+    nitrox_base_formation: boolean
+    nitrox_confirmed_formation: boolean
     comes_from_issoire: boolean
     has_car: boolean
     car_seats?: number
@@ -265,7 +337,8 @@ export const questionnairesApi = {
   }) => api.post<Questionnaire>('/questionnaires/submit', data),
   // Auto-inscription (pour utilisateurs connectés)
   register: (data: {
-    session_id: string
+    session_id?: string
+    sortie_id?: string
     email: string
     first_name: string
     last_name: string
@@ -276,6 +349,8 @@ export const questionnairesApi = {
     wants_stab: boolean
     stab_size?: string
     nitrox_training: boolean
+    nitrox_base_formation: boolean
+    nitrox_confirmed_formation: boolean
     comes_from_issoire: boolean
     has_car: boolean
     car_seats?: number
@@ -292,6 +367,8 @@ export const questionnairesApi = {
     wants_stab: boolean
     stab_size?: string
     nitrox_training: boolean
+    nitrox_base_formation: boolean
+    nitrox_confirmed_formation: boolean
     comes_from_issoire: boolean
     has_car: boolean
     car_seats?: number

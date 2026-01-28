@@ -4,6 +4,8 @@ import ImpersonationBanner from '@/components/ImpersonationBanner'
 import DashboardHome from './DashboardHome'
 import SessionsPage from './SessionsPage'
 import MySessionsPage from './MySessionsPage'
+import SortiesPage from './SortiesPage'
+import SortiePage from './SortiePage'
 import ImportPage from './ImportPage'
 import EmailsPage from './EmailsPage'
 import SessionEmailsPage from './SessionEmailsPage'
@@ -20,16 +22,18 @@ import GroupsPage from './GroupsPage'
 import LevelDocumentsPage from './LevelDocumentsPage'
 import ValidationLogsPage from './ValidationLogsPage'
 import { useAuthStore } from '@/lib/auth'
+import { useThemeStore } from '@/lib/theme'
 
 export default function Dashboard() {
   const { impersonating, isAdmin: storeIsAdmin, canValidateCompetencies } = useAuthStore()
+  const { theme } = useThemeStore()
   // Admin view = admin ET pas en train d'impersonnifier
   const isAdmin = storeIsAdmin && !impersonating
   
   console.log('Dashboard render:', { storeIsAdmin, impersonating: !!impersonating, canValidateCompetencies, isAdmin })
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 ${impersonating ? 'ring-4 ring-red-500 ring-inset' : ''}`}>
+    <div className={`min-h-screen theme-bg-gradient ${impersonating ? 'ring-4 ring-red-500 ring-inset' : ''} ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
       <ImpersonationBanner />
       <div className={impersonating ? 'pt-12' : ''}>
         <Header />
@@ -39,6 +43,10 @@ export default function Dashboard() {
             
             {/* Sessions - différent selon admin ou non */}
             <Route path="/sessions" element={isAdmin ? <SessionsPage /> : <MySessionsPage />} />
+            
+            {/* Sorties - admin seulement */}
+            {isAdmin && <Route path="/sorties" element={<SortiesPage />} />}
+            {isAdmin && <Route path="/sorties/:id" element={<SortiePage />} />}
             
             {/* Summary - admin seulement */}
             {isAdmin && <Route path="/summary/:id" element={<SummaryPage />} />}
