@@ -513,8 +513,8 @@ export default function PalanqueesPage() {
               </div>
             )}
 
-            {/* Indicateur des bouteilles disponibles (seulement si summary accessible) */}
-            {summary && (() => {
+            {/* Indicateur des bouteilles disponibles (seulement si summary accessible et pas une sortie) */}
+            {summary && !session?.sortie_id && (() => {
               // Calcul identique à SummaryPage pour les bouteilles optimisées
               const studentsAirCount = summary.students_count - summary.nitrox_training_count
               const studentsNitroxCount = summary.nitrox_training_count
@@ -591,6 +591,7 @@ export default function PalanqueesPage() {
                     selectedParticipant={selectedParticipant}
                     availableAir={availableAir}
                     availableNitrox={availableNitrox}
+                    isSortie={!!session?.sortie_id}
                     canEdit={canEdit}
                     onCreatePalanquee={handleCreatePalanquee}
                     onDeleteRotation={handleDeleteRotation}
@@ -823,6 +824,7 @@ function RotationCard({
   selectedParticipant,
   availableAir,
   availableNitrox,
+  isSortie,
   canEdit,
   onCreatePalanquee,
   onDeleteRotation,
@@ -840,6 +842,7 @@ function RotationCard({
   selectedParticipant: UnassignedParticipant | null
   availableAir: number
   availableNitrox: number
+  isSortie: boolean
   canEdit: boolean
   onCreatePalanquee: (rotationId: string) => void
   onDeleteRotation: (id: string) => void
@@ -862,7 +865,7 @@ function RotationCard({
 
   return (
     <div className={`bg-slate-800/50 backdrop-blur-xl rounded-lg shadow border ${
-      airExceeded || nitroxExceeded ? 'border-red-500' : 'border-slate-700'
+      !isSortie && (airExceeded || nitroxExceeded) ? 'border-red-500' : 'border-slate-700'
     }`}>
       <div className="p-2 sm:p-3 border-b border-slate-700">
         <div className="flex items-start sm:items-center justify-between gap-2">
@@ -873,7 +876,7 @@ function RotationCard({
                 ({allMembers.length})
               </span>
             </h3>
-            {allMembers.length > 0 && (
+            {allMembers.length > 0 && !isSortie && (
               <div className="flex items-center gap-1 text-xs font-normal">
                 <span className={`px-1 sm:px-1.5 py-0.5 rounded ${
                   airExceeded ? 'bg-red-600 text-white' : 'bg-blue-600/80 text-white'

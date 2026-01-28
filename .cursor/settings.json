@@ -1,0 +1,5 @@
+{
+  "telemetry.telemetryLevel": "off",
+  "cursor.general.enableIndexing": false,
+  "cursor.general.disableIndexing": true
+}

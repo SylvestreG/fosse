@@ -208,6 +208,7 @@ export default function MySessionsPage() {
   const [pastSessionsWithStudents, setPastSessionsWithStudents] = useState<PastSessionWithStudents[]>([])
   const [myPerson, setMyPerson] = useState<Person | null>(null)
   const [myRegistrations, setMyRegistrations] = useState<Map<string, MyRegistration>>(new Map())
+  const [sessionsWithPalanquees, setSessionsWithPalanquees] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [showPastSessions, setShowPastSessions] = useState(false)
@@ -283,21 +284,28 @@ export default function MySessionsPage() {
       
       // Pour chaque sortie où je suis inscrit, charger les plongées (dives)
       const allSortieDives: Session[] = []
+      const pastSortieDives: Session[] = []
       for (const [sortieId] of mySortieRegistrations) {
         try {
           const sortieDetail = await sortiesApi.get(sortieId)
-          allSortieDives.push(...sortieDetail.data.dives)
+          // Séparer les plongées futures et passées
+          const futureDives = sortieDetail.data.dives
+            .filter(d => new Date(d.start_date) >= now)
+            .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+          const pastDives = sortieDetail.data.dives.filter(d => new Date(d.start_date) < now)
+          
+          // Pour les plongées à venir, ne garder que la première de chaque sortie
+          if (futureDives.length > 0) {
+            allSortieDives.push(futureDives[0])
+          }
+          pastSortieDives.push(...pastDives)
         } catch (e) {
           // Ignorer
         }
       }
       
-      // Séparer les plongées futures et passées
-      const futureSortieDives = allSortieDives.filter(d => new Date(d.start_date) >= now)
-      const pastSortieDives = allSortieDives.filter(d => new Date(d.start_date) < now)
-      
       // Combiner et trier toutes les sessions futures
-      const allFutureSessions = [...futureFosseSessions, ...futureSortieDives]
+      const allFutureSessions = [...futureFosseSessions, ...allSortieDives]
         .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
       setSessions(allFutureSessions)
       
@@ -332,6 +340,24 @@ export default function MySessionsPage() {
         }
       }
       setMyRegistrations(registrations)
+
+      // Vérifier quelles sessions ont des palanquées créées
+      const withPalanquees = new Set<string>()
+      for (const [sessionId] of registrations) {
+        try {
+          const palanqueesRes = await palanqueesApi.getSessionPalanquees(sessionId)
+          // Vérifier s'il y a au moins une palanquée avec des membres
+          const hasPalanquees = palanqueesRes.data.rotations.some(r => 
+            r.palanquees.some(p => p.members.length > 0)
+          )
+          if (hasPalanquees) {
+            withPalanquees.add(sessionId)
+          }
+        } catch (e) {
+          // Ignorer - l'utilisateur n'a peut-être pas accès
+        }
+      }
+      setSessionsWithPalanquees(withPalanquees)
 
       // Charger les sessions passées (fosses + plongées de sorties)
       const allPastSessions = [...pastFosseSessions, ...pastSortieDives]
@@ -476,13 +502,19 @@ export default function MySessionsPage() {
                         }`}>
                           ✅ Inscrit {isEncadrant ? '(Encadrant)' : ''}
                         </span>
-                        <Button 
-                          variant="secondary" 
-                          size="sm"
-                          onClick={() => navigate(`/dashboard/palanquees/${session.id}`)}
-                        >
-                          🤿 Palanquées
-                        </Button>
+                        {sessionsWithPalanquees.has(session.id) ? (
+                          <Button 
+                            variant="secondary" 
+                            size="sm"
+                            onClick={() => navigate(`/dashboard/palanquees/${session.id}`)}
+                          >
+                            🤿 Palanquées
+                          </Button>
+                        ) : (
+                          <span className="px-3 py-1.5 text-sm bg-slate-600/30 text-slate-500 rounded-lg cursor-not-allowed">
+                            🤿 Palanquées (non définies)
+                          </span>
+                        )}
                       </>
                     ) : (
                       <span className="inline-flex items-center px-4 py-2 bg-slate-500/20 text-slate-400 rounded-full font-medium border border-slate-500/30">
