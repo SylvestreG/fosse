@@ -285,7 +285,7 @@ export default function MySessionsPage() {
       // Pour chaque sortie où je suis inscrit, charger les plongées (dives)
       const allSortieDives: Session[] = []
       const pastSortieDives: Session[] = []
-      for (const [sortieId] of mySortieRegistrations) {
+      for (const [sortieId, myQuest] of mySortieRegistrations) {
         try {
           const sortieDetail = await sortiesApi.get(sortieId)
           // Séparer les plongées futures et passées
@@ -294,8 +294,24 @@ export default function MySessionsPage() {
             .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
           const pastDives = sortieDetail.data.dives.filter(d => new Date(d.start_date) < now)
           
-          // Pour les plongées à venir, ne garder que la première de chaque sortie
-          if (futureDives.length > 0) {
+          // Vérifier si l'utilisateur est DP pour l'une des plongées
+          let isDP = false
+          for (const dive of futureDives) {
+            try {
+              const dpRes = await sessionsApi.getDiveDirectors(dive.id)
+              if (dpRes.data.some(dp => dp.questionnaire_id === myQuest.id)) {
+                isDP = true
+                break
+              }
+            } catch (e) {
+              // Ignorer
+            }
+          }
+          
+          // Si DP, afficher toutes les plongées à venir, sinon seulement la première
+          if (isDP) {
+            allSortieDives.push(...futureDives)
+          } else if (futureDives.length > 0) {
             allSortieDives.push(futureDives[0])
           }
           pastSortieDives.push(...pastDives)
