@@ -366,15 +366,15 @@ pub async fn get_session_palanquees(
     Extension(auth): Extension<crate::middleware::acl::AuthUser>,
     Path(session_id): Path<Uuid>,
 ) -> Result<Json<SessionPalanqueesResponse>, AppError> {
-    // Vérifier que la session existe
-    let _session = Sessions::find_by_id(session_id)
+    // Vérifier que la session existe et récupérer ses infos
+    let session = Sessions::find_by_id(session_id)
         .one(db.as_ref())
         .await?
         .ok_or_else(|| AppError::NotFound("Session not found".to_string()))?;
 
     // Vérifier les permissions d'accès:
     // - Admin ou a la permission SessionsView -> accès complet
-    // - Sinon, doit être inscrit à cette session
+    // - Sinon, doit être inscrit à cette session (ou à la sortie parente)
     let has_admin_access = auth.has_permission(crate::models::Permission::SessionsView);
     
     if !has_admin_access {
@@ -391,13 +391,24 @@ pub async fn get_session_palanquees(
             .await?;
         
         let is_registered = if let Some(person) = person {
-            // Vérifier s'il a un questionnaire pour cette session
-            Questionnaires::find()
-                .filter(questionnaires::Column::SessionId.eq(session_id))
-                .filter(questionnaires::Column::PersonId.eq(person.id))
-                .one(db.as_ref())
-                .await?
-                .is_some()
+            // Vérifier s'il a un questionnaire pour cette session ou la sortie parente
+            if let Some(sortie_id) = session.sortie_id {
+                // Session fait partie d'une sortie - vérifier l'inscription à la sortie
+                Questionnaires::find()
+                    .filter(questionnaires::Column::SortieId.eq(sortie_id))
+                    .filter(questionnaires::Column::PersonId.eq(person.id))
+                    .one(db.as_ref())
+                    .await?
+                    .is_some()
+            } else {
+                // Session classique (fosse)
+                Questionnaires::find()
+                    .filter(questionnaires::Column::SessionId.eq(session_id))
+                    .filter(questionnaires::Column::PersonId.eq(person.id))
+                    .one(db.as_ref())
+                    .await?
+                    .is_some()
+            }
         } else {
             false
         };
@@ -437,11 +448,20 @@ pub async fn get_session_palanquees(
         });
     }
 
-    // Récupérer tous les questionnaires de la session (soumis ou non)
-    let all_questionnaires = Questionnaires::find()
-        .filter(questionnaires::Column::SessionId.eq(session_id))
-        .all(db.as_ref())
-        .await?;
+    // Récupérer tous les questionnaires (de la session ou de la sortie parente)
+    let all_questionnaires = if let Some(sortie_id) = session.sortie_id {
+        // Session fait partie d'une sortie - récupérer les participants de la sortie
+        Questionnaires::find()
+            .filter(questionnaires::Column::SortieId.eq(sortie_id))
+            .all(db.as_ref())
+            .await?
+    } else {
+        // Session classique (fosse)
+        Questionnaires::find()
+            .filter(questionnaires::Column::SessionId.eq(session_id))
+            .all(db.as_ref())
+            .await?
+    };
 
     let mut unassigned_participants = vec![];
     for q in all_questionnaires {
