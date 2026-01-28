@@ -66,7 +66,7 @@ export default function CompetencesInstructorPage() {
   }
 
   if (loading) {
-    return <div className="text-center py-12">Chargement...</div>
+    return <div className="text-center py-12 theme-text">Chargement...</div>
   }
 
   const studentsForCurrentLevel = getStudentsPreparingLevel(activeTab)
@@ -76,8 +76,8 @@ export default function CompetencesInstructorPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
-          <h1 className="text-xl sm:text-3xl font-bold text-white">🎯 Validation des Compétences</h1>
-          <p className="text-slate-300 mt-1 text-sm sm:text-base">Valider les compétences des élèves</p>
+          <h1 className="text-xl sm:text-3xl font-bold theme-text">🎯 Validation des Compétences</h1>
+          <p className="theme-text-secondary mt-1 text-sm sm:text-base">Valider les compétences des élèves</p>
         </div>
         <div className="flex gap-2">
           <Button

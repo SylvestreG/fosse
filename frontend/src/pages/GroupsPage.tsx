@@ -118,22 +118,22 @@ export default function GroupsPage() {
   })).filter(cat => cat.permissions.length > 0)
 
   if (loading) {
-    return <div className="text-center py-12 text-slate-400">Chargement...</div>
+    return <div className="text-center py-12 theme-text-muted">Chargement...</div>
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">⚙️ Gestion des groupes</h1>
-        <p className="text-slate-300 mt-1">Configurez les permissions pour chaque groupe d'utilisateurs</p>
+        <h1 className="text-3xl font-bold theme-text">⚙️ Gestion des groupes</h1>
+        <p className="theme-text-secondary mt-1">Configurez les permissions pour chaque groupe d'utilisateurs</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Liste des groupes */}
         <div className="lg:col-span-1">
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4">
-            <h2 className="font-semibold text-white mb-4">Groupes</h2>
+          <div className="theme-card p-4 shadow">
+            <h2 className="font-semibold theme-text mb-4">Groupes</h2>
             <div className="space-y-2">
               {groups.map(group => (
                 <button

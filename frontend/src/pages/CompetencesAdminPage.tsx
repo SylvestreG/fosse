@@ -157,7 +157,7 @@ export default function CompetencesAdminPage() {
   }
 
   if (initialLoading) {
-    return <div className="text-center py-12">Chargement...</div>
+    return <div className="text-center py-12 theme-text">Chargement...</div>
   }
 
   const studentsForCurrentLevel = getStudentsPreparingLevel(activeTab)
@@ -167,8 +167,8 @@ export default function CompetencesAdminPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-white">🎯 Gestion des Compétences</h1>
-          <p className="text-slate-300 mt-1">Administration des domaines, modules et acquis</p>
+          <h1 className="text-3xl font-bold theme-text">🎯 Gestion des Compétences</h1>
+          <p className="theme-text-secondary mt-1">Administration des domaines, modules et acquis</p>
         </div>
         <div className="flex gap-2">
           <Button

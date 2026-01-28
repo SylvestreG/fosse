@@ -96,13 +96,13 @@ export default function UsersPage() {
   }
 
   if (loading) {
-    return <div className="text-center py-12">Chargement...</div>
+    return <div className="text-center py-12 theme-text">Chargement...</div>
   }
 
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <h1 className="text-xl sm:text-3xl font-bold text-white">Utilisateurs</h1>
+        <h1 className="text-xl sm:text-3xl font-bold theme-text">Utilisateurs</h1>
         <Button onClick={() => { setEditingPerson(null); setShowModal(true) }} className="text-sm sm:text-base">
           ➕ <span className="hidden sm:inline">Nouvel </span>utilisateur
         </Button>
@@ -115,7 +115,7 @@ export default function UsersPage() {
           placeholder="Rechercher..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-3 sm:px-4 py-2 bg-slate-800/50 backdrop-blur-xl border border-slate-600 rounded-lg text-sm sm:text-base text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+          className="w-full px-3 sm:px-4 py-2 theme-bg-input rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-cyan-500"
         />
         
         <div className="flex flex-wrap gap-2 sm:gap-3">
@@ -123,7 +123,7 @@ export default function UsersPage() {
           <select
             value={filterLevel}
             onChange={(e) => setFilterLevel(e.target.value)}
-            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl text-white"
+            className="theme-select px-3 py-2 rounded-lg text-sm"
           >
             <option value="">🤿 Tous niveaux</option>
             {ALL_LEVELS.map(level => (
@@ -135,7 +135,7 @@ export default function UsersPage() {
           <select
             value={filterPreparingLevel}
             onChange={(e) => setFilterPreparingLevel(e.target.value)}
-            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl text-white"
+            className="theme-select px-3 py-2 rounded-lg text-sm"
           >
             <option value="">🎯 Préparation: tous</option>
             {PREPARING_LEVELS.map(level => (
@@ -147,7 +147,7 @@ export default function UsersPage() {
           <select
             value={filterEncadrant}
             onChange={(e) => setFilterEncadrant(e.target.value)}
-            className="px-3 py-2 border border-slate-600 rounded-lg text-sm bg-slate-800/50 backdrop-blur-xl text-white"
+            className="theme-select px-3 py-2 rounded-lg text-sm"
           >
             <option value="">👥 Tous</option>
             <option value="encadrant">👨‍🏫 Encadrants</option>
@@ -170,7 +170,7 @@ export default function UsersPage() {
         </div>
 
         {/* Compteur de résultats */}
-        <p className="text-sm text-slate-400">
+        <p className="text-sm theme-text-muted">
           {filteredPeople.length} utilisateur{filteredPeople.length > 1 ? 's' : ''} 
           {filteredPeople.length !== people.length && ` sur ${people.length}`}
         </p>
@@ -178,17 +178,17 @@ export default function UsersPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {filteredPeople.map((person) => (
-          <div key={person.id} className="bg-slate-800/50 backdrop-blur-xl p-3 sm:p-4 rounded-lg shadow">
+          <div key={person.id} className="theme-card p-3 sm:p-4 shadow">
             <div className="flex justify-between items-start mb-2 gap-2">
-              <h3 className="text-sm sm:text-lg font-semibold text-white">{person.first_name} {person.last_name}</h3>
+              <h3 className="text-sm sm:text-lg font-semibold theme-text">{person.first_name} {person.last_name}</h3>
               {person.is_instructor && (
                 <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full font-semibold flex-shrink-0">
                   👨‍🏫<span className="hidden sm:inline"> Encadrant</span>
                 </span>
               )}
             </div>
-            <p className="text-xs sm:text-sm text-slate-300 truncate">{person.email}</p>
-            {person.phone && <p className="text-xs sm:text-sm text-slate-300">📞 {person.phone}</p>}
+            <p className="text-xs sm:text-sm theme-text-secondary truncate">{person.email}</p>
+            {person.phone && <p className="text-xs sm:text-sm theme-text-secondary">📞 {person.phone}</p>}
             
             {person.diving_level_display && (
               <div className="mt-2 space-y-1">
@@ -234,7 +234,7 @@ export default function UsersPage() {
       </div>
 
       {filteredPeople.length === 0 && (
-        <div className="text-center py-12 text-slate-400">
+        <div className="text-center py-12 theme-text-muted">
           {people.length === 0 ? 'Aucun utilisateur trouvé' : 'Aucun utilisateur ne correspond aux filtres'}
         </div>
       )}
@@ -275,7 +275,7 @@ export default function UsersPage() {
           title={confirmAction.type === 'delete' ? '🗑️ Supprimer l\'utilisateur' : '👤 Impersonnifier'}
         >
           <div className="space-y-4">
-            <p className="text-slate-200">
+            <p className="theme-text-secondary">
               {confirmAction.type === 'delete' ? (
                 <>Êtes-vous sûr de vouloir supprimer <strong>{confirmAction.person.first_name} {confirmAction.person.last_name}</strong> ?</>
               ) : (
@@ -283,11 +283,11 @@ export default function UsersPage() {
               )}
             </p>
             {confirmAction.type === 'impersonate' && (
-              <p className="text-sm text-slate-400">
+              <p className="text-sm theme-text-muted">
                 Vous verrez l'application comme cet utilisateur.
               </p>
             )}
-            <div className="flex justify-end gap-2 pt-4 border-t">
+            <div className="flex justify-end gap-2 pt-4 border-t theme-border">
               <Button variant="secondary" onClick={() => setConfirmAction(null)}>
                 Annuler
               </Button>
@@ -349,10 +349,10 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-slate-800/50 backdrop-blur-xl border-b px-6 py-4 flex justify-between items-center">
-          <h2 className="text-2xl font-bold">{person ? 'Modifier' : 'Nouvel'} utilisateur</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-slate-300 text-2xl">×</button>
+      <div className="theme-modal-bg backdrop-blur-xl rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border">
+        <div className="sticky top-0 theme-modal-bg backdrop-blur-xl border-b theme-border px-6 py-4 flex justify-between items-center">
+          <h2 className="text-2xl font-bold theme-text">{person ? 'Modifier' : 'Nouvel'} utilisateur</h2>
+          <button onClick={onClose} className="theme-text-muted hover:theme-text text-2xl">×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -360,52 +360,52 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Prénom *</label>
-              <input type="text" required value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+              <label className="block text-sm font-medium theme-text-secondary mb-1">Prénom *</label>
+              <input type="text" required value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} className="w-full px-3 py-2 theme-bg-input rounded focus:outline-none focus:ring-2 focus:ring-cyan-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Nom *</label>
-              <input type="text" required value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+              <label className="block text-sm font-medium theme-text-secondary mb-1">Nom *</label>
+              <input type="text" required value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} className="w-full px-3 py-2 theme-bg-input rounded focus:outline-none focus:ring-2 focus:ring-cyan-500" />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Email *</label>
-            <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+            <label className="block text-sm font-medium theme-text-secondary mb-1">Email *</label>
+            <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-3 py-2 theme-bg-input rounded focus:outline-none focus:ring-2 focus:ring-cyan-500" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Téléphone</label>
-            <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+            <label className="block text-sm font-medium theme-text-secondary mb-1">Téléphone</label>
+            <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-3 py-2 theme-bg-input rounded focus:outline-none focus:ring-2 focus:ring-cyan-500" />
           </div>
 
-          <div className="border-t border-slate-700 pt-4">
-            <h3 className="font-semibold mb-3 text-white">Préférences par défaut</h3>
+          <div className="border-t theme-border pt-4">
+            <h3 className="font-semibold mb-3 theme-text">Préférences par défaut</h3>
             
             <div className="grid grid-cols-2 gap-3">
-              <label className="flex items-center space-x-2 text-slate-300">
+              <label className="flex items-center space-x-2 theme-text-secondary">
                 <input type="checkbox" checked={formData.default_wants_regulator} onChange={(e) => setFormData({ ...formData, default_wants_regulator: e.target.checked })} className="w-4 h-4 accent-cyan-500" />
                 <span>Détendeur</span>
               </label>
               {isInstructor && (
                 <>
-                  <label className="flex items-center space-x-2 text-slate-300">
+                  <label className="flex items-center space-x-2 theme-text-secondary">
                     <input type="checkbox" checked={formData.default_wants_nitrox} onChange={(e) => setFormData({ ...formData, default_wants_nitrox: e.target.checked })} className="w-4 h-4 accent-cyan-500" />
                     <span>Nitrox</span>
                   </label>
-                  <label className="flex items-center space-x-2 text-slate-300">
+                  <label className="flex items-center space-x-2 theme-text-secondary">
                     <input type="checkbox" checked={formData.default_wants_2nd_reg} onChange={(e) => setFormData({ ...formData, default_wants_2nd_reg: e.target.checked })} className="w-4 h-4 accent-cyan-500" />
                     <span>2ème détendeur</span>
                   </label>
                 </>
               )}
-              <label className="flex items-center space-x-2 text-slate-300">
+              <label className="flex items-center space-x-2 theme-text-secondary">
                 <input type="checkbox" checked={formData.default_wants_stab} onChange={(e) => setFormData({ ...formData, default_wants_stab: e.target.checked })} className="w-4 h-4 accent-cyan-500" />
                 <span>Stab</span>
               </label>
               {formData.default_wants_stab && (
                 <div>
-                  <select value={formData.default_stab_size} onChange={(e) => setFormData({ ...formData, default_stab_size: e.target.value })} className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                  <select value={formData.default_stab_size} onChange={(e) => setFormData({ ...formData, default_stab_size: e.target.value })} className="w-full px-3 py-2 theme-select rounded focus:outline-none focus:ring-2 focus:ring-cyan-500">
                     <option value="XS">XS</option>
                     <option value="S">S</option>
                     <option value="M">M</option>
@@ -417,7 +417,7 @@ function UserModal({ person, onClose, onSuccess }: UserModalProps) {
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
+          <div className="flex justify-end space-x-3 pt-4 border-t theme-border">
             <Button type="button" variant="secondary" onClick={onClose}>Annuler</Button>
             <Button type="submit" disabled={loading}>{loading ? 'En cours...' : person ? 'Modifier' : 'Créer'}</Button>
           </div>

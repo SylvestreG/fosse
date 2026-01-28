@@ -140,20 +140,20 @@ Cordialement,`
   }
 
   if (loading) {
-    return <div className="text-center py-12">Chargement...</div>
+    return <div className="text-center py-12 theme-text">Chargement...</div>
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">📧 Emails</h1>
-        <p className="text-slate-300 mt-1">Sélectionnez une fosse et copiez l'email à envoyer</p>
+        <h1 className="text-2xl font-bold theme-text">📧 Emails</h1>
+        <p className="theme-text-secondary mt-1">Sélectionnez une fosse et copiez l'email à envoyer</p>
       </div>
 
       {/* Sélecteur de session */}
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-        <label className="block text-sm font-medium text-slate-200 mb-2">
+      <div className="theme-card p-6 shadow">
+        <label className="block text-sm font-medium theme-text-secondary mb-2">
           🏊 Sélectionner une fosse
         </label>
         <select
@@ -162,7 +162,7 @@ Cordialement,`
             const session = sessions.find(s => s.id === e.target.value)
             setSelectedSession(session || null)
           }}
-          className="w-full px-4 py-3 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+          className="w-full px-4 py-3 theme-select rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
         >
           <option value="">-- Choisir une fosse --</option>
           {sessions.map(session => {
