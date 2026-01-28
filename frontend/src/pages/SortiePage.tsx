@@ -5,6 +5,7 @@ import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import Table from '@/components/Table'
 import Toast from '@/components/Toast'
+import AddSortieParticipantModal from '@/components/AddSortieParticipantModal'
 
 export default function SortiePage() {
   const { id } = useParams<{ id: string }>()
@@ -13,6 +14,7 @@ export default function SortiePage() {
   const [questionnaires, setQuestionnaires] = useState<QuestionnaireDetail[]>([])
   const [loading, setLoading] = useState(true)
   const [showCopyModal, setShowCopyModal] = useState(false)
+  const [showAddParticipantModal, setShowAddParticipantModal] = useState(false)
   const [copySource, setCopySource] = useState<string>('')
   const [copyTarget, setCopyTarget] = useState<string>('')
   const [copying, setCopying] = useState(false)
@@ -224,11 +226,21 @@ export default function SortiePage() {
 
       {/* Participants */}
       <div className="theme-card p-6 rounded-lg">
-        <h2 className="text-lg font-semibold theme-text mb-4">
-          Participants inscrits ({questionnaires.length})
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold theme-text">
+            Participants inscrits ({questionnaires.length})
+          </h2>
+          <Button size="sm" onClick={() => setShowAddParticipantModal(true)}>
+            + Ajouter un participant
+          </Button>
+        </div>
         {questionnaires.length === 0 ? (
-          <p className="theme-text-secondary text-center py-4">Aucun participant inscrit</p>
+          <div className="text-center py-8">
+            <p className="theme-text-secondary mb-4">Aucun participant inscrit</p>
+            <Button onClick={() => setShowAddParticipantModal(true)}>
+              Ajouter le premier participant
+            </Button>
+          </div>
         ) : (
           <Table data={questionnaires} columns={participantsColumns} />
         )}
@@ -294,6 +306,18 @@ export default function SortiePage() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal ajout participant */}
+      {showAddParticipantModal && (
+        <AddSortieParticipantModal
+          sortieId={id!}
+          sortieName={sortie.name}
+          sortieType={sortie.sortie_type as 'exploration' | 'technique'}
+          nitroxCompatible={sortie.nitrox_compatible}
+          onClose={() => setShowAddParticipantModal(false)}
+          onSuccess={() => loadQuestionnaires()}
+        />
+      )}
 
       {toast && (
         <Toast
