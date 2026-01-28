@@ -15,33 +15,33 @@ interface TableProps<T extends object> {
 export default function Table<T extends object>({ data, columns, emptyMessage = 'Aucune donnée' }: TableProps<T>) {
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-slate-700">
-        <thead className="bg-slate-700/30">
+      <table className="min-w-full divide-y theme-border">
+        <thead className="bg-slate-700/30 dark:bg-slate-700/30 light:bg-gray-100">
           <tr>
             {columns.map((column) => (
               <th
                 key={String(column.key)}
-                className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-xs font-medium theme-text-muted uppercase tracking-wider"
               >
                 {column.label}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="bg-slate-800/50 divide-y divide-slate-700/50">
+        <tbody className="theme-bg-card divide-y theme-border">
           {data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-6 py-4 text-center text-slate-400">
+              <td colSpan={columns.length} className="px-6 py-4 text-center theme-text-muted">
                 {emptyMessage}
               </td>
             </tr>
           ) : (
             data.map((row, rowIndex) => (
-              <tr key={rowIndex} className="hover:bg-slate-700/30">
+              <tr key={rowIndex} className="theme-hover">
                 {columns.map((column) => {
                   const value = column.key in row ? (row as any)[column.key] : null
                   return (
-                    <td key={String(column.key)} className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                    <td key={String(column.key)} className="px-6 py-4 whitespace-nowrap text-sm theme-text">
                       {column.render ? column.render(value, row) : value}
                     </td>
                   )

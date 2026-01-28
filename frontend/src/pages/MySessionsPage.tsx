@@ -49,38 +49,38 @@ function RegistrationDetails({
   }
 
   return (
-    <div className="mt-4 p-4 bg-slate-700/30 rounded-lg border border-slate-600">
-      <h3 className="text-sm font-medium text-slate-300 mb-4">Mes préférences</h3>
+    <div className="mt-4 p-4 theme-card">
+      <h3 className="text-sm font-medium theme-text-secondary mb-4">Mes préférences</h3>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {/* Matériel */}
         <div className="space-y-3">
-          <p className="text-xs text-slate-500 mb-2">🎒 Matériel</p>
+          <p className="text-xs theme-text-dimmed mb-2">🎒 Matériel</p>
           
-          <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
+          <label className="flex items-center gap-2 cursor-pointer theme-hover p-1.5 rounded -ml-1.5">
             <input
               type="checkbox"
               checked={formData.wants_regulator}
               onChange={e => setFormData({ ...formData, wants_regulator: e.target.checked })}
               className="w-4 h-4 rounded accent-cyan-500"
             />
-            <span className="text-sm text-slate-300">Détendeur</span>
+            <span className="text-sm theme-text-secondary">Détendeur</span>
           </label>
 
           <div>
-            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
+            <label className="flex items-center gap-2 cursor-pointer theme-hover p-1.5 rounded -ml-1.5">
               <input
                 type="checkbox"
                 checked={formData.wants_stab}
                 onChange={e => setFormData({ ...formData, wants_stab: e.target.checked })}
                 className="w-4 h-4 rounded accent-cyan-500"
               />
-              <span className="text-sm text-slate-300">Stab</span>
+              <span className="text-sm theme-text-secondary">Stab</span>
               {formData.wants_stab && (
                 <select
                   value={formData.stab_size}
                   onChange={e => setFormData({ ...formData, stab_size: e.target.value })}
-                  className="ml-2 px-2 py-0.5 bg-slate-600 border border-slate-500 rounded text-xs"
+                  className="ml-2 px-2 py-0.5 theme-select text-xs"
                   onClick={e => e.stopPropagation()}
                 >
                   <option value="XS">XS</option>
@@ -95,24 +95,24 @@ function RegistrationDetails({
 
           {isEncadrant && (
             <>
-              <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
+              <label className="flex items-center gap-2 cursor-pointer theme-hover p-1.5 rounded -ml-1.5">
                 <input
                   type="checkbox"
                   checked={formData.wants_nitrox}
                   onChange={e => setFormData({ ...formData, wants_nitrox: e.target.checked })}
                   className="w-4 h-4 rounded accent-cyan-500"
                 />
-                <span className="text-sm text-slate-300">Nitrox</span>
+                <span className="text-sm theme-text-secondary">Nitrox</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
+              <label className="flex items-center gap-2 cursor-pointer theme-hover p-1.5 rounded -ml-1.5">
                 <input
                   type="checkbox"
                   checked={formData.wants_2nd_reg}
                   onChange={e => setFormData({ ...formData, wants_2nd_reg: e.target.checked })}
                   className="w-4 h-4 rounded accent-cyan-500"
                 />
-                <span className="text-sm text-slate-300">2ème détendeur</span>
+                <span className="text-sm theme-text-secondary">2ème détendeur</span>
               </label>
             </>
           )}
@@ -120,17 +120,17 @@ function RegistrationDetails({
           {/* Afficher formation nitrox si active (lecture seule) */}
           {!isEncadrant && registration.nitrox_training && (
             <div className="flex items-center gap-2 p-1.5 -ml-1.5">
-              <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded">🎓 Formation Nitrox</span>
+              <span className="text-xs theme-badge-warning px-2 py-1 rounded">🎓 Formation Nitrox</span>
             </div>
           )}
         </div>
 
         {/* Transport */}
         <div className="space-y-3">
-          <p className="text-xs text-slate-500 mb-2">🚗 Transport</p>
+          <p className="text-xs theme-text-dimmed mb-2">🚗 Transport</p>
           
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
+            <label className="flex items-center gap-2 cursor-pointer theme-hover p-1.5 rounded -ml-1.5">
               <input
                 type="radio"
                 name={`transport-${registration.id}`}
@@ -138,9 +138,9 @@ function RegistrationDetails({
                 onChange={() => setFormData({ ...formData, comes_from_issoire: true })}
                 className="w-4 h-4 accent-cyan-500"
               />
-              <span className="text-sm text-slate-300">📍 Départ Issoire</span>
+              <span className="text-sm theme-text-secondary">📍 Départ Issoire</span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
+            <label className="flex items-center gap-2 cursor-pointer theme-hover p-1.5 rounded -ml-1.5">
               <input
                 type="radio"
                 name={`transport-${registration.id}`}
@@ -148,19 +148,19 @@ function RegistrationDetails({
                 onChange={() => setFormData({ ...formData, comes_from_issoire: false })}
                 className="w-4 h-4 accent-cyan-500"
               />
-              <span className="text-sm text-slate-300">📍 Départ Clermont</span>
+              <span className="text-sm theme-text-secondary">📍 Départ Clermont</span>
             </label>
           </div>
 
           <div>
-            <label className="flex items-center gap-2 cursor-pointer hover:bg-slate-600/30 p-1.5 rounded -ml-1.5">
+            <label className="flex items-center gap-2 cursor-pointer theme-hover p-1.5 rounded -ml-1.5">
               <input
                 type="checkbox"
                 checked={formData.has_car}
                 onChange={e => setFormData({ ...formData, has_car: e.target.checked, car_seats: e.target.checked ? 4 : 0 })}
                 className="w-4 h-4 rounded accent-cyan-500"
               />
-              <span className="text-sm text-slate-300">🚗 J'ai une voiture</span>
+              <span className="text-sm theme-text-secondary">🚗 J'ai une voiture</span>
               {formData.has_car && (
                 <span className="flex items-center gap-1 ml-2">
                   <input
@@ -170,9 +170,9 @@ function RegistrationDetails({
                     value={formData.car_seats}
                     onChange={e => setFormData({ ...formData, car_seats: parseInt(e.target.value) || 0 })}
                     onClick={e => e.stopPropagation()}
-                    className="w-12 px-1 py-0.5 bg-slate-600 border border-slate-500 rounded text-xs text-center"
+                    className="w-12 px-1 py-0.5 theme-bg-input rounded text-xs text-center"
                   />
-                  <span className="text-xs text-slate-400">places</span>
+                  <span className="text-xs theme-text-muted">places</span>
                 </span>
               )}
             </label>
@@ -181,7 +181,7 @@ function RegistrationDetails({
       </div>
 
       {/* Bouton de validation */}
-      <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-600">
+      <div className="flex justify-between items-center mt-4 pt-3 border-t theme-border">
         {isSubmitted ? (
           <span className="text-xs text-green-400">✅ Réponse validée</span>
         ) : (
@@ -479,13 +479,13 @@ export default function MySessionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white">📅 Plongées à venir</h1>
-        <p className="text-slate-300 mt-1">Consultez vos prochaines fosses et sorties</p>
+        <h1 className="text-3xl font-bold theme-text">📅 Plongées à venir</h1>
+        <p className="theme-text-secondary mt-1">Consultez vos prochaines fosses et sorties</p>
       </div>
 
       {sessions.length === 0 ? (
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-12 text-center">
-          <p className="text-slate-400 text-lg">Aucune plongée à venir pour le moment.</p>
+        <div className="theme-card shadow p-12 text-center">
+          <p className="theme-text-muted text-lg">Aucune plongée à venir pour le moment.</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -506,7 +506,7 @@ export default function MySessionsPage() {
             return (
               <div 
                 key={session.id} 
-                className={`bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 border-l-4 ${
+                className={`theme-card shadow p-6 border-l-4 ${
                   isSortieDive 
                     ? 'border-purple-500' 
                     : isRegistered ? 'border-green-500' : 'border-blue-500'
@@ -515,15 +515,15 @@ export default function MySessionsPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     {isSortieDive && sortie && (
-                      <p className="text-purple-400 text-sm font-medium mb-1">
+                      <p className="text-purple-500 text-sm font-medium mb-1">
                         🏝️ {sortie.name}
                       </p>
                     )}
-                    <h2 className="text-xl font-semibold text-white">{session.name}</h2>
-                    <p className="text-slate-300 mt-1">📍 {session.location || 'Lieu non précisé'}</p>
-                    <p className="text-slate-300">📆 {formattedDate}</p>
+                    <h2 className="text-xl font-semibold theme-text">{session.name}</h2>
+                    <p className="theme-text-secondary mt-1">📍 {session.location || 'Lieu non précisé'}</p>
+                    <p className="theme-text-secondary">📆 {formattedDate}</p>
                     {session.description && (
-                      <p className="text-slate-400 mt-2 text-sm">{session.description}</p>
+                      <p className="theme-text-muted mt-2 text-sm">{session.description}</p>
                     )}
                   </div>
                   <div className="flex flex-col items-end gap-2">
@@ -531,8 +531,8 @@ export default function MySessionsPage() {
                       <>
                         <span className={`inline-flex items-center px-4 py-2 rounded-full font-medium border ${
                           isSortieDive 
-                            ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
-                            : 'bg-green-500/20 text-green-400 border-green-500/30'
+                            ? 'theme-badge-purple' 
+                            : 'theme-badge-success'
                         }`}>
                           ✅ Inscrit {isEncadrant ? '(Encadrant)' : ''}
                         </span>
@@ -545,13 +545,13 @@ export default function MySessionsPage() {
                             🤿 Palanquées {!sessionsWithPalanquees.has(session.id) && sessionsWhereDP.has(session.id) ? '(à définir)' : ''}
                           </Button>
                         ) : (
-                          <span className="px-3 py-1.5 text-sm bg-slate-600/30 text-slate-500 rounded-lg cursor-not-allowed">
+                          <span className="px-3 py-1.5 text-sm theme-badge rounded-lg cursor-not-allowed">
                             🤿 Palanquées (non définies)
                           </span>
                         )}
                       </>
                     ) : (
-                      <span className="inline-flex items-center px-4 py-2 bg-slate-500/20 text-slate-400 rounded-full font-medium border border-slate-500/30">
+                      <span className="inline-flex items-center px-4 py-2 theme-badge rounded-full font-medium border">
                         ❌ Non inscrit
                       </span>
                     )}

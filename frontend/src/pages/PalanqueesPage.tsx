@@ -358,16 +358,16 @@ export default function PalanqueesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-white text-xl">Chargement...</div>
+      <div className="min-h-screen theme-bg-gradient flex items-center justify-center">
+        <div className="theme-text text-xl">Chargement...</div>
       </div>
     )
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
-        <div className="text-red-400 text-xl">{error || 'Données non disponibles'}</div>
+      <div className="min-h-screen theme-bg-gradient p-8">
+        <div className="text-red-500 text-xl">{error || 'Données non disponibles'}</div>
       </div>
     )
   }
@@ -375,30 +375,30 @@ export default function PalanqueesPage() {
   const grouped = groupParticipants(data.unassigned_participants)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-4 sm:py-8">
+    <div className="min-h-screen theme-bg-gradient py-4 sm:py-8">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
         
         {/* Header */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 sm:p-6 border border-slate-700">
+        <div className="theme-card p-4 sm:p-6 shadow">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">🤿 Palanquées</h1>
-              <p className="text-slate-300 text-sm sm:text-base">
+              <h1 className="text-xl sm:text-3xl font-bold theme-text mb-1 sm:mb-2">🤿 Palanquées</h1>
+              <p className="theme-text-secondary text-sm sm:text-base">
                 {session?.name}
                 {canEdit ? (
                   <>
-                    <span className="text-slate-400 hidden sm:inline"> — Glissez-déposez les participants</span>
-                    <span className="text-cyan-400 sm:hidden"> — Touchez pour sélectionner</span>
+                    <span className="theme-text-muted hidden sm:inline"> — Glissez-déposez les participants</span>
+                    <span className="text-cyan-500 sm:hidden"> — Touchez pour sélectionner</span>
                   </>
                 ) : (
-                  <span className="text-yellow-400"> — Lecture seule</span>
+                  <span className="text-yellow-500"> — Lecture seule</span>
                 )}
               </p>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 to={session?.sortie_id ? `/dashboard/sorties/${session.sortie_id}` : `/dashboard/sessions`}
-                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors text-sm sm:text-base"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 theme-btn-secondary rounded-lg transition-colors text-sm sm:text-base"
               >
                 ← <span className="hidden sm:inline">Retour</span>
               </Link>

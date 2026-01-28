@@ -176,7 +176,7 @@ export default function SortiePage() {
             {dps.length < 4 && (
               <button
                 onClick={() => setShowDPModal(dive.id)}
-                className="px-2 py-0.5 text-xs bg-slate-600 hover:bg-slate-500 rounded"
+                className="px-2 py-0.5 text-xs theme-btn-secondary rounded"
                 title="Ajouter un DP"
               >
                 + DP
@@ -380,7 +380,7 @@ export default function SortiePage() {
                   <button
                     key={q.id}
                     onClick={() => handleAddDP(showDPModal, q.id)}
-                    className="w-full text-left px-4 py-2 rounded hover:bg-slate-600/50 theme-text"
+                    className="w-full text-left px-4 py-2 rounded theme-hover theme-text"
                   >
                     {q.first_name} {q.last_name}
                     <span className="text-sm theme-text-secondary ml-2">({q.email})</span>
