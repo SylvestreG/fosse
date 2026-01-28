@@ -31,9 +31,6 @@ export default function AddSortieParticipantModal({
     is_encadrant: false,
     nitrox_base_formation: false,
     nitrox_confirmed_formation: false,
-    comes_from_issoire: true,
-    has_car: false,
-    car_seats: 0,
   })
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -91,9 +88,8 @@ export default function AddSortieParticipantModal({
         nitrox_training: false,
         nitrox_base_formation: formData.nitrox_base_formation,
         nitrox_confirmed_formation: formData.nitrox_confirmed_formation,
-        comes_from_issoire: formData.comes_from_issoire,
-        has_car: formData.has_car,
-        car_seats: formData.has_car ? formData.car_seats : undefined,
+        comes_from_issoire: false,
+        has_car: false,
       })
 
       setToast({ message: 'Participant ajouté !', type: 'success' })
@@ -132,7 +128,7 @@ export default function AddSortieParticipantModal({
             </button>
             <button 
               type="button" 
-              onClick={() => { setMode('create'); setSelectedPerson(null); setFormData({ ...formData, first_name: '', last_name: '', email: '' }) }} 
+              onClick={() => { setMode('create'); setSelectedPerson(null); setFormData({ ...formData, first_name: '', last_name: '', email: '', is_encadrant: false }) }} 
               className={`px-4 py-2 rounded ${mode === 'create' ? 'bg-cyan-600 text-white' : 'bg-slate-700 text-slate-300'}`}
             >
               Créer un nouvel utilisateur
@@ -171,6 +167,7 @@ export default function AddSortieParticipantModal({
                     <div className="flex flex-wrap gap-1">
                       {person.is_instructor && <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded">Encadrant</span>}
                       {person.diving_level && <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">{person.diving_level}</span>}
+                      {person.preparing_level && <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded">Prép. {person.preparing_level}</span>}
                     </div>
                   </div>
                 </div>
@@ -181,9 +178,18 @@ export default function AddSortieParticipantModal({
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {selectedPerson && (
               <div className="bg-slate-700/30 p-4 rounded-lg">
-                <p className="text-sm text-slate-400">Utilisateur sélectionné :</p>
-                <p className="text-lg font-semibold text-white">{selectedPerson.first_name} {selectedPerson.last_name}</p>
-                <p className="text-sm text-slate-300">{selectedPerson.email}</p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-sm text-slate-400">Utilisateur sélectionné :</p>
+                    <p className="text-lg font-semibold text-white">{selectedPerson.first_name} {selectedPerson.last_name}</p>
+                    <p className="text-sm text-slate-300">{selectedPerson.email}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedPerson.is_instructor && <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded">Encadrant</span>}
+                    {selectedPerson.diving_level && <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">{selectedPerson.diving_level}</span>}
+                    {selectedPerson.preparing_level && <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded">Prép. {selectedPerson.preparing_level}</span>}
+                  </div>
+                </div>
                 <button 
                   type="button" 
                   onClick={() => setSelectedPerson(null)} 
@@ -242,96 +248,35 @@ export default function AddSortieParticipantModal({
               </>
             )}
 
-            <div className="border-t border-slate-600 pt-4">
-              <h3 className="text-lg font-medium text-white mb-4">Informations pour la sortie</h3>
-              
-              <div className="space-y-4">
+            {showNitroxOptions && (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 space-y-3">
+                <p className="text-sm font-medium text-green-300">Formation Nitrox</p>
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    id="is_encadrant"
-                    checked={formData.is_encadrant}
-                    onChange={e => setFormData({ ...formData, is_encadrant: e.target.checked })}
+                    id="nitrox_base"
+                    checked={formData.nitrox_base_formation}
+                    onChange={e => setFormData({ ...formData, nitrox_base_formation: e.target.checked })}
                     className="rounded"
                   />
-                  <label htmlFor="is_encadrant" className="text-sm text-white">
-                    Encadrant
+                  <label htmlFor="nitrox_base" className="text-sm text-white">
+                    Formation Nitrox Base (pour N1+)
                   </label>
                 </div>
-
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    id="comes_from_issoire"
-                    checked={formData.comes_from_issoire}
-                    onChange={e => setFormData({ ...formData, comes_from_issoire: e.target.checked })}
+                    id="nitrox_confirmed"
+                    checked={formData.nitrox_confirmed_formation}
+                    onChange={e => setFormData({ ...formData, nitrox_confirmed_formation: e.target.checked })}
                     className="rounded"
                   />
-                  <label htmlFor="comes_from_issoire" className="text-sm text-white">
-                    Vient d'Issoire
+                  <label htmlFor="nitrox_confirmed" className="text-sm text-white">
+                    Formation Nitrox Confirmé (pour N2+)
                   </label>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="has_car"
-                    checked={formData.has_car}
-                    onChange={e => setFormData({ ...formData, has_car: e.target.checked })}
-                    className="rounded"
-                  />
-                  <label htmlFor="has_car" className="text-sm text-white">
-                    Dispose d'une voiture
-                  </label>
-                </div>
-
-                {formData.has_car && (
-                  <div className="ml-6">
-                    <label className="block text-sm font-medium text-slate-200 mb-2">
-                      Nombre de places disponibles
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="8"
-                      value={formData.car_seats}
-                      onChange={(e) => setFormData({ ...formData, car_seats: parseInt(e.target.value) || 0 })}
-                      className="w-24 px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white"
-                    />
-                  </div>
-                )}
-
-                {showNitroxOptions && (
-                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 space-y-3">
-                    <p className="text-sm font-medium text-green-300">Formation Nitrox</p>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="nitrox_base"
-                        checked={formData.nitrox_base_formation}
-                        onChange={e => setFormData({ ...formData, nitrox_base_formation: e.target.checked })}
-                        className="rounded"
-                      />
-                      <label htmlFor="nitrox_base" className="text-sm text-white">
-                        Formation Nitrox Base (pour N1+)
-                      </label>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="nitrox_confirmed"
-                        checked={formData.nitrox_confirmed_formation}
-                        onChange={e => setFormData({ ...formData, nitrox_confirmed_formation: e.target.checked })}
-                        className="rounded"
-                      />
-                      <label htmlFor="nitrox_confirmed" className="text-sm text-white">
-                        Formation Nitrox Confirmé (pour N2+)
-                      </label>
-                    </div>
-                  </div>
-                )}
               </div>
-            </div>
+            )}
 
             <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-600">
               <Button
