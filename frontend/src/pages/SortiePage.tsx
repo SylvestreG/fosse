@@ -89,17 +89,17 @@ export default function SortiePage() {
   }
 
   const divesColumns = [
-    { key: 'dive_number', label: '#', render: (dive: Session) => dive.dive_number },
+    { key: 'dive_number', label: '#', render: (_: any, dive: Session) => dive.dive_number },
     { key: 'name', label: 'Nom' },
     { 
-      key: 'date', 
+      key: 'start_date', 
       label: 'Date',
-      render: (dive: Session) => new Date(dive.start_date).toLocaleDateString('fr-FR')
+      render: (_: any, dive: Session) => new Date(dive.start_date).toLocaleDateString('fr-FR')
     },
     {
       key: 'actions',
       label: 'Actions',
-      render: (dive: Session) => (
+      render: (_: any, dive: Session) => (
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -116,13 +116,13 @@ export default function SortiePage() {
     { 
       key: 'name', 
       label: 'Nom',
-      render: (q: QuestionnaireDetail) => `${q.first_name} ${q.last_name}`
+      render: (_: any, q: QuestionnaireDetail) => `${q.first_name} ${q.last_name}`
     },
     { key: 'email', label: 'Email' },
     {
       key: 'status',
       label: 'Statut',
-      render: (q: QuestionnaireDetail) => (
+      render: (_: any, q: QuestionnaireDetail) => (
         <span className={`px-2 py-1 rounded text-xs ${
           q.submitted_at ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'
         }`}>
@@ -133,7 +133,7 @@ export default function SortiePage() {
     {
       key: 'role',
       label: 'Rôle',
-      render: (q: QuestionnaireDetail) => (
+      render: (_: any, q: QuestionnaireDetail) => (
         <span className={q.is_encadrant ? 'text-blue-300' : 'theme-text-secondary'}>
           {q.is_encadrant ? 'Encadrant' : 'Plongeur'}
         </span>
@@ -142,7 +142,7 @@ export default function SortiePage() {
     {
       key: 'nitrox',
       label: 'Formation Nitrox',
-      render: (q: QuestionnaireDetail) => {
+      render: (_: any, q: QuestionnaireDetail) => {
         if (!sortie.nitrox_compatible || sortie.sortie_type !== 'technique') return '-'
         const formations = []
         if (q.nitrox_base_formation) formations.push('Base')

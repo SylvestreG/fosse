@@ -120,9 +120,9 @@ export default function SortiesPage() {
   const columns = [
     { key: 'name', label: 'Nom' },
     { 
-      key: 'type_info', 
+      key: 'sortie_type', 
       label: 'Type',
-      render: (sortie: Sortie) => (
+      render: (_: any, sortie: Sortie) => (
         <span className={`px-2 py-1 rounded text-xs font-medium ${
           sortie.sortie_type === 'technique' 
             ? 'bg-purple-500/20 text-purple-300' 
@@ -134,9 +134,9 @@ export default function SortiesPage() {
     },
     { key: 'location', label: 'Lieu' },
     {
-      key: 'dates',
+      key: 'start_date',
       label: 'Dates',
-      render: (sortie: Sortie) => (
+      render: (_: any, sortie: Sortie) => (
         <span>
           {new Date(sortie.start_date).toLocaleDateString('fr-FR')}
           {sortie.end_date && sortie.end_date !== sortie.start_date && (
@@ -146,16 +146,16 @@ export default function SortiesPage() {
       )
     },
     {
-      key: 'dives_info',
+      key: 'days_count',
       label: 'Plongées',
-      render: (sortie: Sortie) => (
+      render: (_: any, sortie: Sortie) => (
         <span>{sortie.days_count} jours × {sortie.dives_per_day} plongées = {sortie.days_count * sortie.dives_per_day}</span>
       )
     },
     {
-      key: 'nitrox',
+      key: 'nitrox_compatible',
       label: 'Nitrox',
-      render: (sortie: Sortie) => (
+      render: (_: any, sortie: Sortie) => (
         sortie.sortie_type === 'technique' && sortie.nitrox_compatible ? (
           <span className="text-green-400">Oui</span>
         ) : (
@@ -166,7 +166,7 @@ export default function SortiesPage() {
     {
       key: 'actions',
       label: 'Actions',
-      render: (sortie: Sortie) => (
+      render: (_: any, sortie: Sortie) => (
         <div className="flex gap-2">
           <Button
             size="sm"
