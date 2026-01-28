@@ -228,7 +228,7 @@ export default function SortiesPage() {
             <select
               value={formData.sortie_type}
               onChange={e => setFormData({ ...formData, sortie_type: e.target.value as SortieType })}
-              className="w-full px-3 py-2 theme-input rounded-lg"
+              className="w-full theme-select"
             >
               <option value="exploration">Exploration</option>
               <option value="technique">Technique</option>
@@ -259,7 +259,7 @@ export default function SortiesPage() {
               <select
                 value={formData.days_count}
                 onChange={e => setFormData({ ...formData, days_count: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 theme-input rounded-lg"
+                className="w-full theme-select"
               >
                 {[1, 2, 3, 4, 5, 6, 7].map(n => (
                   <option key={n} value={n}>{n} jour{n > 1 ? 's' : ''}</option>
@@ -274,7 +274,7 @@ export default function SortiesPage() {
               <select
                 value={formData.dives_per_day}
                 onChange={e => setFormData({ ...formData, dives_per_day: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 theme-input rounded-lg"
+                className="w-full theme-select"
               >
                 {[1, 2, 3, 4].map(n => (
                   <option key={n} value={n}>{n} plongée{n > 1 ? 's' : ''}</option>

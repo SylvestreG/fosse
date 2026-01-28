@@ -253,7 +253,7 @@ export default function SortiePage() {
             <select
               value={copySource}
               onChange={e => setCopySource(e.target.value)}
-              className="w-full px-3 py-2 theme-input rounded-lg"
+              className="w-full theme-select"
             >
               <option value="">Sélectionner...</option>
               {sortie.dives.map(dive => (
@@ -271,7 +271,7 @@ export default function SortiePage() {
             <select
               value={copyTarget}
               onChange={e => setCopyTarget(e.target.value)}
-              className="w-full px-3 py-2 theme-input rounded-lg"
+              className="w-full theme-select"
             >
               <option value="">Sélectionner...</option>
               {sortie.dives

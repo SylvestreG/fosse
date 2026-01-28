@@ -112,4 +112,25 @@ code {
   :root.light .theme-hover {
     @apply hover:bg-gray-100;
   }
+
+  /* Select elements */
+  .theme-select {
+    @apply bg-slate-700/50 border border-slate-600 text-white rounded-lg px-3 py-2;
+    @apply focus:outline-none focus:ring-2 focus:ring-cyan-500;
+  }
+  
+  :root.light .theme-select {
+    @apply bg-gray-100 border-gray-300 text-gray-900;
+  }
+}
+
+/* Native select option styling */
+select option {
+  background-color: rgb(30, 41, 59);
+  color: white;
+}
+
+:root.light select option {
+  background-color: white;
+  color: rgb(17, 24, 39);
 }
