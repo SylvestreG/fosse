@@ -153,52 +153,59 @@ export default function AddSortieParticipantModal({
               {people.length === 0 && searchTerm.length <= 1 && (
                 <p className="text-center text-slate-400 py-8">Commencez à taper pour rechercher...</p>
               )}
-              {people.map((person) => (
-                <div
-                  key={person.id}
-                  className="border border-slate-600 rounded-lg p-4 hover:bg-slate-700/30 cursor-pointer"
-                  onClick={() => handleSelectPerson(person)}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold text-white">{person.first_name} {person.last_name}</p>
-                      <p className="text-sm text-slate-300">{person.email}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {person.is_instructor && <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded">Encadrant</span>}
-                      {person.diving_level && <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">{person.diving_level}</span>}
-                      {person.preparing_level && <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded">Prép. {person.preparing_level}</span>}
+              {people.map((person) => {
+                // Get highest level from diving_level (e.g., "N1,N2,N3" -> "N3")
+                const highestLevel = person.diving_level?.split(',').pop()?.trim()
+                return (
+                  <div
+                    key={person.id}
+                    className="border border-slate-600 rounded-lg p-4 hover:bg-slate-700/30 cursor-pointer"
+                    onClick={() => handleSelectPerson(person)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-semibold text-white">{person.first_name} {person.last_name}</p>
+                        <p className="text-sm text-slate-300">{person.email}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {person.is_instructor && <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded">Encadrant</span>}
+                        {highestLevel && <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">{highestLevel}</span>}
+                        {person.preparing_level && <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded">Prép. {person.preparing_level}</span>}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {selectedPerson && (
-              <div className="bg-slate-700/30 p-4 rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm text-slate-400">Utilisateur sélectionné :</p>
-                    <p className="text-lg font-semibold text-white">{selectedPerson.first_name} {selectedPerson.last_name}</p>
-                    <p className="text-sm text-slate-300">{selectedPerson.email}</p>
+            {selectedPerson && (() => {
+              const highestLevel = selectedPerson.diving_level?.split(',').pop()?.trim()
+              return (
+                <div className="bg-slate-700/30 p-4 rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm text-slate-400">Utilisateur sélectionné :</p>
+                      <p className="text-lg font-semibold text-white">{selectedPerson.first_name} {selectedPerson.last_name}</p>
+                      <p className="text-sm text-slate-300">{selectedPerson.email}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedPerson.is_instructor && <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded">Encadrant</span>}
+                      {highestLevel && <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">{highestLevel}</span>}
+                      {selectedPerson.preparing_level && <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded">Prép. {selectedPerson.preparing_level}</span>}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedPerson.is_instructor && <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded">Encadrant</span>}
-                    {selectedPerson.diving_level && <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">{selectedPerson.diving_level}</span>}
-                    {selectedPerson.preparing_level && <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded">Prép. {selectedPerson.preparing_level}</span>}
-                  </div>
+                  <button 
+                    type="button" 
+                    onClick={() => setSelectedPerson(null)} 
+                    className="text-sm text-cyan-400 hover:text-cyan-300 mt-2"
+                  >
+                    ← Changer d'utilisateur
+                  </button>
                 </div>
-                <button 
-                  type="button" 
-                  onClick={() => setSelectedPerson(null)} 
-                  className="text-sm text-cyan-400 hover:text-cyan-300 mt-2"
-                >
-                  ← Changer d'utilisateur
-                </button>
-              </div>
-            )}
+              )
+            })()}
 
             {mode === 'create' && (
               <>
