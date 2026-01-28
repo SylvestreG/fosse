@@ -209,6 +209,7 @@ export default function MySessionsPage() {
   const [myPerson, setMyPerson] = useState<Person | null>(null)
   const [myRegistrations, setMyRegistrations] = useState<Map<string, MyRegistration>>(new Map())
   const [sessionsWithPalanquees, setSessionsWithPalanquees] = useState<Set<string>>(new Set())
+  const [sessionsWhereDP, setSessionsWhereDP] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [showPastSessions, setShowPastSessions] = useState(false)
@@ -357,9 +358,10 @@ export default function MySessionsPage() {
       }
       setMyRegistrations(registrations)
 
-      // Vérifier quelles sessions ont des palanquées créées
+      // Vérifier quelles sessions ont des palanquées créées et où l'utilisateur est DP
       const withPalanquees = new Set<string>()
-      for (const [sessionId] of registrations) {
+      const whereDP = new Set<string>()
+      for (const [sessionId, reg] of registrations) {
         try {
           const palanqueesRes = await palanqueesApi.getSessionPalanquees(sessionId)
           // Vérifier s'il y a au moins une palanquée avec des membres
@@ -372,8 +374,24 @@ export default function MySessionsPage() {
         } catch (e) {
           // Ignorer - l'utilisateur n'a peut-être pas accès
         }
+        
+        // Vérifier si l'utilisateur est DP pour cette session
+        // Pour les fosses: via is_directeur_plongee
+        if (reg.questionnaire.is_directeur_plongee) {
+          whereDP.add(sessionId)
+        }
+        // Pour les sorties: via dive_directors
+        try {
+          const dpRes = await sessionsApi.getDiveDirectors(sessionId)
+          if (dpRes.data.some(dp => dp.questionnaire_id === reg.questionnaire.id)) {
+            whereDP.add(sessionId)
+          }
+        } catch (e) {
+          // Ignorer
+        }
       }
       setSessionsWithPalanquees(withPalanquees)
+      setSessionsWhereDP(whereDP)
 
       // Charger les sessions passées (fosses + plongées de sorties)
       const allPastSessions = [...pastFosseSessions, ...pastSortieDives]
@@ -518,13 +536,13 @@ export default function MySessionsPage() {
                         }`}>
                           ✅ Inscrit {isEncadrant ? '(Encadrant)' : ''}
                         </span>
-                        {sessionsWithPalanquees.has(session.id) ? (
+                        {sessionsWithPalanquees.has(session.id) || sessionsWhereDP.has(session.id) ? (
                           <Button 
                             variant="secondary" 
                             size="sm"
                             onClick={() => navigate(`/dashboard/palanquees/${session.id}`)}
                           >
-                            🤿 Palanquées
+                            🤿 Palanquées {!sessionsWithPalanquees.has(session.id) && sessionsWhereDP.has(session.id) ? '(à définir)' : ''}
                           </Button>
                         ) : (
                           <span className="px-3 py-1.5 text-sm bg-slate-600/30 text-slate-500 rounded-lg cursor-not-allowed">
