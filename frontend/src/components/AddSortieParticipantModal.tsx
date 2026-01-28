@@ -156,6 +156,8 @@ export default function AddSortieParticipantModal({
               {people.map((person) => {
                 // Get highest level from diving_level (e.g., "N1,N2,N3" -> "N3")
                 const highestLevel = person.diving_level?.split(',').pop()?.trim()
+                // Clean preparing level (e.g., "preparing_N3" -> "N3")
+                const prepLevel = person.preparing_level?.replace('preparing_', '')
                 return (
                   <div
                     key={person.id}
@@ -164,13 +166,15 @@ export default function AddSortieParticipantModal({
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-semibold text-white">{person.first_name} {person.last_name}</p>
+                        <p className="font-semibold text-white">
+                          {person.first_name} {person.last_name}
+                          {highestLevel && <span className="ml-2 text-xs px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded">{highestLevel}</span>}
+                        </p>
                         <p className="text-sm text-slate-300">{person.email}</p>
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {person.is_instructor && <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded">Encadrant</span>}
-                        {highestLevel && <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">{highestLevel}</span>}
-                        {person.preparing_level && <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded">Prép. {person.preparing_level}</span>}
+                        {prepLevel && <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded">Prép. {prepLevel}</span>}
                       </div>
                     </div>
                   </div>
@@ -182,18 +186,21 @@ export default function AddSortieParticipantModal({
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             {selectedPerson && (() => {
               const highestLevel = selectedPerson.diving_level?.split(',').pop()?.trim()
+              const prepLevel = selectedPerson.preparing_level?.replace('preparing_', '')
               return (
                 <div className="bg-slate-700/30 p-4 rounded-lg">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-sm text-slate-400">Utilisateur sélectionné :</p>
-                      <p className="text-lg font-semibold text-white">{selectedPerson.first_name} {selectedPerson.last_name}</p>
+                      <p className="text-lg font-semibold text-white">
+                        {selectedPerson.first_name} {selectedPerson.last_name}
+                        {highestLevel && <span className="ml-2 text-xs px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded">{highestLevel}</span>}
+                      </p>
                       <p className="text-sm text-slate-300">{selectedPerson.email}</p>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {selectedPerson.is_instructor && <span className="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded">Encadrant</span>}
-                      {highestLevel && <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-300 rounded">{highestLevel}</span>}
-                      {selectedPerson.preparing_level && <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded">Prép. {selectedPerson.preparing_level}</span>}
+                      {prepLevel && <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded">Prép. {prepLevel}</span>}
                     </div>
                   </div>
                   <button 
