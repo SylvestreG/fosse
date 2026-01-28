@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { sessionsApi, questionnairesApi, peopleApi, palanqueesApi, Session, Person, QuestionnaireDetail, PalanqueeMember } from '@/lib/api'
+import { sessionsApi, questionnairesApi, peopleApi, palanqueesApi, sortiesApi, Session, Person, QuestionnaireDetail, PalanqueeMember, Sortie } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth'
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
@@ -8,6 +8,7 @@ import Toast from '@/components/Toast'
 interface MyRegistration {
   questionnaire: QuestionnaireDetail
   isEncadrant: boolean
+  sortie?: Sortie // Si c'est une plongée de sortie
 }
 
 // Composant pour afficher et éditer les infos d'inscription
@@ -246,26 +247,76 @@ export default function MySessionsPage() {
 
   const loadData = async () => {
     try {
-      // Charger toutes les sessions
-      const sessionsRes = await sessionsApi.list()
-      
-      // Filtrer pour ne garder que les sessions futures
       const now = new Date()
       now.setHours(0, 0, 0, 0)
-      const futureSessions = sessionsRes.data.filter(s => new Date(s.start_date) >= now)
-      const pastSessions = sessionsRes.data.filter(s => new Date(s.start_date) < now)
-        .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
-      setSessions(futureSessions)
+      
+      // Charger toutes les sessions de fosse
+      const sessionsRes = await sessionsApi.list()
+      const futureFosseSessions = sessionsRes.data.filter(s => new Date(s.start_date) >= now)
+      const pastFosseSessions = sessionsRes.data.filter(s => new Date(s.start_date) < now)
       
       // Charger mon profil
+      let me: Person | null = null
       if (targetEmail) {
         const peopleRes = await peopleApi.list(targetEmail)
-        const me = peopleRes.data.find(p => p.email === targetEmail)
-        setMyPerson(me || null)
-        
-        // Charger mes inscriptions pour chaque session future
-        const registrations = new Map<string, MyRegistration>()
-        for (const session of futureSessions) {
+        me = peopleRes.data.find(p => p.email === targetEmail) || null
+        setMyPerson(me)
+      }
+      
+      // Charger les sorties et identifier celles où l'utilisateur est inscrit
+      const sortiesRes = await sortiesApi.list()
+      const sortiesMap = new Map<string, Sortie>()
+      const mySortieRegistrations = new Map<string, QuestionnaireDetail>() // sortie_id -> questionnaire
+      
+      for (const sortie of sortiesRes.data) {
+        sortiesMap.set(sortie.id, sortie)
+        try {
+          const questRes = await sortiesApi.getQuestionnaires(sortie.id)
+          const myQuest = questRes.data.find(q => q.email === targetEmail)
+          if (myQuest) {
+            mySortieRegistrations.set(sortie.id, myQuest)
+          }
+        } catch (e) {
+          // Ignorer
+        }
+      }
+      
+      // Pour chaque sortie où je suis inscrit, charger les plongées (dives)
+      const allSortieDives: Session[] = []
+      for (const [sortieId] of mySortieRegistrations) {
+        try {
+          const sortieDetail = await sortiesApi.get(sortieId)
+          allSortieDives.push(...sortieDetail.data.dives)
+        } catch (e) {
+          // Ignorer
+        }
+      }
+      
+      // Séparer les plongées futures et passées
+      const futureSortieDives = allSortieDives.filter(d => new Date(d.start_date) >= now)
+      const pastSortieDives = allSortieDives.filter(d => new Date(d.start_date) < now)
+      
+      // Combiner et trier toutes les sessions futures
+      const allFutureSessions = [...futureFosseSessions, ...futureSortieDives]
+        .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
+      setSessions(allFutureSessions)
+      
+      // Charger mes inscriptions pour chaque session future
+      const registrations = new Map<string, MyRegistration>()
+      
+      for (const session of allFutureSessions) {
+        if (session.sortie_id) {
+          // C'est une plongée de sortie
+          const myQuest = mySortieRegistrations.get(session.sortie_id)
+          if (myQuest) {
+            registrations.set(session.id, {
+              questionnaire: myQuest,
+              isEncadrant: myQuest.is_encadrant,
+              sortie: sortiesMap.get(session.sortie_id)
+            })
+          }
+        } else {
+          // C'est une fosse classique
           try {
             const questRes = await questionnairesApi.listDetail(session.id)
             const myQuest = questRes.data.find(q => q.email === targetEmail)
@@ -276,79 +327,83 @@ export default function MySessionsPage() {
               })
             }
           } catch (e) {
-            // Ignorer les erreurs
+            // Ignorer
           }
         }
-        setMyRegistrations(registrations)
+      }
+      setMyRegistrations(registrations)
 
-        // Charger les sessions passées pour tous les utilisateurs
-        const pastWithStudents: PastSessionWithStudents[] = []
-        
-        // Charger toutes les sessions passées
-        for (const session of pastSessions) {
-          try {
-            // Vérifier si j'étais inscrit à cette session
+      // Charger les sessions passées (fosses + plongées de sorties)
+      const allPastSessions = [...pastFosseSessions, ...pastSortieDives]
+        .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+      
+      const pastWithStudents: PastSessionWithStudents[] = []
+      
+      for (const session of allPastSessions) {
+        try {
+          let myQuest: QuestionnaireDetail | undefined
+          
+          if (session.sortie_id) {
+            // Plongée de sortie - utiliser l'inscription de la sortie
+            myQuest = mySortieRegistrations.get(session.sortie_id)
+          } else {
+            // Fosse classique
             const questRes = await questionnairesApi.listDetail(session.id)
-            const myQuest = questRes.data.find(q => q.email === targetEmail)
+            myQuest = questRes.data.find(q => q.email === targetEmail)
+          }
+          
+          if (myQuest) {
+            // Charger les palanquées
+            const palanqueesRes = await palanqueesApi.getSessionPalanquees(session.id)
             
-            if (myQuest) {
-              // Charger les palanquées
-              const palanqueesRes = await palanqueesApi.getSessionPalanquees(session.id)
-              
-              // Trouver mes palanquées et les élèves (pour les encadrants)
-              const myStudents: PalanqueeMember[] = []
-              const myPalanquees: { rotationNumber: number; palanqueeNumber: number; members: PalanqueeMember[] }[] = []
-              
-              for (const rotation of palanqueesRes.data.rotations) {
-                for (const palanquee of rotation.palanquees) {
-                  // Vérifier si je suis dans cette palanquée
-                  const amIMember = palanquee.members.some(m => m.questionnaire_id === myQuest.id)
+            // Trouver mes palanquées et les élèves
+            const myStudents: PalanqueeMember[] = []
+            const myPalanquees: { rotationNumber: number; palanqueeNumber: number; members: PalanqueeMember[] }[] = []
+            
+            for (const rotation of palanqueesRes.data.rotations) {
+              for (const palanquee of rotation.palanquees) {
+                const amIMember = palanquee.members.some(m => m.questionnaire_id === myQuest!.id)
+                
+                if (amIMember) {
+                  myPalanquees.push({
+                    rotationNumber: rotation.number,
+                    palanqueeNumber: palanquee.number,
+                    members: palanquee.members
+                  })
                   
-                  if (amIMember) {
-                    // Ajouter cette palanquée à mes palanquées
-                    myPalanquees.push({
-                      rotationNumber: rotation.number,
-                      palanqueeNumber: palanquee.number,
-                      members: palanquee.members
-                    })
-                    
-                    // Si je suis encadrant (GP), ajouter les élèves
-                    const amIGP = palanquee.members.some(m => 
-                      m.questionnaire_id === myQuest.id && (m.role === 'GP' || m.role === 'E')
+                  const amIGP = palanquee.members.some(m => 
+                    m.questionnaire_id === myQuest!.id && (m.role === 'GP' || m.role === 'E')
+                  )
+                  
+                  if (amIGP) {
+                    const students = palanquee.members.filter(m => 
+                      m.role === 'P' && m.questionnaire_id !== myQuest!.id
                     )
-                    
-                    if (amIGP) {
-                      const students = palanquee.members.filter(m => 
-                        m.role === 'P' && m.questionnaire_id !== myQuest.id
-                      )
-                      myStudents.push(...students)
-                    }
+                    myStudents.push(...students)
                   }
                 }
               }
-              
-              // Dédupliquer les élèves
-              const uniqueStudents = myStudents
-                .filter((student, index, self) =>
-                  index === self.findIndex(s => s.person_id === student.person_id)
-                )
-              
-              // Ajouter la session si l'utilisateur avait des palanquées
-              if (myPalanquees.length > 0) {
-                pastWithStudents.push({
-                  session,
-                  myStudents: uniqueStudents,
-                  myPalanquees
-                })
-              }
             }
-          } catch (e) {
-            // Ignorer les erreurs
+            
+            const uniqueStudents = myStudents
+              .filter((student, index, self) =>
+                index === self.findIndex(s => s.person_id === student.person_id)
+              )
+            
+            if (myPalanquees.length > 0) {
+              pastWithStudents.push({
+                session,
+                myStudents: uniqueStudents,
+                myPalanquees
+              })
+            }
           }
+        } catch (e) {
+          // Ignorer
         }
-        
-        setPastSessionsWithStudents(pastWithStudents)
       }
+      
+      setPastSessionsWithStudents(pastWithStudents)
     } catch (error) {
       console.error('Error loading data:', error)
       setToast({ message: 'Erreur lors du chargement', type: 'error' })
@@ -364,13 +419,13 @@ export default function MySessionsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-white">📅 Sessions à venir</h1>
-        <p className="text-slate-300 mt-1">Consultez les prochaines sessions de fosse</p>
+        <h1 className="text-3xl font-bold text-white">📅 Plongées à venir</h1>
+        <p className="text-slate-300 mt-1">Consultez vos prochaines fosses et sorties</p>
       </div>
 
       {sessions.length === 0 ? (
         <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-12 text-center">
-          <p className="text-slate-400 text-lg">Aucune session à venir pour le moment.</p>
+          <p className="text-slate-400 text-lg">Aucune plongée à venir pour le moment.</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -378,6 +433,8 @@ export default function MySessionsPage() {
             const registration = myRegistrations.get(session.id)
             const isRegistered = !!registration
             const isEncadrant = registration?.isEncadrant || false
+            const isSortieDive = !!session.sortie_id
+            const sortie = registration?.sortie
             const sessionDate = new Date(session.start_date)
             const formattedDate = sessionDate.toLocaleDateString('fr-FR', {
               weekday: 'long',
@@ -390,11 +447,18 @@ export default function MySessionsPage() {
               <div 
                 key={session.id} 
                 className={`bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 border-l-4 ${
-                  isRegistered ? 'border-green-500' : 'border-blue-500'
+                  isSortieDive 
+                    ? 'border-purple-500' 
+                    : isRegistered ? 'border-green-500' : 'border-blue-500'
                 }`}
               >
                 <div className="flex justify-between items-start">
                   <div>
+                    {isSortieDive && sortie && (
+                      <p className="text-purple-400 text-sm font-medium mb-1">
+                        🏝️ {sortie.name}
+                      </p>
+                    )}
                     <h2 className="text-xl font-semibold text-white">{session.name}</h2>
                     <p className="text-slate-300 mt-1">📍 {session.location || 'Lieu non précisé'}</p>
                     <p className="text-slate-300">📆 {formattedDate}</p>
@@ -405,7 +469,11 @@ export default function MySessionsPage() {
                   <div className="flex flex-col items-end gap-2">
                     {isRegistered ? (
                       <>
-                        <span className="inline-flex items-center px-4 py-2 bg-green-500/20 text-green-400 rounded-full font-medium border border-green-500/30">
+                        <span className={`inline-flex items-center px-4 py-2 rounded-full font-medium border ${
+                          isSortieDive 
+                            ? 'bg-purple-500/20 text-purple-400 border-purple-500/30' 
+                            : 'bg-green-500/20 text-green-400 border-green-500/30'
+                        }`}>
                           ✅ Inscrit {isEncadrant ? '(Encadrant)' : ''}
                         </span>
                         <Button 
@@ -424,8 +492,8 @@ export default function MySessionsPage() {
                   </div>
                 </div>
 
-                {/* Détails d'inscription - toujours visible */}
-                {isRegistered && registration && (
+                {/* Détails d'inscription - seulement pour les fosses (pas de gestion matériel pour les sorties) */}
+                {isRegistered && registration && !isSortieDive && (
                   <RegistrationDetails
                     registration={registration.questionnaire}
                     isEncadrant={isEncadrant}
@@ -438,7 +506,7 @@ export default function MySessionsPage() {
         </div>
       )}
 
-      {/* Section Fosses passées pour tous les utilisateurs */}
+      {/* Section plongées passées pour tous les utilisateurs */}
       {pastSessionsWithStudents.length > 0 && (
         <div className="space-y-4">
           <div 
@@ -446,7 +514,7 @@ export default function MySessionsPage() {
             onClick={() => setShowPastSessions(!showPastSessions)}
           >
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">📋 Mes fosses passées</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-white">📋 Mes plongées passées</h2>
               <p className="text-slate-300 text-sm mt-1">
                 {myPerson?.is_instructor 
                   ? 'Retrouvez les élèves que vous avez encadrés'
@@ -470,14 +538,20 @@ export default function MySessionsPage() {
                 })
                 const studentsInTraining = myStudents.filter(s => s.preparing_level).length
                 const isInstructor = myPerson?.is_instructor
+                const isSortieDive = !!session.sortie_id
 
                 return (
                   <div 
                     key={session.id}
-                    className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 sm:p-6 border border-slate-700"
+                    className={`bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 sm:p-6 border ${
+                      isSortieDive ? 'border-purple-500/50' : 'border-slate-700'
+                    }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
                       <div>
+                        {isSortieDive && (
+                          <span className="text-xs text-purple-400 font-medium">🏝️ Sortie</span>
+                        )}
                         <h3 className="text-lg font-semibold text-white">{session.name}</h3>
                         <p className="text-sm text-slate-400">📆 {formattedDate} • 📍 {session.location}</p>
                       </div>
