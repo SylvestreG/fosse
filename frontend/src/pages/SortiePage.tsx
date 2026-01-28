@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { sortiesApi, SortieWithDives, QuestionnaireDetail, Session } from '@/lib/api'
 import Button from '@/components/Button'
-import Modal from '@/components/Modal'
 import Table from '@/components/Table'
 import Toast from '@/components/Toast'
 import AddSortieParticipantModal from '@/components/AddSortieParticipantModal'
@@ -13,11 +12,7 @@ export default function SortiePage() {
   const [sortie, setSortie] = useState<SortieWithDives | null>(null)
   const [questionnaires, setQuestionnaires] = useState<QuestionnaireDetail[]>([])
   const [loading, setLoading] = useState(true)
-  const [showCopyModal, setShowCopyModal] = useState(false)
   const [showAddParticipantModal, setShowAddParticipantModal] = useState(false)
-  const [copySource, setCopySource] = useState<string>('')
-  const [copyTarget, setCopyTarget] = useState<string>('')
-  const [copying, setCopying] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   useEffect(() => {
@@ -44,30 +39,6 @@ export default function SortiePage() {
       setQuestionnaires(response.data)
     } catch (error) {
       console.error('Error loading questionnaires:', error)
-    }
-  }
-
-  const handleCopyAttendees = async () => {
-    if (!copySource || !copyTarget) {
-      setToast({ message: 'Veuillez sélectionner la source et la destination', type: 'error' })
-      return
-    }
-
-    setCopying(true)
-    try {
-      const response = await sortiesApi.copyAttendees(id!, copySource, copyTarget)
-      setToast({ 
-        message: `${response.data.copied_count} participants copiés, ${response.data.skipped_count} déjà présents`, 
-        type: 'success' 
-      })
-      setShowCopyModal(false)
-      setCopySource('')
-      setCopyTarget('')
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Erreur lors de la copie'
-      setToast({ message: errorMessage, type: 'error' })
-    } finally {
-      setCopying(false)
     }
   }
 
@@ -215,12 +186,7 @@ export default function SortiePage() {
 
       {/* Plongées */}
       <div className="theme-card p-6 rounded-lg">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold theme-text">Plongées ({sortie.dives.length})</h2>
-          <Button size="sm" variant="secondary" onClick={() => setShowCopyModal(true)}>
-            Copier présents entre plongées
-          </Button>
-        </div>
+        <h2 className="text-lg font-semibold theme-text mb-4">Plongées ({sortie.dives.length})</h2>
         <Table data={sortie.dives} columns={divesColumns} />
       </div>
 
@@ -245,67 +211,6 @@ export default function SortiePage() {
           <Table data={questionnaires} columns={participantsColumns} />
         )}
       </div>
-
-      {/* Modal copie présents */}
-      <Modal
-        isOpen={showCopyModal}
-        onClose={() => { setShowCopyModal(false); setCopySource(''); setCopyTarget('') }}
-        title="Copier les présents"
-      >
-        <div className="space-y-4">
-          <p className="text-sm theme-text-secondary">
-            Copier tous les participants assignés d'une plongée vers une autre.
-            Les participants déjà présents dans la destination seront ignorés.
-          </p>
-
-          <div>
-            <label className="block text-sm font-medium theme-text-secondary mb-1">
-              Plongée source
-            </label>
-            <select
-              value={copySource}
-              onChange={e => setCopySource(e.target.value)}
-              className="w-full theme-select"
-            >
-              <option value="">Sélectionner...</option>
-              {sortie.dives.map(dive => (
-                <option key={dive.id} value={dive.id}>
-                  {dive.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium theme-text-secondary mb-1">
-              Plongée destination
-            </label>
-            <select
-              value={copyTarget}
-              onChange={e => setCopyTarget(e.target.value)}
-              className="w-full theme-select"
-            >
-              <option value="">Sélectionner...</option>
-              {sortie.dives
-                .filter(dive => dive.id !== copySource)
-                .map(dive => (
-                  <option key={dive.id} value={dive.id}>
-                    {dive.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="secondary" onClick={() => setShowCopyModal(false)}>
-              Annuler
-            </Button>
-            <Button onClick={handleCopyAttendees} disabled={copying || !copySource || !copyTarget}>
-              {copying ? 'Copie en cours...' : 'Copier'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
 
       {/* Modal ajout participant */}
       {showAddParticipantModal && (

@@ -4,6 +4,7 @@ import {
   palanqueesApi, 
   sessionsApi,
   questionnairesApi,
+  sortiesApi,
   SessionPalanquees, 
   Rotation, 
   Palanquee, 
@@ -63,11 +64,13 @@ export default function PalanqueesPage() {
     setLoading(true)
     
     let hasData = false
+    let loadedSession: Session | null = null
     
     // Charger la session
     try {
       const sessionRes = await sessionsApi.get(sessionId)
-      setSession(sessionRes.data)
+      loadedSession = sessionRes.data
+      setSession(loadedSession)
       setFicheOptions(prev => ({
         ...prev,
         site: sessionRes.data.location || '',
@@ -97,11 +100,17 @@ export default function PalanqueesPage() {
       setSummary(null)
     }
     
-    // Essayer de charger les détails des questionnaires (pour déterminer si l'utilisateur est DP)
-    // Cet appel peut échouer pour les élèves qui n'ont pas les permissions
+    // Charger les questionnaires - depuis la sortie si la session en fait partie
     try {
-      const questionnairesRes = await questionnairesApi.listDetail(sessionId)
-      setQuestionnaires(questionnairesRes.data)
+      if (loadedSession?.sortie_id) {
+        // Session fait partie d'une sortie - charger les participants de la sortie
+        const questionnairesRes = await sortiesApi.getQuestionnaires(loadedSession.sortie_id)
+        setQuestionnaires(questionnairesRes.data)
+      } else {
+        // Session classique (fosse) - charger les questionnaires de la session
+        const questionnairesRes = await questionnairesApi.listDetail(sessionId)
+        setQuestionnaires(questionnairesRes.data)
+      }
     } catch (questErr) {
       // Si l'utilisateur n'a pas les permissions, on continue avec un tableau vide
       // L'utilisateur sera en lecture seule (canEdit = false)
@@ -375,7 +384,7 @@ export default function PalanqueesPage() {
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <Link
-                to={`/dashboard/sessions`}
+                to={session?.sortie_id ? `/dashboard/sorties/${session.sortie_id}` : `/dashboard/sessions`}
                 className="px-3 py-1.5 sm:px-4 sm:py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors text-sm sm:text-base"
               >
                 ← <span className="hidden sm:inline">Retour</span>
