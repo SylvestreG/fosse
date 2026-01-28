@@ -57,7 +57,7 @@ export default function ValidationLogsPage() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
-        <span className="ml-3 text-slate-400">Chargement des logs...</span>
+        <span className="ml-3 theme-text-muted">Chargement des logs...</span>
       </div>
     )
   }
@@ -66,8 +66,8 @@ export default function ValidationLogsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white">📋 Journal des Validations</h1>
-        <p className="text-slate-400 mt-1">Historique de toutes les compétences validées</p>
+        <h1 className="text-2xl sm:text-3xl font-bold theme-text">📋 Journal des Validations</h1>
+        <p className="theme-text-muted mt-1">Historique de toutes les compétences validées</p>
       </div>
 
       {/* Stats */}

@@ -289,7 +289,7 @@ export default function StudentCompetencesPage() {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mx-auto"></div>
-        <p className="mt-2 text-slate-400">Chargement...</p>
+        <p className="mt-2 theme-text-muted">Chargement...</p>
       </div>
     )
   }
@@ -297,7 +297,7 @@ export default function StudentCompetencesPage() {
   if (!student || !progress) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-400">Élève non trouvé</p>
+        <p className="theme-text-muted">Élève non trouvé</p>
         <Button onClick={() => navigate('/dashboard/competences')} className="mt-4">
           ← Retour
         </Button>
@@ -320,13 +320,13 @@ export default function StudentCompetencesPage() {
             ← <span className="hidden sm:inline">Retour</span>
           </Button>
           <div>
-            <h1 className="text-lg sm:text-2xl font-bold text-white">
+            <h1 className="text-lg sm:text-2xl font-bold theme-text">
               {student.first_name} {student.last_name}
             </h1>
-            <p className="text-slate-400 text-xs sm:text-base">
+            <p className="theme-text-muted text-xs sm:text-base">
               Prépare <span className="font-semibold text-cyan-400">{level}</span>
               {student.diving_level_display && student.diving_level_display !== level && (
-                <span className="ml-1 sm:ml-2 text-slate-500">• Actuel: {student.diving_level_display}</span>
+                <span className="ml-1 sm:ml-2 theme-text-dimmed">• Actuel: {student.diving_level_display}</span>
               )}
             </p>
           </div>

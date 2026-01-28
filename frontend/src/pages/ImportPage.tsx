@@ -55,25 +55,25 @@ export default function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-white">Import CSV</h1>
+      <h1 className="text-3xl font-bold theme-text">Import CSV</h1>
 
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 space-y-6">
+      <div className="theme-card p-6 space-y-6 shadow">
         <div>
-          <h2 className="text-xl font-semibold text-white mb-4">Importer des plongeurs</h2>
-          <p className="text-slate-300 mb-4">
+          <h2 className="text-xl font-semibold theme-text mb-4">Importer des plongeurs</h2>
+          <p className="theme-text-secondary mb-4">
             Le fichier CSV doit contenir les colonnes suivantes : first_name, last_name, email, phone (optionnel)
           </p>
         </div>
 
         <form onSubmit={handleImport} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-1">
+            <label className="block text-sm font-medium theme-text-secondary mb-1">
               Session
             </label>
             <select
               value={selectedSessionId}
               onChange={(e) => setSelectedSessionId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 theme-select rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               required
             >
               {sessions.map((session) => (
@@ -85,14 +85,14 @@ export default function ImportPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-1">
+            <label className="block text-sm font-medium theme-text-secondary mb-1">
               Fichier CSV
             </label>
             <input
               type="file"
               accept=".csv"
               onChange={handleFileChange}
-              className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 theme-bg-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               required
             />
           </div>
@@ -103,8 +103,8 @@ export default function ImportPage() {
         </form>
 
         {importResult && (
-          <div className="mt-6 p-4 bg-slate-700/30 rounded-lg">
-            <h3 className="font-semibold text-white mb-2">Résultat de l'import</h3>
+          <div className="mt-6 p-4 theme-bg-input rounded-lg">
+            <h3 className="font-semibold theme-text mb-2">Résultat de l'import</h3>
             <div className="space-y-2 text-sm">
               <p>Fichier : {importResult.filename}</p>
               <p>Total de lignes : {importResult.total_rows}</p>

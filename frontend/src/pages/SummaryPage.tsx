@@ -97,7 +97,7 @@ export default function SummaryPage() {
   if (loading) {
     return (
       <div className="text-center py-12">
-        <p className="text-xl text-slate-200">Chargement...</p>
+        <p className="text-xl theme-text-secondary">Chargement...</p>
       </div>
     )
   }
@@ -106,7 +106,7 @@ export default function SummaryPage() {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-red-600 mb-4">Session introuvable</h2>
-        <p className="text-slate-300 mb-4">Cette session n'existe pas ou vous n'avez pas accès.</p>
+        <p className="theme-text-muted mb-4">Cette session n'existe pas ou vous n'avez pas accès.</p>
         <Button onClick={() => navigate('/dashboard/sessions')}>
           ← Retour aux sessions
         </Button>
@@ -121,8 +121,8 @@ export default function SummaryPage() {
           <Button variant="secondary" onClick={() => navigate('/dashboard/sessions')}>
             ← Retour aux sessions
           </Button>
-          <h1 className="text-3xl font-bold text-white mt-4">{session.name}</h1>
-          <p className="text-slate-300">
+          <h1 className="text-3xl font-bold theme-text mt-4">{session.name}</h1>
+          <p className="theme-text-secondary">
             {new Date(session.start_date).toLocaleDateString('fr-FR')} • {session.location}
           </p>
         </div>

@@ -72,13 +72,13 @@ export default function MyCompetencesPage() {
   }
 
   if (loading) {
-    return <div className="text-center py-12">Chargement...</div>
+    return <div className="text-center py-12 theme-text">Chargement...</div>
   }
 
   if (!myPerson) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-400">Profil non trouvé. Contactez un administrateur.</p>
+        <p className="theme-text-muted">Profil non trouvé. Contactez un administrateur.</p>
       </div>
     )
   }
@@ -90,7 +90,7 @@ export default function MyCompetencesPage() {
   if (!preparingLevel) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-white">🎯 Mes Compétences</h1>
+        <h1 className="text-3xl font-bold theme-text">🎯 Mes Compétences</h1>
         
         <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden">
           {/* Header avec illustration */}
@@ -197,8 +197,8 @@ export default function MyCompetencesPage() {
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white">🎯 Mes Compétences</h1>
-          <p className="text-slate-300 mt-1 text-sm sm:text-base">
+          <h1 className="text-2xl sm:text-3xl font-bold theme-text">🎯 Mes Compétences</h1>
+          <p className="theme-text-secondary mt-1 text-sm sm:text-base">
             Suivez votre progression vers le niveau {displayLevel}
           </p>
         </div>

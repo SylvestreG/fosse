@@ -16,7 +16,7 @@ export default function Table<T extends object>({ data, columns, emptyMessage = 
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full divide-y theme-border">
-        <thead className="bg-slate-700/30 dark:bg-slate-700/30 light:bg-gray-100">
+        <thead className="theme-bg-input">
           <tr>
             {columns.map((column) => (
               <th
@@ -28,7 +28,7 @@ export default function Table<T extends object>({ data, columns, emptyMessage = 
             ))}
           </tr>
         </thead>
-        <tbody className="theme-bg-card divide-y theme-border">
+        <tbody className="theme-card divide-y theme-border">
           {data.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="px-6 py-4 text-center theme-text-muted">

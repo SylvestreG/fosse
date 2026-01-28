@@ -113,11 +113,11 @@ export default function SessionEmailsPage() {
   }
 
   if (loading) {
-    return <div className="text-center py-12">Chargement...</div>
+    return <div className="text-center py-12 theme-text">Chargement...</div>
   }
 
   if (!session) {
-    return <div className="text-center py-12">Session introuvable</div>
+    return <div className="text-center py-12 theme-text">Session introuvable</div>
   }
 
   const pendingEmails = emails.filter((e) => e.status === 'generated')
@@ -130,8 +130,8 @@ export default function SessionEmailsPage() {
           <Button variant="secondary" onClick={() => navigate('/dashboard/sessions')}>
             ← Retour aux sessions
           </Button>
-          <h1 className="text-3xl font-bold text-white mt-4">📧 Emails - {session.name}</h1>
-          <p className="text-slate-300">
+          <h1 className="text-3xl font-bold theme-text mt-4">📧 Emails - {session.name}</h1>
+          <p className="theme-text-secondary">
             {pendingEmails.length} email(s) à envoyer • {sentEmails.length} envoyé(s)
           </p>
         </div>

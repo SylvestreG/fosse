@@ -88,7 +88,7 @@ export default function CompetencesPage() {
   }
 
   if (loading) {
-    return <div className="text-center py-12">Chargement...</div>
+    return <div className="text-center py-12 theme-text">Chargement...</div>
   }
 
   const currentLevelCompetencies = getCompetenciesForLevel(activeTab)
@@ -99,8 +99,8 @@ export default function CompetencesPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-white">🎯 Compétences</h1>
-          <p className="text-slate-300 mt-1">Gestion des compétences par niveau de plongée</p>
+          <h1 className="text-3xl font-bold theme-text">🎯 Compétences</h1>
+          <p className="theme-text-secondary mt-1">Gestion des compétences par niveau de plongée</p>
         </div>
         <Button onClick={handleAddCompetency}>
           ➕ Nouvelle compétence

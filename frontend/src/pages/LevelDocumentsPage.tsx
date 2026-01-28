@@ -511,8 +511,8 @@ export default function LevelDocumentsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">📄 Documents de Compétences</h1>
-        <p className="text-slate-400 mt-1">
+        <h1 className="text-3xl font-bold theme-text">📄 Documents de Compétences</h1>
+        <p className="theme-text-muted mt-1">
           Uploadez les templates PDF et cliquez sur le document pour placer chaque acquis
         </p>
       </div>
