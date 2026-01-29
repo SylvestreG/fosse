@@ -720,6 +720,7 @@ export interface PalanqueeMember {
   diving_level?: string
   preparing_level?: string
   is_encadrant: boolean
+  instructor_level?: string
 }
 
 export interface Palanquee {
@@ -754,6 +755,8 @@ export interface UnassignedParticipant {
   is_encadrant: boolean
   wants_nitrox: boolean
   nitrox_training: boolean
+  nitrox_confirmed_formation: boolean
+  instructor_level?: string
 }
 
 export interface SessionPalanquees {

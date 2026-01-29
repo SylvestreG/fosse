@@ -74,6 +74,7 @@ pub struct PalanqueeMemberResponse {
     pub diving_level: Option<String>,
     pub preparing_level: Option<String>,
     pub is_encadrant: bool,
+    pub instructor_level: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -110,6 +111,8 @@ pub struct UnassignedParticipant {
     pub is_encadrant: bool,
     pub wants_nitrox: bool,
     pub nitrox_training: bool,
+    pub nitrox_confirmed_formation: bool,
+    pub instructor_level: Option<String>,
 }
 
 // Helper pour parser les heures

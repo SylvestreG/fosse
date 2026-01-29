@@ -201,6 +201,21 @@ impl DiverLevel {
             .unwrap_or(false)
     }
     
+    /// Retourne le niveau d'encadrement le plus élevé (E1, E2, E3, E4)
+    pub fn instructor_level(&self) -> Option<String> {
+        self.validated
+            .iter()
+            .filter(|l| l.is_instructor_level())
+            .max_by_key(|l| l.hierarchy())
+            .map(|l| l.to_string())
+    }
+    
+    /// Extrait le niveau d'encadrement d'une chaîne diving_level brute
+    pub fn extract_instructor_level(diving_level: &str) -> Option<String> {
+        let diver = Self::from_db_string(diving_level);
+        diver.instructor_level()
+    }
+    
     /// Retourne le niveau que le plongeur prépare (s'il en prépare un)
     #[allow(dead_code)]
     pub fn preparing_level(&self) -> Option<String> {

@@ -340,8 +340,11 @@ export default function PalanqueesPage() {
     const encadrants = participants.filter(p => p.is_encadrant)
     const students = participants.filter(p => !p.is_encadrant)
     
-    const nitroxTraining = students.filter(p => p.nitrox_training)
-    const remainingStudents = students.filter(p => !p.nitrox_training)
+    // Formation Nitrox (base)
+    const nitroxTraining = students.filter(p => p.nitrox_training && !p.nitrox_confirmed_formation)
+    // Formation Nitrox Confirmé
+    const nitroxConfirmed = students.filter(p => p.nitrox_confirmed_formation)
+    const remainingStudents = students.filter(p => !p.nitrox_training && !p.nitrox_confirmed_formation)
     
     const preparingLevels = ['N1', 'N2', 'N3', 'N4']
     const byPreparingLevel: Record<string, UnassignedParticipant[]> = {}
@@ -353,7 +356,7 @@ export default function PalanqueesPage() {
       p => !p.preparing_level || !preparingLevels.includes(p.preparing_level)
     )
     
-    return { encadrants, nitroxTraining, byPreparingLevel, others }
+    return { encadrants, nitroxTraining, nitroxConfirmed, byPreparingLevel, others }
   }
 
   if (loading) {
@@ -466,6 +469,20 @@ export default function PalanqueesPage() {
                   <ParticipantGroup
                     title="⚡ Formation Nitrox"
                     participants={grouped.nitroxTraining}
+                    color="yellow"
+                    canEdit={canEdit}
+                    selectedParticipant={selectedParticipant}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                    onSelect={handleSelectParticipant}
+                  />
+                )}
+                
+                {/* Formation Nitrox Confirmé */}
+                {grouped.nitroxConfirmed.length > 0 && (
+                  <ParticipantGroup
+                    title="🔥 Nitrox Confirmé"
+                    participants={grouped.nitroxConfirmed}
                     color="yellow"
                     canEdit={canEdit}
                     selectedParticipant={selectedParticipant}
@@ -797,6 +814,11 @@ function DraggableParticipant({
     }
   }
 
+  // Extraire le niveau d'affichage (instructor_level pour encadrants, sinon diving_level le plus haut)
+  const displayLevel = participant.is_encadrant 
+    ? participant.instructor_level 
+    : participant.diving_level?.split(',').filter(l => !l.startsWith('preparing_'))[0]
+
   return (
     <div
       draggable={canEdit}
@@ -814,14 +836,23 @@ function DraggableParticipant({
       }`}
     >
       <div className="flex items-center justify-between gap-1 sm:gap-2">
-        <span className="theme-text truncate">
-          {participant.last_name.toUpperCase()} {participant.first_name.charAt(0)}.
-        </span>
+        <div className="flex items-center gap-1 min-w-0">
+          {displayLevel && (
+            <span className={`text-[10px] sm:text-xs px-1 rounded font-medium flex-shrink-0 ${
+              participant.is_encadrant ? 'bg-purple-500/30 text-purple-300' : 'bg-cyan-500/30 text-cyan-300'
+            }`}>
+              {displayLevel}
+            </span>
+          )}
+          <span className="theme-text truncate">
+            {participant.last_name.toUpperCase()} {participant.first_name.charAt(0)}.
+          </span>
+        </div>
         <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
           {participant.is_encadrant && (
             <span className="bg-purple-600 text-white text-[10px] sm:text-xs px-0.5 sm:px-1 rounded">E</span>
           )}
-          {(participant.wants_nitrox || participant.nitrox_training) && (
+          {(participant.wants_nitrox || participant.nitrox_training || participant.nitrox_confirmed_formation) && (
             <span className="bg-yellow-600 text-white text-[10px] sm:text-xs px-0.5 sm:px-1 rounded">Nx</span>
           )}
         </div>
@@ -1227,10 +1258,22 @@ function MemberRow({
   canEdit: boolean
   onRemove: (memberId: string) => void
 }) {
+  // Niveau d'affichage : instructor_level pour GP/E, sinon diving_level
+  const displayLevel = isGP || member.is_encadrant
+    ? member.instructor_level
+    : member.diving_level?.split(',').filter(l => !l.startsWith('preparing_'))[0]
+  
   return (
     <div className={`flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded text-[11px] sm:text-xs ${
       isGP ? 'bg-purple-900/40' : 'theme-bg-card'
     }`}>
+      {displayLevel && (
+        <span className={`px-0.5 sm:px-1 rounded text-[9px] sm:text-[10px] font-medium flex-shrink-0 ${
+          isGP ? 'bg-purple-500/30 text-purple-300' : 'bg-cyan-500/30 text-cyan-300'
+        }`}>
+          {displayLevel}
+        </span>
+      )}
       {isGP && (
         <span className="bg-purple-600 text-white px-0.5 sm:px-1 rounded text-[10px] sm:text-xs flex-shrink-0">GP</span>
       )}

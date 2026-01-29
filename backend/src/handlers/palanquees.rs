@@ -279,6 +279,8 @@ pub async fn add_member(
 
     let preparing_level = person.diving_level.as_ref()
         .and_then(|s| DiverLevel::extract_preparing_level(s));
+    let instructor_level = person.diving_level.as_ref()
+        .and_then(|s| DiverLevel::extract_instructor_level(s));
     
     Ok(Json(PalanqueeMemberResponse {
         id: member.id,
@@ -292,6 +294,7 @@ pub async fn add_member(
         diving_level: person.diving_level,
         preparing_level,
         is_encadrant: questionnaire.is_encadrant,
+        instructor_level,
     }))
 }
 
@@ -330,6 +333,8 @@ pub async fn update_member(
 
     let preparing_level = person.diving_level.as_ref()
         .and_then(|s| DiverLevel::extract_preparing_level(s));
+    let instructor_level = person.diving_level.as_ref()
+        .and_then(|s| DiverLevel::extract_instructor_level(s));
 
     Ok(Json(PalanqueeMemberResponse {
         id: updated.id,
@@ -343,6 +348,7 @@ pub async fn update_member(
         diving_level: person.diving_level,
         preparing_level,
         is_encadrant: questionnaire.is_encadrant,
+        instructor_level,
     }))
 }
 
@@ -477,6 +483,9 @@ pub async fn get_session_palanquees(
             let preparing_level = person.diving_level.as_ref()
                 .and_then(|s| DiverLevel::extract_preparing_level(s));
 
+            let instructor_level = person.diving_level.as_ref()
+                .and_then(|s| DiverLevel::extract_instructor_level(s));
+            
             unassigned_participants.push(UnassignedParticipant {
                 questionnaire_id: q.id,
                 person_id: person.id,
@@ -487,6 +496,8 @@ pub async fn get_session_palanquees(
                 is_encadrant: q.is_encadrant,
                 wants_nitrox: q.wants_nitrox,
                 nitrox_training: q.nitrox_training,
+                nitrox_confirmed_formation: q.nitrox_confirmed_formation,
+                instructor_level,
             });
         }
     }
@@ -562,6 +573,8 @@ async fn get_palanquee_members(
             if let Some(p) = person {
                 let preparing_level = p.diving_level.as_ref()
                     .and_then(|s| DiverLevel::extract_preparing_level(s));
+                let instructor_level = p.diving_level.as_ref()
+                    .and_then(|s| DiverLevel::extract_instructor_level(s));
                 
                 responses.push(PalanqueeMemberResponse {
                     id: m.id,
@@ -575,6 +588,7 @@ async fn get_palanquee_members(
                     diving_level: p.diving_level,
                     preparing_level,
                     is_encadrant: q.is_encadrant,
+                    instructor_level,
                 });
             }
         }
