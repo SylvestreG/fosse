@@ -212,8 +212,8 @@ impl DiverLevel {
     
     /// Extrait le niveau d'encadrement d'une chaîne diving_level brute
     pub fn extract_instructor_level(diving_level: &str) -> Option<String> {
-        let diver = Self::from_db_string(diving_level);
-        diver.instructor_level()
+        Self::from_string(diving_level)
+            .and_then(|diver| diver.instructor_level())
     }
     
     /// Retourne le niveau que le plongeur prépare (s'il en prépare un)
