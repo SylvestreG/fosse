@@ -518,8 +518,8 @@ export default function LevelDocumentsPage() {
       </div>
 
       {/* Liste des niveaux */}
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Templates par niveau</h2>
+      <div className="theme-card p-6 shadow">
+        <h2 className="text-lg font-semibold theme-text mb-4">Templates par niveau</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {DIVING_LEVELS.map(level => {
             const doc = getDocForLevel(level)
@@ -531,24 +531,24 @@ export default function LevelDocumentsPage() {
                     ? 'bg-cyan-500/20 border-cyan-500/50' 
                     : doc 
                       ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20' 
-                      : 'bg-slate-700/30 border-slate-600/50 hover:bg-slate-700/50'
+                      : 'theme-bg-input theme-border hover:opacity-80'
                 }`}
                 onClick={() => setSelectedLevel(level)}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-lg font-bold text-white">{level}</span>
+                  <span className="text-lg font-bold theme-text">{level}</span>
                   {doc ? (
                     <span className="text-green-400 text-sm">✓</span>
                   ) : (
-                    <span className="text-slate-500 text-sm">—</span>
+                    <span className="theme-text-dimmed text-sm">—</span>
                   )}
                 </div>
                 {doc ? (
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs theme-text-muted">
                     {doc.page_count} page{doc.page_count > 1 ? 's' : ''}
                   </div>
                 ) : (
-                  <div className="text-xs text-slate-500">Aucun document</div>
+                  <div className="text-xs theme-text-dimmed">Aucun document</div>
                 )}
               </div>
             )
@@ -560,9 +560,9 @@ export default function LevelDocumentsPage() {
       {selectedLevel && (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* PDF Viewer - 2 colonnes */}
-          <div className="xl:col-span-2 bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6">
+          <div className="xl:col-span-2 theme-card p-6 shadow">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold theme-text">
                 Aperçu - {selectedLevel}
               </h2>
               <div className="flex gap-2">
@@ -628,7 +628,7 @@ export default function LevelDocumentsPage() {
                     >
                       ←
                     </Button>
-                    <span className="text-slate-300 text-sm">
+                    <span className="theme-text-secondary text-sm">
                       Page {currentPage} / {totalPages}
                     </span>
                     <Button 
@@ -648,7 +648,7 @@ export default function LevelDocumentsPage() {
                     >
                       -
                     </Button>
-                    <span className="text-slate-300 text-sm w-16 text-center">
+                    <span className="theme-text-secondary text-sm w-16 text-center">
                       {Math.round(scale * 100)}%
                     </span>
                     <Button 
@@ -745,7 +745,7 @@ export default function LevelDocumentsPage() {
                 </div>
 
                 {/* Legend */}
-                <div className="mt-4 flex items-center gap-6 text-sm text-slate-400">
+                <div className="mt-4 flex items-center gap-6 text-sm theme-text-muted">
                   <div className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-cyan-400 rounded"></span>
                     <span>Position définie</span>
@@ -754,13 +754,13 @@ export default function LevelDocumentsPage() {
                     <span className="w-4 h-4 border-2 border-amber-400 bg-amber-500/20 rounded"></span>
                     <span>En cours d'édition</span>
                   </div>
-                  <div className="text-slate-500">
+                  <div className="theme-text-dimmed">
                     💡 Glissez pour déplacer • Coins pour redimensionner
                   </div>
                 </div>
               </>
             ) : (
-              <div className="text-center py-12 text-slate-400 border-2 border-dashed border-slate-600 rounded-lg">
+              <div className="text-center py-12 theme-text-muted border-2 border-dashed theme-border rounded-lg">
                 <p className="mb-4">Aucun document uploadé pour ce niveau</p>
                 <Button onClick={() => fileInputRef.current?.click()}>
                   📤 Uploader un PDF
@@ -770,11 +770,11 @@ export default function LevelDocumentsPage() {
           </div>
 
           {/* Liste des acquis - 1 colonne */}
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-6 max-h-[800px] overflow-y-auto">
-            <h2 className="text-lg font-semibold text-white mb-4">Acquis à placer</h2>
+          <div className="theme-card p-6 max-h-[800px] overflow-y-auto shadow">
+            <h2 className="text-lg font-semibold theme-text mb-4">Acquis à placer</h2>
             
             {!pdfData ? (
-              <p className="text-slate-500 text-sm">Uploadez d'abord un PDF</p>
+              <p className="theme-text-dimmed text-sm">Uploadez d'abord un PDF</p>
             ) : (
               <>
                 {/* Skills without position */}
@@ -790,13 +790,13 @@ export default function LevelDocumentsPage() {
                           className={`p-3 rounded-lg border transition-all ${
                             skillToPlace?.id === skill.id
                               ? 'bg-cyan-500/20 border-cyan-500/50'
-                              : 'bg-slate-700/30 border-slate-600/50 hover:bg-slate-700/50'
+                              : 'theme-bg-input theme-border hover:opacity-80'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm text-white font-medium truncate">{skill.name}</p>
-                              <p className="text-xs text-slate-500 truncate">{skill.domainName} › {skill.moduleName}</p>
+                              <p className="text-sm theme-text font-medium truncate">{skill.name}</p>
+                              <p className="text-xs theme-text-dimmed truncate">{skill.domainName} › {skill.moduleName}</p>
                             </div>
                             <Button 
                               variant="secondary" 
@@ -829,8 +829,8 @@ export default function LevelDocumentsPage() {
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm text-white font-medium truncate">{skill.name}</p>
-                                <p className="text-xs text-slate-400">
+                                <p className="text-sm theme-text font-medium truncate">{skill.name}</p>
+                                <p className="text-xs theme-text-muted">
                                   Page {pos.page} • X:{Math.round(pos.x)} Y:{Math.round(pos.y)}
                                 </p>
                               </div>
@@ -862,7 +862,7 @@ export default function LevelDocumentsPage() {
                 )}
 
                 {allSkills.length === 0 && (
-                  <p className="text-slate-500 text-sm">Aucun acquis défini pour ce niveau</p>
+                  <p className="theme-text-dimmed text-sm">Aucun acquis défini pour ce niveau</p>
                 )}
               </>
             )}
