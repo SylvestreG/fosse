@@ -99,49 +99,49 @@ export default function CompetencesInstructorPage() {
 
       {viewMode === 'students' && (
         <>
-          {/* Tabs pour les niveaux */}
-          <div className="border-b border-slate-600">
-            <nav className="-mb-px flex space-x-1 overflow-x-auto pb-px">
-              {LEVEL_ORDER.map((level) => {
-                const studentCount = getStudentCountByLevel(level)
-                return (
-                  <button
-                    key={level}
-                    onClick={() => setActiveTab(level)}
-                    className={`
-                      whitespace-nowrap py-2 sm:py-3 px-3 sm:px-4 border-b-2 font-medium text-xs sm:text-sm transition-colors
-                      flex items-center gap-1.5 sm:gap-2
-                      ${activeTab === level
-                        ? 'border-cyan-500 text-cyan-400 bg-cyan-500/10'
-                        : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
-                      }
-                    `}
-                  >
-                    {level}
-                    {studentCount > 0 && (
-                      <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeTab === level ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-amber-500/10 text-amber-400'}`}>
-                        {studentCount}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </nav>
-          </div>
+      {/* Tabs pour les niveaux */}
+      <div className="border-b theme-border">
+        <nav className="-mb-px flex space-x-1 overflow-x-auto pb-px">
+          {LEVEL_ORDER.map((level) => {
+            const studentCount = getStudentCountByLevel(level)
+            return (
+              <button
+                key={level}
+                onClick={() => setActiveTab(level)}
+                className={`
+                  whitespace-nowrap py-2 sm:py-3 px-3 sm:px-4 border-b-2 font-medium text-xs sm:text-sm transition-colors
+                  flex items-center gap-1.5 sm:gap-2
+                  ${activeTab === level
+                    ? 'border-cyan-500 text-cyan-400 bg-cyan-500/10'
+                    : 'border-transparent theme-text-muted hover:theme-text-secondary hover:border-current'
+                  }
+                `}
+              >
+                {level}
+                {studentCount > 0 && (
+                  <span className={`px-1.5 py-0.5 text-xs rounded-full ${activeTab === level ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-amber-500/10 text-amber-400'}`}>
+                    {studentCount}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </nav>
+      </div>
 
           {/* Students Section */}
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 sm:p-6">
+          <div className="theme-card p-3 sm:p-6 shadow">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-2">
               <div>
-                <h2 className="text-base sm:text-xl font-bold text-white">👨‍🎓 Élèves préparant {activeTab}</h2>
-                <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                <h2 className="text-base sm:text-xl font-bold theme-text">👨‍🎓 Élèves préparant {activeTab}</h2>
+                <p className="text-xs sm:text-sm theme-text-muted mt-1">
                   {studentsForCurrentLevel.length} élève{studentsForCurrentLevel.length > 1 ? 's' : ''} en préparation
                 </p>
               </div>
             </div>
 
             {studentsForCurrentLevel.length === 0 ? (
-              <p className="text-center text-slate-400 py-6 sm:py-8 text-sm sm:text-base">
+              <p className="text-center theme-text-muted py-6 sm:py-8 text-sm sm:text-base">
                 Aucun élève ne prépare actuellement le niveau {activeTab}
               </p>
             ) : (
@@ -150,19 +150,19 @@ export default function CompetencesInstructorPage() {
                   <div
                     key={student.id}
                     onClick={() => navigate(`/dashboard/competences/student/${student.id}`)}
-                    className="p-3 sm:p-4 bg-slate-700/30 rounded-lg border border-slate-600 hover:border-cyan-500/50 hover:shadow-md transition-all cursor-pointer group active:bg-cyan-500/10"
+                    className="p-3 sm:p-4 theme-bg-card rounded-lg border theme-border hover:border-cyan-500/50 hover:shadow-md transition-all cursor-pointer group active:bg-cyan-500/10"
                   >
-                    <div className="font-medium text-white group-hover:text-cyan-400 transition-colors text-sm sm:text-base">
+                    <div className="font-medium theme-text group-hover:text-cyan-400 transition-colors text-sm sm:text-base">
                       {student.first_name} {student.last_name}
                     </div>
-                    <div className="text-xs sm:text-sm text-slate-400 truncate">{student.email}</div>
+                    <div className="text-xs sm:text-sm theme-text-muted truncate">{student.email}</div>
                     {student.diving_level_display && (
                       <div className="text-xs text-cyan-400 mt-1">
                         🤿 {student.diving_level_display}
                       </div>
                     )}
                     <div className="mt-2 sm:mt-3 flex items-center justify-between">
-                      <span className="text-xs text-slate-500 hidden sm:inline">Cliquez pour valider</span>
+                      <span className="text-xs theme-text-dimmed hidden sm:inline">Cliquez pour valider</span>
                       <span className="text-cyan-400 group-hover:translate-x-1 transition-transform text-sm sm:text-base">Valider →</span>
                     </div>
                   </div>
@@ -333,7 +333,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-slate-400">Chargement des statistiques...</p>
+        <p className="mt-2 theme-text-muted">Chargement des statistiques...</p>
       </div>
     )
   }
@@ -363,8 +363,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
       {/* Graphiques en grille */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Élèves par niveau préparé */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-white mb-4">👨‍🎓 Élèves par niveau préparé</h3>
+        <div className="theme-card p-6 shadow">
+          <h3 className="text-lg font-bold theme-text mb-4">👨‍🎓 Élèves par niveau préparé</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={studentsByLevelData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -380,8 +380,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         </div>
 
         {/* Répartition Encadrants / Élèves */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-white mb-4">👥 Répartition des membres</h3>
+        <div className="theme-card p-6 shadow">
+          <h3 className="text-lg font-bold theme-text mb-4">👥 Répartition des membres</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -405,8 +405,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         </div>
 
         {/* Niveaux actuels des membres */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-white mb-4">🤿 Niveaux actuels des membres</h3>
+        <div className="theme-card p-6 shadow">
+          <h3 className="text-lg font-bold theme-text mb-4">🤿 Niveaux actuels des membres</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={currentLevelData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" />
@@ -419,8 +419,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         </div>
 
         {/* Participations aux fosses - élèves vs encadrants */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-white mb-4">📅 Participations aux dernières fosses</h3>
+        <div className="theme-card p-6 shadow">
+          <h3 className="text-lg font-bold theme-text mb-4">📅 Participations aux dernières fosses</h3>
           {participationData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={participationData}>
@@ -433,11 +433,11 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                     if (active && payload && payload.length > 0 && payload[0]?.payload) {
                       const data = payload[0].payload
                       return (
-                        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-600 rounded-lg shadow-lg p-3">
-                          <p className="font-semibold text-white mb-2">📅 {data.fullName}</p>
+                        <div className="theme-card p-3">
+                          <p className="font-semibold theme-text mb-2">📅 {data.fullName}</p>
                           <p className="text-green-600">👨‍🎓 Élèves : {data.eleves}</p>
                           <p className="text-blue-600">👨‍🏫 Encadrants : {data.encadrants}</p>
-                          <p className="text-slate-200 font-medium border-t mt-2 pt-2">Total : {data.eleves + data.encadrants}</p>
+                          <p className="theme-text-secondary font-medium border-t theme-border mt-2 pt-2">Total : {data.eleves + data.encadrants}</p>
                         </div>
                       )
                     }
@@ -452,7 +452,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-slate-400">
+            <div className="h-[300px] flex items-center justify-center theme-text-muted">
               Aucune donnée de participation disponible
             </div>
           )}

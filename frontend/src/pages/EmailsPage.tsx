@@ -202,13 +202,13 @@ Cordialement,`
           </div>
 
           {/* Liste des destinataires */}
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
-            <div className="bg-purple-50 px-6 py-4 border-b border-purple-200 flex items-center justify-between">
+          <div className="theme-card shadow overflow-hidden">
+            <div className="bg-purple-500/10 px-6 py-4 border-b border-purple-500/30 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-purple-900">👥 Destinataires</h3>
-                <p className="text-sm text-purple-700">
+                <h3 className="text-lg font-semibold text-purple-400">👥 Destinataires</h3>
+                <p className="text-sm text-purple-300">
                   {filteredParticipants.length} participant(s) 
-                  {myEmail && <span className="text-purple-500"> (vous exclu)</span>}
+                  {myEmail && <span className="text-purple-400/70"> (vous exclu)</span>}
                 </p>
               </div>
               <Button 
@@ -221,14 +221,14 @@ Cordialement,`
             </div>
             <div className="p-6">
               {loadingParticipants ? (
-                <p className="text-center text-slate-400">Chargement des participants...</p>
+                <p className="text-center theme-text-muted">Chargement des participants...</p>
               ) : filteredParticipants.length === 0 ? (
-                <p className="text-center text-slate-400">Aucun participant pour cette session</p>
+                <p className="text-center theme-text-muted">Aucun participant pour cette session</p>
               ) : (
                 <>
                   {/* Emails copiables en une ligne */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-slate-200 mb-2">
+                    <label className="block text-sm font-medium theme-text-secondary mb-2">
                       📧 Emails (à coller dans "À:")
                     </label>
                     <div className="flex gap-2">
@@ -236,7 +236,7 @@ Cordialement,`
                         type="text"
                         readOnly
                         value={filteredParticipants.map(p => p.email).join(', ')}
-                        className="flex-1 px-4 py-2 border border-slate-600 rounded-lg bg-slate-700/30 text-sm font-mono"
+                        className="flex-1 px-4 py-2 theme-bg-input rounded-lg text-sm font-mono"
                       />
                       <Button variant="secondary" onClick={copyAllEmails}>
                         📋
@@ -245,22 +245,22 @@ Cordialement,`
                   </div>
                   
                   {/* Liste détaillée */}
-                  <div className="border rounded-lg divide-y max-h-48 overflow-y-auto">
+                  <div className="border theme-border rounded-lg divide-y theme-border max-h-48 overflow-y-auto">
                     {filteredParticipants.map(p => (
-                      <div key={p.id} className="px-4 py-2 flex items-center justify-between hover:bg-slate-700/30">
+                      <div key={p.id} className="px-4 py-2 flex items-center justify-between theme-hover">
                         <div>
-                          <span className="font-medium text-white">{p.first_name} {p.last_name}</span>
+                          <span className="font-medium theme-text">{p.first_name} {p.last_name}</span>
                           {p.is_encadrant && (
-                            <span className="ml-2 text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">
+                            <span className="ml-2 text-xs px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded-full">
                               Encadrant
                             </span>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-slate-400">{p.email}</span>
+                          <span className="text-sm theme-text-muted">{p.email}</span>
                           <button
                             onClick={() => copyToClipboard(p.email, 'Email')}
-                            className="text-gray-400 hover:text-slate-300"
+                            className="theme-text-muted hover:theme-text-secondary"
                           >
                             📋
                           </button>
@@ -274,10 +274,10 @@ Cordialement,`
           </div>
 
           {/* Objet du mail */}
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
-            <div className="bg-blue-50 px-6 py-4 border-b border-blue-200 flex items-center justify-between">
+          <div className="theme-card shadow overflow-hidden">
+            <div className="bg-blue-500/10 px-6 py-4 border-b border-blue-500/30 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-blue-900">📝 Objet du mail</h3>
+                <h3 className="text-lg font-semibold text-blue-400">📝 Objet du mail</h3>
               </div>
               <Button 
                 onClick={() => copyToClipboard(generateSubject(selectedSession), 'Objet')}
@@ -292,7 +292,7 @@ Cordialement,`
                   type="text"
                   readOnly
                   value={generateSubject(selectedSession)}
-                  className="flex-1 px-4 py-3 border border-slate-600 rounded-lg bg-slate-700/30 text-lg font-medium"
+                  className="flex-1 px-4 py-3 theme-bg-input rounded-lg text-lg font-medium"
                 />
                 <Button variant="secondary" onClick={() => copyToClipboard(generateSubject(selectedSession), 'Objet')}>
                   📋
@@ -302,11 +302,11 @@ Cordialement,`
           </div>
 
           {/* Email d'invitation */}
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
-            <div className="bg-green-50 px-6 py-4 border-b border-green-200 flex items-center justify-between">
+          <div className="theme-card shadow overflow-hidden">
+            <div className="bg-green-500/10 px-6 py-4 border-b border-green-500/30 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-green-900">✉️ Corps du mail - Invitation</h3>
-                <p className="text-sm text-green-700">Pour inviter les participants à la fosse</p>
+                <h3 className="text-lg font-semibold text-green-400">✉️ Corps du mail - Invitation</h3>
+                <p className="text-sm text-green-300">Pour inviter les participants à la fosse</p>
               </div>
               <Button 
                 onClick={() => copyToClipboard(generateInvitationEmail(selectedSession), 'Email d\'invitation')} 
@@ -316,18 +316,18 @@ Cordialement,`
               </Button>
             </div>
             <div className="p-6">
-              <pre className="whitespace-pre-wrap text-sm text-slate-200 bg-slate-700/30 p-4 rounded-lg border font-sans leading-relaxed">
+              <pre className="whitespace-pre-wrap text-sm theme-text-secondary theme-bg-card p-4 rounded-lg border theme-border font-sans leading-relaxed">
                 {generateInvitationEmail(selectedSession)}
               </pre>
             </div>
           </div>
 
           {/* Email de demande de matériel */}
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
-            <div className="bg-amber-50 px-6 py-4 border-b border-amber-200 flex items-center justify-between">
+          <div className="theme-card shadow overflow-hidden">
+            <div className="bg-amber-500/10 px-6 py-4 border-b border-amber-500/30 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-amber-900">🎒 Corps du mail - Demande de matériel</h3>
-                <p className="text-sm text-amber-700">Pour demander le matériel au club</p>
+                <h3 className="text-lg font-semibold text-amber-400">🎒 Corps du mail - Demande de matériel</h3>
+                <p className="text-sm text-amber-300">Pour demander le matériel au club</p>
               </div>
               <Button 
                 onClick={() => copyToClipboard(generateMaterialEmail(selectedSession), 'Email matériel')} 
@@ -337,7 +337,7 @@ Cordialement,`
               </Button>
             </div>
             <div className="p-6">
-              <pre className="whitespace-pre-wrap text-sm text-slate-200 bg-slate-700/30 p-4 rounded-lg border font-sans leading-relaxed">
+              <pre className="whitespace-pre-wrap text-sm theme-text-secondary theme-bg-card p-4 rounded-lg border theme-border font-sans leading-relaxed">
                 {generateMaterialEmail(selectedSession)}
               </pre>
             </div>
@@ -346,14 +346,14 @@ Cordialement,`
       )}
 
       {!selectedSession && sessions.length > 0 && (
-        <div className="bg-slate-700/30 rounded-lg p-12 text-center">
-          <p className="text-slate-400 text-lg">👆 Sélectionnez une fosse ci-dessus pour voir les emails</p>
+        <div className="theme-card p-12 text-center shadow">
+          <p className="theme-text-muted text-lg">👆 Sélectionnez une fosse ci-dessus pour voir les emails</p>
         </div>
       )}
 
       {sessions.length === 0 && (
-        <div className="bg-slate-700/30 rounded-lg p-12 text-center">
-          <p className="text-slate-400">Aucune session disponible</p>
+        <div className="theme-card p-12 text-center shadow">
+          <p className="theme-text-muted">Aucune session disponible</p>
         </div>
       )}
 

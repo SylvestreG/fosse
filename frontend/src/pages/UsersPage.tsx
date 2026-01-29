@@ -549,35 +549,35 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
         
         {/* Niveaux complets */}
         <div>
-          <h3 className="font-semibold text-lg mb-3 text-white">🎓 Niveaux validés</h3>
-          <p className="text-sm text-slate-300 mb-3">
+          <h3 className="font-semibold text-lg mb-3 theme-text">🎓 Niveaux validés</h3>
+          <p className="text-sm theme-text-secondary mb-3">
             💡 Cocher un niveau coche automatiquement tous les niveaux précédents
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {levelHierarchy.map((level) => (
-              <label key={level} className="flex items-center space-x-2 p-3 border border-slate-600 rounded-lg hover:bg-slate-700/30 cursor-pointer">
+              <label key={level} className="flex items-center space-x-2 p-3 border theme-border rounded-lg theme-hover cursor-pointer">
                 <input 
                   type="checkbox" 
                   checked={completeLevels[level as keyof typeof completeLevels]} 
                   onChange={(e) => handleLevelChange(level, e.target.checked)}
                   className="w-4 h-4 accent-cyan-500"
                 />
-                <span className="font-medium text-white">{level}</span>
+                <span className="font-medium theme-text">{level}</span>
               </label>
             ))}
           </div>
         </div>
 
         {/* Niveau en préparation */}
-        <div className="border-t border-slate-700 pt-4">
-          <h3 className="font-semibold text-lg mb-3 text-white">🎯 Niveau en préparation (optionnel)</h3>
-          <p className="text-sm text-slate-300 mb-3">
+        <div className="border-t theme-border pt-4">
+          <h3 className="font-semibold text-lg mb-3 theme-text">🎯 Niveau en préparation (optionnel)</h3>
+          <p className="text-sm theme-text-secondary mb-3">
             Sélectionnez le niveau que cette personne prépare actuellement
           </p>
           <select
             value={preparingLevel}
             onChange={(e) => setPreparingLevel(e.target.value)}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="w-full px-4 py-2 theme-select"
           >
             {getPreparingOptions().map((option) => (
               <option key={option.value} value={option.value}>
@@ -590,7 +590,7 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
         {/* Aperçu du résultat */}
         <div className="bg-cyan-500/10 p-4 rounded-lg border border-cyan-500/30">
           <h4 className="font-semibold text-cyan-300 mb-2">📊 Aperçu du résultat</h4>
-          <p className="text-sm text-slate-200">
+          <p className="text-sm theme-text-secondary">
             <strong>Niveau validé :</strong> {getHighestLevel() || 'Aucun'}
           </p>
           {preparingLevel && (
@@ -612,7 +612,7 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
           })()}
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t border-slate-700">
+        <div className="flex justify-end space-x-3 pt-4 border-t theme-border">
           <Button type="button" variant="secondary" onClick={onClose}>
             Annuler
           </Button>

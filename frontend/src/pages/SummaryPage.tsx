@@ -198,16 +198,16 @@ export default function SummaryPage() {
         const savedBottles = savedAirBottles + savedNitroxBottles
 
         return (
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+          <div className="theme-card p-6 shadow">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-white">📦 Bouteilles</h2>
+              <h2 className="text-xl font-semibold theme-text">📦 Bouteilles</h2>
               <div className="flex items-center gap-3">
                 {summary.optimization_mode && (
                   <span className="text-sm text-green-400 bg-green-500/20 px-3 py-1 rounded-full border border-green-500/30">
                     🔄 Mode 2 rotations (-{savedBottles} bouteilles)
                   </span>
                 )}
-                <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
+                <span className="text-sm theme-text-muted theme-badge px-3 py-1 rounded-full">
                   Inclut bloc de secours (Air)
                 </span>
               </div>
@@ -248,10 +248,10 @@ export default function SummaryPage() {
       })()}
 
       {/* Section Matériel */}
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+      <div className="theme-card p-6 shadow">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-white">🛠️ Matériel</h2>
-          <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
+          <h2 className="text-xl font-semibold theme-text">🛠️ Matériel</h2>
+          <span className="text-sm theme-text-muted theme-badge px-3 py-1 rounded-full">
             Inclut +1 détendeur et +1 stab de secours
           </span>
         </div>
@@ -286,8 +286,8 @@ export default function SummaryPage() {
       </div>
 
       {summary && summary.stab_sizes && summary.stab_sizes.length > 0 && (
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4 text-white">🦺 Répartition Tailles Stab</h2>
+        <div className="theme-card p-6 shadow">
+          <h2 className="text-xl font-semibold mb-4 theme-text">🦺 Répartition Tailles Stab</h2>
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             {summary.stab_sizes.map((size) => (
               <div 
@@ -295,14 +295,14 @@ export default function SummaryPage() {
                 className={`text-center p-4 rounded-lg ${
                   size.size === 'Secours' 
                     ? 'bg-red-500/20 border-2 border-red-500/50' 
-                    : 'bg-slate-700/30'
+                    : 'theme-bg-card'
                 }`}
               >
-                <p className="text-2xl font-bold text-white">{size.count}</p>
+                <p className="text-2xl font-bold theme-text">{size.count}</p>
                 <p className={`text-sm ${
                   size.size === 'Secours' 
                     ? 'text-red-400 font-semibold' 
-                    : 'text-slate-300'
+                    : 'theme-text-secondary'
                 }`}>
                   {size.size === 'Secours' ? '🚨 Secours' : `Taille ${size.size}`}
                 </p>
@@ -328,9 +328,9 @@ export default function SummaryPage() {
         const driversCount = sorted.filter(p => p.has_car).length
 
         return (
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+          <div className="theme-card p-6 shadow">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold theme-text">
                 🚗 Départs d'Issoire ({fromIssoire.length})
               </h2>
               <div className="flex items-center gap-3">
@@ -346,7 +346,7 @@ export default function SummaryPage() {
                   className={`p-3 rounded-lg border ${
                     p.has_car 
                       ? 'bg-green-500/10 border-green-500/30' 
-                      : 'bg-slate-700/30 border-slate-600/50'
+                      : 'theme-bg-card theme-border'
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -354,7 +354,7 @@ export default function SummaryPage() {
                       <span className="text-lg" title={`${p.car_seats || '?'} places`}>🚗</span>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-white font-medium truncate">
+                      <p className="theme-text font-medium truncate">
                         {p.first_name} {p.last_name}
                       </p>
                       {p.has_car && p.car_seats && (
@@ -373,18 +373,18 @@ export default function SummaryPage() {
       })()}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4 text-white">🚗 Transport</h2>
+        <div className="theme-card p-6 shadow">
+          <h2 className="text-xl font-semibold mb-4 theme-text">🚗 Transport</h2>
           <div className="space-y-2">
-            <p className="text-3xl font-bold text-white">{summary.vehicles_count}</p>
-            <p className="text-slate-300">Véhicules disponibles</p>
+            <p className="text-3xl font-bold theme-text">{summary.vehicles_count}</p>
+            <p className="theme-text-secondary">Véhicules disponibles</p>
             <p className="text-2xl font-semibold text-cyan-400">{summary.total_car_seats}</p>
-            <p className="text-slate-300">Places totales</p>
+            <p className="theme-text-secondary">Places totales</p>
           </div>
         </div>
 
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4 text-white">📊 Taux de Complétion</h2>
+        <div className="theme-card p-6 shadow">
+          <h2 className="text-xl font-semibold mb-4 theme-text">📊 Taux de Complétion</h2>
           <div className="relative pt-1">
             <div className="flex mb-2 items-center justify-between">
               <div>
@@ -398,7 +398,7 @@ export default function SummaryPage() {
                 </span>
               </div>
             </div>
-            <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-slate-700">
+            <div className="overflow-hidden h-4 mb-4 text-xs flex rounded theme-bg-card">
               <div
                 style={{
                   width: summary.total_questionnaires > 0 ? `${(summary.submitted_count / summary.total_questionnaires) * 100}%` : '0%',
@@ -406,7 +406,7 @@ export default function SummaryPage() {
                 className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-500"
               ></div>
             </div>
-            <p className="text-sm text-slate-300">
+            <p className="text-sm theme-text-secondary">
               {summary.submitted_count} réponses sur {summary.total_questionnaires} plongeurs
             </p>
           </div>
@@ -415,38 +415,38 @@ export default function SummaryPage() {
 
       {/* Section Encadrants */}
       {summary && summary.participants && summary.participants.filter(p => p.is_encadrant).length > 0 && (
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4 text-white">
+        <div className="theme-card p-6 shadow">
+          <h2 className="text-xl font-semibold mb-4 theme-text">
             🏊 Encadrants ({summary.participants.filter(p => p.is_encadrant).length})
           </h2>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-700">
+            <table className="min-w-full divide-y theme-border">
               <thead className="bg-purple-500/10">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium theme-text-muted uppercase tracking-wider">
                     Nom
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium theme-text-muted uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium theme-text-muted uppercase tracking-wider">
                     Niveau
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium theme-text-muted uppercase tracking-wider">
                     Statut
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-slate-700">
+              <tbody className="theme-card divide-y theme-border">
                 {summary.participants.filter(p => p.is_encadrant).map((participant, idx) => (
                   <tr key={idx} className={participant.submitted ? 'bg-green-500/10' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-white">
+                      <div className="text-sm font-medium theme-text">
                         {participant.first_name} {participant.last_name}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-slate-400">{participant.email}</div>
+                      <div className="text-sm theme-text-muted">{participant.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400 border border-purple-500/30">
@@ -493,36 +493,36 @@ export default function SummaryPage() {
 
         const StudentTable = ({ participants, headerColor }: { participants: typeof students, headerColor: string }) => (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-700">
+            <table className="min-w-full divide-y theme-border">
               <thead className={headerColor}>
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium theme-text-muted uppercase tracking-wider">
                     Nom
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium theme-text-muted uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium theme-text-muted uppercase tracking-wider">
                     Niveau
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium theme-text-muted uppercase tracking-wider">
                     Prépare
                   </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium theme-text-muted uppercase tracking-wider">
                     Statut
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-slate-700">
+              <tbody className="theme-card divide-y theme-border">
                 {participants.map((participant, idx) => (
                   <tr key={idx} className={participant.submitted ? 'bg-green-500/10' : ''}>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-white">
+                      <div className="text-sm font-medium theme-text">
                         {participant.first_name} {participant.last_name}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-slate-400">{participant.email}</div>
+                      <div className="text-sm theme-text-muted">{participant.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
@@ -535,7 +535,7 @@ export default function SummaryPage() {
                           🎯 {participant.preparing_level}
                         </span>
                       ) : (
-                        <span className="text-slate-500">-</span>
+                        <span className="theme-text-dimmed">-</span>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -560,8 +560,8 @@ export default function SummaryPage() {
           <div className="space-y-6">
             {/* Formation Nitrox */}
             {nitroxTrainingStudents.length > 0 && (
-              <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold mb-4 text-white">
+              <div className="theme-card p-6 shadow">
+                <h2 className="text-xl font-semibold mb-4 theme-text">
                   🎓 Formation Nitrox ({nitroxTrainingStudents.length})
                 </h2>
                 <StudentTable participants={nitroxTrainingStudents} headerColor="bg-yellow-500/10" />
@@ -573,8 +573,8 @@ export default function SummaryPage() {
               const levelStudents = studentsByPreparingLevel[level]
               if (levelStudents.length === 0) return null
               return (
-                <div key={level} className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-                  <h2 className="text-xl font-semibold mb-4 text-white">
+                <div key={level} className="theme-card p-6 shadow">
+                  <h2 className="text-xl font-semibold mb-4 theme-text">
                     🎯 Préparation {level} ({levelStudents.length})
                   </h2>
                   <StudentTable participants={levelStudents} headerColor="bg-cyan-500/10" />
@@ -584,8 +584,8 @@ export default function SummaryPage() {
 
             {/* Autres élèves */}
             {otherStudents.length > 0 && (
-              <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold mb-4 text-white">
+              <div className="theme-card p-6 shadow">
+                <h2 className="text-xl font-semibold mb-4 theme-text">
                   🤿 Autres élèves ({otherStudents.length})
                 </h2>
                 <StudentTable participants={otherStudents} headerColor="bg-slate-500/10" />
@@ -626,12 +626,12 @@ function StatCard({ title, value, icon, color, subtitle }: StatCardProps) {
   }
 
   return (
-    <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+    <div className="theme-card p-6 shadow">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <p className="text-sm text-slate-300 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-white">{value}</p>
-          {subtitle && <p className="text-sm text-slate-400 mt-1">{subtitle}</p>}
+          <p className="text-sm theme-text-secondary mb-1">{title}</p>
+          <p className="text-3xl font-bold theme-text">{value}</p>
+          {subtitle && <p className="text-sm theme-text-muted mt-1">{subtitle}</p>}
         </div>
         <div className={`text-4xl p-3 rounded-full ${colorClasses[color] || colorClasses.gray}`}>{icon}</div>
       </div>

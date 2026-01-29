@@ -358,24 +358,24 @@ export default function SessionsPage() {
                   </div>
 
                   {q.comments && (
-                    <p className="text-sm italic text-slate-300 border-t pt-2">"{q.comments}"</p>
+                    <p className="text-sm italic theme-text-secondary border-t theme-border pt-2">"{q.comments}"</p>
                   )}
 
                   {q.magic_link && (
-                    <div className="border-t pt-3 space-y-2">
-                      <p className="text-sm font-medium text-slate-200">Magic Link:</p>
+                    <div className="border-t theme-border pt-3 space-y-2">
+                      <p className="text-sm font-medium theme-text-secondary">Magic Link:</p>
                       <div className="flex items-center space-x-2">
                         <input
                           type="text"
                           value={q.magic_link}
                           readOnly
-                          className="flex-1 text-sm px-3 py-2 border rounded-lg bg-slate-700/30 font-mono"
+                          className="flex-1 text-sm px-3 py-2 theme-bg-input rounded-lg font-mono"
                         />
                         <Button size="sm" onClick={() => copyToClipboard(q.magic_link!)}>
                           📋 Copier
                         </Button>
                       </div>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs theme-text-muted">
                         Statut email: <span className="font-medium">{q.email_status || 'N/A'}</span>
                       </p>
                     </div>
@@ -386,7 +386,7 @@ export default function SessionsPage() {
           )}
         </div>
       ) : (
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
+        <div className="theme-card shadow overflow-hidden">
           <Table data={sessions} columns={sessionColumns} />
         </div>
       )}
@@ -394,13 +394,13 @@ export default function SessionsPage() {
       <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Créer une session">
         <form onSubmit={handleCreateSession} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-1">
+            <label className="block text-sm font-medium theme-text-secondary mb-1">
               Lieu
             </label>
             <select
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 theme-select"
               required
             >
               <option value="Coubertin">Coubertin</option>
@@ -424,16 +424,16 @@ export default function SessionsPage() {
             className="bg-slate-700/30"
           />
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-1">
+            <label className="block text-sm font-medium theme-text-secondary mb-1">
               Liste des participants (CSV)
             </label>
             <input
               type="file"
               accept=".csv"
               onChange={(e) => setFormData({ ...formData, csvFile: e.target.files?.[0] || null })}
-              className="block w-full text-sm text-white border border-slate-600 rounded-lg cursor-pointer bg-slate-700/30 focus:outline-none"
+              className="block w-full text-sm theme-text border theme-border rounded-lg cursor-pointer theme-bg-input focus:outline-none"
             />
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm theme-text-muted">
               Optionnel - Importez directement la liste des plongeurs
             </p>
           </div>

@@ -343,56 +343,56 @@ export default function StudentCompetencesPage() {
       {/* Statistiques de l'élève */}
       {studentStats && (
         <div className="grid grid-cols-2 gap-2 sm:gap-4">
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-cyan-500">
+          <div className="theme-card p-2 sm:p-4 shadow border-l-4 border-cyan-500">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 bg-cyan-500/20 rounded-lg">
                 <span className="text-lg sm:text-2xl">🏊</span>
               </div>
               <div>
-                <div className="text-lg sm:text-2xl font-bold text-white">{studentStats.attendedSessions}</div>
-                <div className="text-xs sm:text-sm text-slate-400">Fosses</div>
+                <div className="text-lg sm:text-2xl font-bold theme-text">{studentStats.attendedSessions}</div>
+                <div className="text-xs sm:text-sm theme-text-muted">Fosses</div>
               </div>
             </div>
           </div>
           
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-green-500">
+          <div className="theme-card p-2 sm:p-4 shadow border-l-4 border-green-500">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 bg-green-500/20 rounded-lg">
                 <span className="text-lg sm:text-2xl">✅</span>
               </div>
               <div>
-                <div className="text-lg sm:text-2xl font-bold text-white">
+                <div className="text-lg sm:text-2xl font-bold theme-text">
                   {progress?.domains.reduce((sum, d) => sum + d.progress.validated, 0) || 0}
                 </div>
-                <div className="text-xs sm:text-sm text-slate-400">Validées</div>
+                <div className="text-xs sm:text-sm theme-text-muted">Validées</div>
               </div>
             </div>
           </div>
           
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-amber-500">
+          <div className="theme-card p-2 sm:p-4 shadow border-l-4 border-amber-500">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 bg-amber-500/20 rounded-lg">
                 <span className="text-lg sm:text-2xl">🔄</span>
               </div>
               <div>
-                <div className="text-lg sm:text-2xl font-bold text-white">
+                <div className="text-lg sm:text-2xl font-bold theme-text">
                   {progress?.domains.reduce((sum, d) => sum + d.progress.in_progress, 0) || 0}
                 </div>
-                <div className="text-xs sm:text-sm text-slate-400">En cours</div>
+                <div className="text-xs sm:text-sm theme-text-muted">En cours</div>
               </div>
             </div>
           </div>
           
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg sm:rounded-xl shadow p-2 sm:p-4 border-l-4 border-purple-500">
+          <div className="theme-card p-2 sm:p-4 shadow border-l-4 border-purple-500">
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="p-1.5 sm:p-2 bg-purple-500/20 rounded-lg">
                 <span className="text-lg sm:text-2xl">📅</span>
               </div>
               <div className="min-w-0">
-                <div className="text-xs sm:text-sm font-medium text-white truncate" title={studentStats.lastSessionName || undefined}>
+                <div className="text-xs sm:text-sm font-medium theme-text truncate" title={studentStats.lastSessionName || undefined}>
                   {studentStats.lastSessionName || 'Aucune'}
                 </div>
-                <div className="text-xs sm:text-sm text-slate-400">
+                <div className="text-xs sm:text-sm theme-text-muted">
                   {studentStats.lastSessionDate 
                     ? new Date(studentStats.lastSessionDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
                     : 'Dernière fosse'}
@@ -438,15 +438,15 @@ export default function StudentCompetencesPage() {
       </div>
 
       {/* Légende des étapes - toujours visible */}
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 sm:p-4 border border-slate-700">
-        <h3 className="text-xs sm:text-sm font-medium text-slate-200 mb-2 sm:mb-3">Étapes de validation</h3>
+      <div className="theme-card p-3 sm:p-4 shadow">
+        <h3 className="text-xs sm:text-sm font-medium theme-text-secondary mb-2 sm:mb-3">Étapes de validation</h3>
         <div className="flex flex-wrap gap-2 sm:gap-3">
-          <div className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-slate-400">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm theme-text-muted">
             <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-slate-600"></span>
             Non commencé
           </div>
           {stages.map(stage => (
-            <div key={stage.id} className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-slate-300">
+            <div key={stage.id} className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm theme-text-secondary">
               <span 
                 className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full"
                 style={{ backgroundColor: stage.color }}
@@ -460,16 +460,16 @@ export default function StudentCompetencesPage() {
 
       {/* Liste des compétences */}
       {progress.domains.length === 0 ? (
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 sm:p-8 text-center">
-          <p className="text-slate-400 text-sm sm:text-base">Aucune compétence définie pour le niveau {level}</p>
+        <div className="theme-card p-6 sm:p-8 shadow text-center">
+          <p className="theme-text-muted text-sm sm:text-base">Aucune compétence définie pour le niveau {level}</p>
         </div>
       ) : (
         <div className="space-y-3 sm:space-y-4">
           {progress.domains.map(domain => (
-            <div key={domain.id} className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
+            <div key={domain.id} className="theme-card shadow overflow-hidden">
               {/* Header du domaine */}
               <div 
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-gradient-to-r from-slate-700/50 to-slate-700/30 cursor-pointer hover:from-slate-700/70 hover:to-slate-700/50 transition-colors gap-2"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 theme-bg-card cursor-pointer theme-hover transition-colors gap-2"
                 onClick={() => toggleDomain(domain.id)}
               >
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -478,7 +478,7 @@ export default function StudentCompetencesPage() {
                 </div>
                 <div className="flex items-center gap-2 sm:gap-4 ml-7 sm:ml-0">
                   <div className="text-right flex-shrink-0">
-                    <span className="text-xs sm:text-sm font-medium text-slate-200">
+                    <span className="text-xs sm:text-sm font-medium theme-text-secondary">
                       {domain.progress.validated}/{domain.progress.total}
                     </span>
                   </div>
@@ -488,7 +488,7 @@ export default function StudentCompetencesPage() {
                       style={{ width: `${domain.progress.percentage}%` }}
                     />
                   </div>
-                  <span className="text-xs sm:text-sm font-bold text-slate-300 w-10 sm:w-12 text-right">
+                  <span className="text-xs sm:text-sm font-bold theme-text-secondary w-10 sm:w-12 text-right">
                     {Math.round(domain.progress.percentage)}%
                   </span>
                 </div>
@@ -496,12 +496,12 @@ export default function StudentCompetencesPage() {
 
               {/* Modules */}
               {expandedDomains.has(domain.id) && (
-                <div className="border-t border-slate-700">
+                <div className="border-t theme-border">
                   {domain.modules.map(module => (
-                    <div key={module.id} className="border-b border-slate-700/50 last:border-b-0">
+                    <div key={module.id} className="border-b theme-border last:border-b-0">
                       {/* Header du module */}
                       <div 
-                        className="flex items-center justify-between p-2 sm:p-3 pl-6 sm:pl-8 hover:bg-slate-700/30 cursor-pointer"
+                        className="flex items-center justify-between p-2 sm:p-3 pl-6 sm:pl-8 theme-hover cursor-pointer"
                         onClick={() => toggleModule(module.id)}
                       >
                         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -509,7 +509,7 @@ export default function StudentCompetencesPage() {
                           <span className="font-medium text-cyan-300 text-xs sm:text-base">{module.name}</span>
                         </div>
                         <div className="flex items-center gap-2 sm:gap-3">
-                          <span className="text-xs text-slate-400">
+                          <span className="text-xs theme-text-muted">
                             {module.progress.validated}/{module.progress.total}
                           </span>
                           <div className="w-12 sm:w-16 h-1 sm:h-1.5 bg-slate-600 rounded-full overflow-hidden">
@@ -523,7 +523,7 @@ export default function StudentCompetencesPage() {
 
                       {/* Skills */}
                       {expandedModules.has(module.id) && (
-                        <div className="bg-slate-700/30 border-t border-slate-700">
+                        <div className="theme-bg-card border-t theme-border">
                           {module.skills.map((skill, index) => {
                             const pending = pendingChanges.get(skill.id)
                             const currentStage = skill.validation
@@ -531,15 +531,15 @@ export default function StudentCompetencesPage() {
                             return (
                               <div 
                                 key={skill.id}
-                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 pl-8 sm:pl-14 border-b border-slate-700/50 last:border-b-0 hover:bg-slate-700/50 gap-2"
+                                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 sm:p-3 pl-8 sm:pl-14 border-b theme-border last:border-b-0 theme-hover gap-2"
                               >
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                                     <span className="w-5 h-5 sm:w-6 sm:h-6 bg-cyan-500/20 text-cyan-300 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0">
                                       {index + 1}
                                     </span>
-                                    <span className="text-xs sm:text-sm text-slate-200">{skill.name}</span>
-                                    <span className="text-xs text-slate-400 bg-slate-700/50 px-1 sm:px-1.5 py-0.5 rounded hidden sm:inline">
+                                    <span className="text-xs sm:text-sm theme-text-secondary">{skill.name}</span>
+                                    <span className="text-xs theme-text-muted theme-badge px-1 sm:px-1.5 py-0.5 rounded hidden sm:inline">
                                       Min: {skill.min_validator_level}
                                     </span>
                                   </div>
@@ -564,7 +564,7 @@ export default function StudentCompetencesPage() {
                                       >
                                         {currentStage.stage_icon} {currentStage.stage_name}
                                       </span>
-                                      <span className="text-[10px] sm:text-xs text-slate-500 hidden sm:inline">
+                                      <span className="text-[10px] sm:text-xs theme-text-dimmed hidden sm:inline">
                                         par {currentStage.validated_by_name}
                                       </span>
                                     </div>

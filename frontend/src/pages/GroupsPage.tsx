@@ -161,13 +161,13 @@ export default function GroupsPage() {
         {/* Permissions du groupe sélectionné */}
         <div className="lg:col-span-3">
           {selectedGroup ? (
-            <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow">
-              <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+            <div className="theme-card shadow">
+              <div className="p-4 border-b theme-border flex justify-between items-center">
                 <div>
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-bold theme-text">
                     Permissions: {selectedGroup.name}
                   </h2>
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm theme-text-muted">
                     Type: <span className="font-medium">{selectedGroup.group_type}</span>
                   </p>
                 </div>
@@ -185,12 +185,12 @@ export default function GroupsPage() {
                   const someSelected = category.permissions.some(p => editedPermissions.has(p.key))
                   
                   return (
-                    <div key={category.key} className="border border-slate-700 rounded-lg overflow-hidden">
-                      <div className="bg-slate-700/30 px-4 py-3 flex justify-between items-center">
+                    <div key={category.key} className="border theme-border rounded-lg overflow-hidden">
+                      <div className="theme-bg-input px-4 py-3 flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <span className="text-xl">{category.icon}</span>
-                          <span className="font-semibold text-white">{category.key}</span>
-                          <span className="text-xs text-slate-400">
+                          <span className="font-semibold theme-text">{category.key}</span>
+                          <span className="text-xs theme-text-muted">
                             ({category.permissions.filter(p => editedPermissions.has(p.key)).length}/{category.permissions.length})
                           </span>
                         </div>
@@ -205,7 +205,7 @@ export default function GroupsPage() {
                           <button
                             onClick={() => handleDeselectAll(category.key)}
                             disabled={!someSelected}
-                            className="text-xs px-2 py-1 bg-slate-700/50 text-slate-300 rounded hover:bg-slate-600/50 disabled:opacity-50"
+                            className="text-xs px-2 py-1 theme-badge rounded hover:opacity-80 disabled:opacity-50"
                           >
                             Aucun
                           </button>
@@ -218,7 +218,7 @@ export default function GroupsPage() {
                             className={`flex items-center gap-3 p-2 rounded cursor-pointer transition-colors ${
                               editedPermissions.has(perm.key)
                                 ? 'bg-green-500/20 hover:bg-green-500/30 border border-green-500/30'
-                                : 'bg-slate-700/30 hover:bg-slate-700/50 border border-transparent'
+                                : 'theme-bg-card theme-hover border border-transparent'
                             }`}
                           >
                             <input
@@ -228,10 +228,10 @@ export default function GroupsPage() {
                               className="w-4 h-4 rounded accent-cyan-500"
                             />
                             <div>
-                              <div className="text-sm font-medium text-white">
+                              <div className="text-sm font-medium theme-text">
                                 {perm.description}
                               </div>
-                              <div className="text-xs text-slate-500 font-mono">
+                              <div className="text-xs theme-text-dimmed font-mono">
                                 {perm.key}
                               </div>
                             </div>
@@ -244,7 +244,7 @@ export default function GroupsPage() {
               </div>
             </div>
           ) : (
-            <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-12 text-center text-slate-400">
+            <div className="theme-card p-12 text-center theme-text-muted shadow">
               Sélectionnez un groupe pour voir et modifier ses permissions
             </div>
           )}

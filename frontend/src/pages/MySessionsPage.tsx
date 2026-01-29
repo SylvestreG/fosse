@@ -580,8 +580,8 @@ export default function MySessionsPage() {
             onClick={() => setShowPastSessions(!showPastSessions)}
           >
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white">📋 Mes plongées passées</h2>
-              <p className="text-slate-300 text-sm mt-1">
+              <h2 className="text-xl sm:text-2xl font-bold theme-text">📋 Mes plongées passées</h2>
+              <p className="theme-text-secondary text-sm mt-1">
                 {myPerson?.is_instructor 
                   ? 'Retrouvez les élèves que vous avez encadrés'
                   : 'Retrouvez vos palanquées passées'}
@@ -606,32 +606,32 @@ export default function MySessionsPage() {
                 const isInstructor = myPerson?.is_instructor
                 const isSortieDive = !!session.sortie_id
 
-                return (
-                  <div 
-                    key={session.id}
-                    className={`bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 sm:p-6 border ${
-                      isSortieDive ? 'border-purple-500/50' : 'border-slate-700'
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-                      <div>
-                        {isSortieDive && (
-                          <span className="text-xs text-purple-400 font-medium">🏝️ Sortie</span>
-                        )}
-                        <h3 className="text-lg font-semibold text-white">{session.name}</h3>
-                        <p className="text-sm text-slate-400">📆 {formattedDate} • 📍 {session.location}</p>
-                      </div>
-                      <div className="flex gap-2 self-start sm:self-auto">
-                        <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full border border-slate-600">
-                          {myPalanquees.length} palanquée{myPalanquees.length > 1 ? 's' : ''}
-                        </span>
-                        {isInstructor && studentsInTraining > 0 && (
-                          <span className="text-sm text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
-                            🎯 {studentsInTraining} en formation
+                  return (
+                    <div 
+                      key={session.id}
+                      className={`theme-card p-4 sm:p-6 shadow ${
+                        isSortieDive ? 'border-purple-500/50' : ''
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                        <div>
+                          {isSortieDive && (
+                            <span className="text-xs text-purple-400 font-medium">🏝️ Sortie</span>
+                          )}
+                          <h3 className="text-lg font-semibold theme-text">{session.name}</h3>
+                          <p className="text-sm theme-text-muted">📆 {formattedDate} • 📍 {session.location}</p>
+                        </div>
+                        <div className="flex gap-2 self-start sm:self-auto">
+                          <span className="text-sm theme-text-muted theme-badge px-3 py-1 rounded-full">
+                            {myPalanquees.length} palanquée{myPalanquees.length > 1 ? 's' : ''}
                           </span>
-                        )}
+                          {isInstructor && studentsInTraining > 0 && (
+                            <span className="text-sm text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
+                              🎯 {studentsInTraining} en formation
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
                     {/* Affichage des palanquées pour tous */}
                     <div className="space-y-3">
@@ -640,9 +640,9 @@ export default function MySessionsPage() {
                         const students = pal.members.filter(m => m.role === 'P')
                         
                         return (
-                          <div key={idx} className="bg-slate-700/30 rounded-lg p-3 border border-slate-600/50">
+                          <div key={idx} className="theme-bg-card rounded-lg p-3 border theme-border">
                             <div className="flex items-center gap-2 mb-2">
-                              <span className="text-xs text-slate-500">Rot. {pal.rotationNumber}</span>
+                              <span className="text-xs theme-text-dimmed">Rot. {pal.rotationNumber}</span>
                               <span className="bg-purple-600/30 text-purple-300 text-xs px-2 py-0.5 rounded font-medium">
                                 Pal. {pal.palanqueeNumber}
                               </span>

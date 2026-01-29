@@ -108,7 +108,7 @@ export default function CompetencesPage() {
       </div>
 
       {/* Tabs pour les niveaux */}
-      <div className="border-b border-slate-600">
+      <div className="border-b theme-border">
         <nav className="-mb-px flex space-x-1 overflow-x-auto pb-px">
           {LEVEL_ORDER.map((level) => {
             const studentCount = getStudentCountByLevel(level)
@@ -121,22 +121,22 @@ export default function CompetencesPage() {
                   whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm transition-colors
                   flex items-center gap-2
                   ${activeTab === level
-                    ? 'border-blue-500 text-blue-600 bg-blue-50'
-                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
+                    ? 'border-cyan-500 text-cyan-400 bg-cyan-500/10'
+                    : 'border-transparent theme-text-muted hover:theme-text-secondary'
                   }
                 `}
               >
                 {level}
                 <span className={`
                   px-1.5 py-0.5 text-xs rounded
-                  ${activeTab === level ? 'bg-blue-200 text-blue-800' : 'bg-gray-200 text-slate-300'}
+                  ${activeTab === level ? 'bg-cyan-500/20 text-cyan-300' : 'theme-badge'}
                 `}>
                   {competencyCount}
                 </span>
                 {studentCount > 0 && (
                   <span className={`
                     px-1.5 py-0.5 text-xs rounded-full
-                    ${activeTab === level ? 'bg-amber-200 text-amber-800' : 'bg-amber-100 text-amber-600'}
+                    ${activeTab === level ? 'bg-amber-500/20 text-amber-300' : 'bg-amber-500/10 text-amber-400'}
                   `}>
                     👨‍🎓 {studentCount}
                   </span>
@@ -151,11 +151,11 @@ export default function CompetencesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Colonne gauche : Compétences du niveau */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+          <div className="theme-card p-6 shadow">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h2 className="text-xl font-bold text-white">{LEVEL_NAMES[activeTab] || activeTab}</h2>
-                <p className="text-sm text-slate-400 mt-1">
+                <h2 className="text-xl font-bold theme-text">{LEVEL_NAMES[activeTab] || activeTab}</h2>
+                <p className="text-sm theme-text-muted mt-1">
                   {currentLevelCompetencies.length} compétence{currentLevelCompetencies.length > 1 ? 's' : ''} à valider
                 </p>
               </div>
@@ -165,7 +165,7 @@ export default function CompetencesPage() {
             </div>
 
             {currentLevelCompetencies.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
+              <div className="text-center py-8 theme-text-muted">
                 <p className="mb-4">Aucune compétence définie pour ce niveau</p>
                 <Button size="sm" onClick={handleAddCompetency}>
                   ➕ Ajouter une compétence
@@ -176,30 +176,30 @@ export default function CompetencesPage() {
                 {currentLevelCompetencies.map((competency, index) => (
                   <div
                     key={competency.id}
-                    className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors group"
+                    className="flex items-center justify-between p-3 theme-bg-card rounded-lg border theme-border hover:border-cyan-500/50 transition-colors group"
                   >
                     <div className="flex items-center flex-1">
-                      <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-semibold mr-3">
+                      <span className="flex-shrink-0 w-6 h-6 bg-cyan-500/20 text-cyan-400 rounded-full flex items-center justify-center text-xs font-semibold mr-3">
                         {index + 1}
                       </span>
                       <div>
-                        <span className="text-slate-200 font-medium">{competency.name}</span>
+                        <span className="theme-text-secondary font-medium">{competency.name}</span>
                         {competency.description && (
-                          <p className="text-sm text-slate-400 mt-0.5">{competency.description}</p>
+                          <p className="text-sm theme-text-muted mt-0.5">{competency.description}</p>
                         )}
                       </div>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => handleEditCompetency(competency)}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                        className="p-1.5 theme-text-muted hover:text-cyan-400 theme-hover rounded"
                         title="Modifier"
                       >
                         ✏️
                       </button>
                       <button
                         onClick={() => handleDeleteCompetency(competency.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
+                        className="p-1.5 theme-text-muted hover:text-red-400 hover:bg-red-500/20 rounded"
                         title="Supprimer"
                       >
                         🗑️
@@ -214,18 +214,18 @@ export default function CompetencesPage() {
 
         {/* Colonne droite : Élèves préparant ce niveau */}
         <div className="space-y-4">
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+          <div className="theme-card p-6 shadow">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-lg font-bold theme-text">
                 👨‍🎓 Élèves préparant {activeTab}
               </h3>
-              <span className="px-2 py-1 bg-amber-100 text-amber-700 text-sm font-semibold rounded">
+              <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-sm font-semibold rounded">
                 {studentsForCurrentLevel.length}
               </span>
             </div>
 
             {studentsForCurrentLevel.length === 0 ? (
-              <p className="text-slate-400 text-sm text-center py-6">
+              <p className="theme-text-muted text-sm text-center py-6">
                 Aucun élève ne prépare ce niveau actuellement
               </p>
             ) : (
@@ -233,14 +233,14 @@ export default function CompetencesPage() {
                 {studentsForCurrentLevel.map((student) => (
                   <div
                     key={student.id}
-                    className="p-3 bg-slate-700/30 rounded-lg border border-gray-100 hover:bg-slate-700/50 transition-colors"
+                    className="p-3 theme-bg-card rounded-lg border theme-border theme-hover transition-colors"
                   >
-                    <div className="font-medium text-white">
+                    <div className="font-medium theme-text">
                       {student.first_name} {student.last_name}
                     </div>
-                    <div className="text-sm text-slate-400">{student.email}</div>
+                    <div className="text-sm theme-text-muted">{student.email}</div>
                     {student.diving_level_display && (
-                      <div className="text-xs text-blue-600 mt-1">
+                      <div className="text-xs text-cyan-400 mt-1">
                         🤿 Niveau actuel: {student.diving_level_display}
                       </div>
                     )}
@@ -339,45 +339,45 @@ function StudentsListModal({ level, students, onClose }: StudentsListModalProps)
   return (
     <Modal isOpen={true} onClose={onClose} title={`Élèves préparant ${level}`}>
       <div className="space-y-4">
-        <p className="text-slate-300">
+        <p className="theme-text-secondary">
           {students.length} élève{students.length > 1 ? 's' : ''} prépare{students.length > 1 ? 'nt' : ''} actuellement le niveau {level}
         </p>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-slate-700/30">
+          <table className="min-w-full divide-y theme-border">
+            <thead className="theme-bg-input">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium theme-text-muted uppercase tracking-wider">
                   Nom
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium theme-text-muted uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium theme-text-muted uppercase tracking-wider">
                   Niveau actuel
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium theme-text-muted uppercase tracking-wider">
                   Téléphone
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-gray-200">
+            <tbody className="theme-card divide-y theme-border">
               {students.map((student) => (
-                <tr key={student.id} className="hover:bg-slate-700/30">
+                <tr key={student.id} className="theme-hover">
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="font-medium text-white">
+                    <div className="font-medium theme-text">
                       {student.first_name} {student.last_name}
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-400">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm theme-text-muted">
                     {student.email}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                    <span className="px-2 py-1 text-xs bg-cyan-500/20 text-cyan-400 rounded">
                       {student.diving_level_display || 'Aucun'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-400">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm theme-text-muted">
                     {student.phone || '-'}
                   </td>
                 </tr>

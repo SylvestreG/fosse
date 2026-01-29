@@ -199,7 +199,7 @@ export default function CompetencesAdminPage() {
       </div>
 
       {/* Tabs pour les niveaux */}
-      <div className="border-b border-slate-600">
+      <div className="border-b theme-border">
         <nav className="-mb-px flex space-x-1 overflow-x-auto pb-px">
           {LEVEL_ORDER.map((level) => {
             const studentCount = getStudentCountByLevel(level)
@@ -213,7 +213,7 @@ export default function CompetencesAdminPage() {
                   flex items-center gap-2
                   ${activeTab === level
                     ? 'border-cyan-500 text-cyan-400 bg-cyan-500/10'
-                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-600'
+                    : 'border-transparent theme-text-muted hover:theme-text-secondary'
                   }
                 `}
               >
@@ -364,11 +364,11 @@ interface ValidationStagesSectionProps {
 
 function ValidationStagesSection({ stages, onAdd, onEdit, onDelete }: ValidationStagesSectionProps) {
   return (
-    <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+    <div className="theme-card p-6 shadow">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-xl font-bold text-white">📊 Étapes de Validation</h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <h2 className="text-xl font-bold theme-text">📊 Étapes de Validation</h2>
+          <p className="text-sm theme-text-muted mt-1">
             Configurez les différentes étapes de progression (ex: Vu en piscine → Acquis → Validé en mer)
           </p>
         </div>
@@ -379,13 +379,13 @@ function ValidationStagesSection({ stages, onAdd, onEdit, onDelete }: Validation
         {stages.map((stage, index) => (
           <div
             key={stage.id}
-            className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg border border-slate-600 hover:border-cyan-500/50 transition-colors group"
+            className="flex items-center justify-between p-4 theme-bg-card rounded-lg border theme-border hover:border-cyan-500/50 transition-colors group"
           >
             <div className="flex items-center gap-4">
               <span className="text-2xl">{stage.icon}</span>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-white">{stage.name}</span>
+                  <span className="font-medium theme-text">{stage.name}</span>
                   <span 
                     className="px-2 py-0.5 text-xs rounded"
                     style={{ backgroundColor: stage.color + '20', color: stage.color }}
@@ -399,23 +399,23 @@ function ValidationStagesSection({ stages, onAdd, onEdit, onDelete }: Validation
                   )}
                 </div>
                 {stage.description && (
-                  <p className="text-sm text-slate-400 mt-0.5">{stage.description}</p>
+                  <p className="text-sm theme-text-muted mt-0.5">{stage.description}</p>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-slate-400">#{index + 1}</span>
+              <span className="text-sm theme-text-muted">#{index + 1}</span>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => onEdit(stage)}
-                  className="p-1.5 text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/20 rounded"
+                  className="p-1.5 theme-text-muted hover:text-cyan-400 hover:bg-cyan-500/20 rounded"
                   title="Modifier"
                 >
                   ✏️
                 </button>
                 <button
                   onClick={() => onDelete(stage.id)}
-                  className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-500/20 rounded"
+                  className="p-1.5 theme-text-muted hover:text-red-400 hover:bg-red-500/20 rounded"
                   title="Supprimer"
                 >
                   🗑️
@@ -498,8 +498,8 @@ function HierarchySection({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold text-white">{LEVEL_NAMES[level] || level}</h2>
-          <p className="text-sm text-slate-400">
+          <h2 className="text-xl font-bold theme-text">{LEVEL_NAMES[level] || level}</h2>
+          <p className="text-sm theme-text-muted">
             {levelDomains.length} domaine{levelDomains.length > 1 ? 's' : ''} • 
             {levelDomains.reduce((sum, d) => sum + (d.modules?.length || 0), 0)} modules •
             {levelDomains.reduce((sum, d) => sum + (d.modules?.reduce((s, m) => s + (m.skills?.length || 0), 0) || 0), 0)} acquis
@@ -509,14 +509,14 @@ function HierarchySection({
       </div>
 
       {levelDomains.length === 0 ? (
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-12 text-center">
-          <p className="text-slate-400 mb-4">Aucun domaine défini pour {level}</p>
+        <div className="theme-card p-12 text-center shadow">
+          <p className="theme-text-muted mb-4">Aucun domaine défini pour {level}</p>
           <Button onClick={onAddDomain}>Créer le premier domaine</Button>
         </div>
       ) : (
         <div className="space-y-4">
           {levelDomains.map((domain) => (
-            <div key={domain.id} className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
+            <div key={domain.id} className="theme-card shadow overflow-hidden">
               {/* Domain header */}
               <div 
                 className="flex items-center justify-between p-4 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 cursor-pointer hover:from-cyan-500/20 hover:to-blue-500/20 transition-colors"
@@ -557,17 +557,17 @@ function HierarchySection({
 
               {/* Modules */}
               {expandedDomains.has(domain.id) && domain.modules && (
-                <div className="border-t border-slate-700">
+                <div className="border-t theme-border">
                   {domain.modules.length === 0 ? (
-                    <div className="p-4 text-center text-slate-400 text-sm">
+                    <div className="p-4 text-center theme-text-muted text-sm">
                       Aucun module dans ce domaine
                     </div>
                   ) : (
                     domain.modules.map((module) => (
-                      <div key={module.id} className="border-b border-slate-700/50 last:border-b-0">
+                      <div key={module.id} className="border-b theme-border last:border-b-0">
                         {/* Module header */}
                         <div 
-                          className="flex items-center justify-between p-3 pl-8 hover:bg-slate-700/30 cursor-pointer"
+                          className="flex items-center justify-between p-3 pl-8 theme-hover cursor-pointer"
                           onClick={() => toggleModule(module.id)}
                         >
                           <div className="flex items-center gap-2">
@@ -575,7 +575,7 @@ function HierarchySection({
                             <span className="font-medium text-cyan-300">{module.name}</span>
                           </div>
                           <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs theme-text-muted">
                               {module.skills?.length || 0} acquis
                             </span>
                             <button
@@ -586,13 +586,13 @@ function HierarchySection({
                             </button>
                             <button
                               onClick={() => onEditModule(module)}
-                              className="p-1 text-slate-400 hover:text-cyan-400"
+                              className="p-1 theme-text-muted hover:text-cyan-400"
                             >
                               ✏️
                             </button>
                             <button
                               onClick={() => onDeleteModule(module.id)}
-                              className="p-1 text-slate-400 hover:text-red-400"
+                              className="p-1 theme-text-muted hover:text-red-400"
                             >
                               🗑️
                             </button>
@@ -601,29 +601,29 @@ function HierarchySection({
 
                         {/* Skills */}
                         {expandedModules.has(module.id) && module.skills && (
-                          <div className="bg-slate-700/30 border-t border-slate-600">
+                          <div className="theme-bg-card border-t theme-border">
                             {module.skills.length === 0 ? (
-                              <div className="p-3 pl-12 text-slate-400 text-sm">
+                              <div className="p-3 pl-12 theme-text-muted text-sm">
                                 Aucun acquis dans ce module
                               </div>
                             ) : (
                               module.skills.map((skill, index) => (
                                 <div
                                   key={skill.id}
-                                  className="flex items-center justify-between p-2 pl-12 hover:bg-slate-700/50 border-b border-slate-600/50 last:border-b-0"
+                                  className="flex items-center justify-between p-2 pl-12 theme-hover border-b theme-border last:border-b-0"
                                 >
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                       <span className="w-5 h-5 bg-cyan-500/20 text-cyan-400 rounded-full flex items-center justify-center text-xs border border-cyan-500/30">
                                         {index + 1}
                                       </span>
-                                      <span className="text-sm text-slate-200">{skill.name}</span>
-                                      <span className="text-xs text-slate-400 bg-slate-600/50 px-1.5 py-0.5 rounded border border-slate-500/50">
+                                      <span className="text-sm theme-text-secondary">{skill.name}</span>
+                                      <span className="text-xs theme-text-muted theme-badge px-1.5 py-0.5 rounded">
                                         Min: {skill.min_validator_level}
                                       </span>
                                     </div>
                                     {skill.description && (
-                                      <p className="text-xs text-slate-400 ml-7 mt-1 italic">
+                                      <p className="text-xs theme-text-muted ml-7 mt-1 italic">
                                         💡 {skill.description}
                                       </p>
                                     )}
@@ -631,13 +631,13 @@ function HierarchySection({
                                   <div className="flex items-center gap-1">
                                     <button
                                       onClick={() => onEditSkill(skill)}
-                                      className="p-1 text-slate-400 hover:text-cyan-400"
+                                      className="p-1 theme-text-muted hover:text-cyan-400"
                                     >
                                       ✏️
                                     </button>
                                     <button
                                       onClick={() => onDeleteSkill(skill.id)}
-                                      className="p-1 text-slate-400 hover:text-red-400"
+                                      className="p-1 theme-text-muted hover:text-red-400"
                                     >
                                       🗑️
                                     </button>
@@ -672,18 +672,18 @@ interface StudentsSectionProps {
 
 function StudentsSection({ level, students, onViewProgress }: StudentsSectionProps) {
   return (
-    <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6">
+    <div className="theme-card p-6 shadow">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-xl font-bold text-white">👨‍🎓 Élèves préparant {level}</h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <h2 className="text-xl font-bold theme-text">👨‍🎓 Élèves préparant {level}</h2>
+          <p className="text-sm theme-text-muted mt-1">
             {students.length} élève{students.length > 1 ? 's' : ''} en préparation
           </p>
         </div>
       </div>
 
       {students.length === 0 ? (
-        <p className="text-center text-slate-400 py-8">
+        <p className="text-center theme-text-muted py-8">
           Aucun élève ne prépare actuellement le niveau {level}
         </p>
       ) : (
@@ -691,12 +691,12 @@ function StudentsSection({ level, students, onViewProgress }: StudentsSectionPro
           {students.map((student) => (
             <div
               key={student.id}
-              className="p-4 bg-slate-700/30 rounded-lg border border-slate-600 hover:border-cyan-500/50 transition-colors"
+              className="p-4 theme-bg-card rounded-lg border theme-border hover:border-cyan-500/50 transition-colors"
             >
-              <div className="font-medium text-white">
+              <div className="font-medium theme-text">
                 {student.first_name} {student.last_name}
               </div>
-              <div className="text-sm text-slate-400">{student.email}</div>
+              <div className="text-sm theme-text-muted">{student.email}</div>
               {student.diving_level_display && (
                 <div className="text-xs text-cyan-400 mt-1">
                   🤿 Niveau actuel: {student.diving_level_display}
@@ -868,7 +868,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-2 text-slate-400">Chargement des statistiques...</p>
+        <p className="mt-2 theme-text-muted">Chargement des statistiques...</p>
       </div>
     )
   }
@@ -898,8 +898,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
       {/* Graphiques en grille */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Élèves par niveau préparé */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-white mb-4">👨‍🎓 Élèves par niveau préparé</h3>
+        <div className="theme-card p-6 shadow">
+          <h3 className="text-lg font-bold theme-text mb-4">👨‍🎓 Élèves par niveau préparé</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={studentsByLevelData}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -915,8 +915,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         </div>
 
         {/* Répartition Encadrants / Élèves */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-white mb-4">👥 Répartition des membres</h3>
+        <div className="theme-card p-6 shadow">
+          <h3 className="text-lg font-bold theme-text mb-4">👥 Répartition des membres</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
@@ -940,8 +940,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         </div>
 
         {/* Niveaux actuels des membres */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-white mb-4">🤿 Niveaux actuels des membres</h3>
+        <div className="theme-card p-6 shadow">
+          <h3 className="text-lg font-bold theme-text mb-4">🤿 Niveaux actuels des membres</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={currentLevelData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" />
@@ -954,8 +954,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
         </div>
 
         {/* Participations aux fosses - élèves vs encadrants */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
-          <h3 className="text-lg font-bold text-white mb-4">📅 Participations aux dernières fosses</h3>
+        <div className="theme-card p-6 shadow">
+          <h3 className="text-lg font-bold theme-text mb-4">📅 Participations aux dernières fosses</h3>
           {participationData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={participationData}>
@@ -968,11 +968,11 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                     if (active && payload && payload.length > 0 && payload[0]?.payload) {
                       const data = payload[0].payload
                       return (
-                        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-600 rounded-lg shadow-lg p-3">
-                          <p className="font-semibold text-white mb-2">📅 {data.fullName}</p>
+                        <div className="theme-card p-3">
+                          <p className="font-semibold theme-text mb-2">📅 {data.fullName}</p>
                           <p className="text-green-600">👨‍🎓 Élèves : {data.eleves}</p>
                           <p className="text-blue-600">👨‍🏫 Encadrants : {data.encadrants}</p>
-                          <p className="text-slate-200 font-medium border-t mt-2 pt-2">Total : {data.eleves + data.encadrants}</p>
+                          <p className="theme-text-secondary font-medium border-t theme-border mt-2 pt-2">Total : {data.eleves + data.encadrants}</p>
                         </div>
                       )
                     }
@@ -987,7 +987,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-slate-400">
+            <div className="h-[300px] flex items-center justify-center theme-text-muted">
               Aucune donnée de participation disponible
             </div>
           )}
@@ -995,8 +995,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
       </div>
 
       {/* Progression des compétences par niveau */}
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow p-6">
-        <h3 className="text-lg font-bold text-white mb-4">📈 Progression des compétences par niveau</h3>
+      <div className="theme-card p-6 shadow">
+        <h3 className="text-lg font-bold theme-text mb-4">📈 Progression des compétences par niveau</h3>
         <ResponsiveContainer width="100%" height={350}>
           <BarChart data={progressChartData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -1009,37 +1009,37 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
             <Bar dataKey="Non commencé" stackId="a" fill="#E5E7EB" />
           </BarChart>
         </ResponsiveContainer>
-        <p className="text-sm text-slate-400 mt-2 text-center">
+        <p className="text-sm theme-text-muted mt-2 text-center">
           Agrégation des compétences des élèves préparant chaque niveau
         </p>
       </div>
 
       {/* Tableau détaillé par niveau */}
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-600">
-          <h3 className="text-lg font-bold text-white">📋 Détail par niveau</h3>
+      <div className="theme-card shadow overflow-hidden">
+        <div className="px-6 py-4 border-b theme-border">
+          <h3 className="text-lg font-bold theme-text">📋 Détail par niveau</h3>
         </div>
-        <table className="min-w-full divide-y divide-slate-700">
-          <thead className="bg-slate-700/30">
+        <table className="min-w-full divide-y theme-border">
+          <thead className="theme-bg-input">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Niveau</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase">Description</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase">Élèves en préparation</th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-slate-400 uppercase">Membres avec ce niveau</th>
+              <th className="px-6 py-3 text-left text-xs font-medium theme-text-muted uppercase">Niveau</th>
+              <th className="px-6 py-3 text-left text-xs font-medium theme-text-muted uppercase">Description</th>
+              <th className="px-6 py-3 text-center text-xs font-medium theme-text-muted uppercase">Élèves en préparation</th>
+              <th className="px-6 py-3 text-center text-xs font-medium theme-text-muted uppercase">Membres avec ce niveau</th>
             </tr>
           </thead>
-          <tbody className="bg-slate-800/50 backdrop-blur-xl divide-y divide-slate-700">
+          <tbody className="theme-card divide-y theme-border">
             {LEVEL_ORDER.map((level) => {
               const preparing = people.filter(p => p.preparing_level === level).length
               const current = people.filter(p => p.diving_level_display === level).length
               return (
-                <tr key={level} className="hover:bg-slate-700/30">
+                <tr key={level} className="theme-hover">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-3 py-1 bg-cyan-500/20 text-cyan-300 rounded-full font-medium border border-cyan-500/30">
                       {level}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-slate-300">
+                  <td className="px-6 py-4 theme-text-secondary">
                     {LEVEL_NAMES[level] || level}
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -1048,7 +1048,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                         {preparing} 👨‍🎓
                       </span>
                     ) : (
-                      <span className="text-slate-500">-</span>
+                      <span className="theme-text-dimmed">-</span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -1057,7 +1057,7 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
                         {current} 🤿
                       </span>
                     ) : (
-                      <span className="text-slate-500">-</span>
+                      <span className="theme-text-dimmed">-</span>
                     )}
                   </td>
                 </tr>

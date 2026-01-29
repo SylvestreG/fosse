@@ -548,8 +548,8 @@ export default function PalanqueesPage() {
               const optimizedAirBottles = encadrantsAirCount + optimizedStudentAirPlusBackup
 
               return (
-                <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-2 sm:p-3 border border-slate-700 flex flex-wrap items-center gap-2 sm:gap-4">
-                  <span className="text-slate-300 text-xs sm:text-sm">Bouteilles :</span>
+                <div className="theme-card p-2 sm:p-3 shadow flex flex-wrap items-center gap-2 sm:gap-4">
+                  <span className="theme-text-secondary text-xs sm:text-sm">Bouteilles :</span>
                   <span className="bg-blue-600/80 text-white px-1.5 sm:px-2 py-0.5 rounded text-xs sm:text-sm">
                     Air: {optimizedAirBottles}
                   </span>
@@ -738,17 +738,17 @@ function ParticipantGroup({
   onSelect: (p: UnassignedParticipant) => void
 }) {
   const colorClasses = {
-    purple: 'border-purple-600/50 bg-purple-900/20',
-    yellow: 'border-yellow-600/50 bg-yellow-900/20',
-    cyan: 'border-cyan-600/50 bg-cyan-900/20',
-    slate: 'border-slate-600/50 bg-slate-700/20',
+    purple: 'border-purple-600/50 bg-purple-900/20 dark:bg-purple-900/20 light:bg-purple-100/50',
+    yellow: 'border-yellow-600/50 bg-yellow-900/20 dark:bg-yellow-900/20 light:bg-yellow-100/50',
+    cyan: 'border-cyan-600/50 bg-cyan-900/20 dark:bg-cyan-900/20 light:bg-cyan-100/50',
+    slate: 'border-slate-600/50 bg-slate-700/20 dark:bg-slate-700/20 light:bg-gray-100/50',
   }
 
   return (
     <div className={`rounded-lg border p-1.5 sm:p-2 ${colorClasses[color]}`}>
-      <h3 className="text-xs sm:text-sm font-medium text-slate-300 mb-1.5 sm:mb-2 flex items-center justify-between">
+      <h3 className="text-xs sm:text-sm font-medium theme-text-secondary mb-1.5 sm:mb-2 flex items-center justify-between">
         {title}
-        <span className="text-xs text-slate-500">{participants.length}</span>
+        <span className="text-xs theme-text-dimmed">{participants.length}</span>
       </h3>
       <div className="space-y-0.5 sm:space-y-1">
         {participants.map(p => (
@@ -809,12 +809,12 @@ function DraggableParticipant({
         isSelected
           ? 'bg-cyan-600/60 border-cyan-400 ring-2 ring-cyan-400/50'
           : participant.is_encadrant
-          ? 'bg-purple-900/40 border-purple-600/50 hover:bg-purple-900/60'
-          : 'bg-slate-700/40 border-slate-600/50 hover:bg-slate-700/60'
+          ? 'bg-purple-900/40 border-purple-600/50 hover:bg-purple-900/60 dark:bg-purple-900/40 dark:hover:bg-purple-900/60'
+          : 'theme-bg-card border theme-border theme-hover'
       }`}
     >
       <div className="flex items-center justify-between gap-1 sm:gap-2">
-        <span className="text-white truncate">
+        <span className="theme-text truncate">
           {participant.last_name.toUpperCase()} {participant.first_name.charAt(0)}.
         </span>
         <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
@@ -877,15 +877,15 @@ function RotationCard({
   const nitroxExceeded = nitroxCount > availableNitrox
 
   return (
-    <div className={`bg-slate-800/50 backdrop-blur-xl rounded-lg shadow border ${
-      !isSortie && (airExceeded || nitroxExceeded) ? 'border-red-500' : 'border-slate-700'
+    <div className={`theme-card shadow ${
+      !isSortie && (airExceeded || nitroxExceeded) ? 'border-red-500' : ''
     }`}>
-      <div className="p-2 sm:p-3 border-b border-slate-700">
+      <div className="p-2 sm:p-3 border-b theme-border">
         <div className="flex items-start sm:items-center justify-between gap-2">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-wrap">
-            <h3 className="text-sm sm:text-base font-semibold text-white flex items-center gap-1 sm:gap-2">
+            <h3 className="text-sm sm:text-base font-semibold theme-text flex items-center gap-1 sm:gap-2">
               🔄 Rot. {rotation.number}
-              <span className="text-slate-400 text-xs sm:text-sm font-normal">
+              <span className="theme-text-muted text-xs sm:text-sm font-normal">
                 ({allMembers.length})
               </span>
             </h3>
@@ -919,7 +919,7 @@ function RotationCard({
               </button>
               <button
                 onClick={() => onDeleteRotation(rotation.id)}
-                className="p-1 sm:p-1.5 text-red-400 hover:text-red-300 hover:bg-slate-700 rounded transition-colors"
+                className="p-1 sm:p-1.5 text-red-400 hover:text-red-300 theme-hover rounded transition-colors"
                 title="Supprimer rotation"
               >
                 🗑️
@@ -930,7 +930,7 @@ function RotationCard({
       </div>
       
       {rotation.palanquees.length === 0 ? (
-        <div className="p-3 sm:p-4 text-center text-slate-500 text-xs sm:text-sm">
+        <div className="p-3 sm:p-4 text-center theme-text-dimmed text-xs sm:text-sm">
           <span className="hidden sm:inline">Cliquez sur "+ Palanquée" pour créer une palanquée</span>
           <span className="sm:hidden">+ Pal. pour créer</span>
         </div>
@@ -1014,19 +1014,19 @@ function PalanqueeCard({
   }
 
   return (
-    <div className="rounded-lg border border-slate-600 bg-slate-700/30 overflow-hidden">
+    <div className="rounded-lg border theme-border theme-bg-card overflow-hidden">
       {/* Header */}
-      <div className="p-1.5 sm:p-2 bg-slate-700/60 flex items-center justify-between">
+      <div className="p-1.5 sm:p-2 theme-bg-input flex items-center justify-between">
         <div className="flex items-center gap-1">
-          <span className="text-white font-semibold text-xs sm:text-sm">
+          <span className="theme-text font-semibold text-xs sm:text-sm">
             Pal. {palanquee.number}
           </span>
           {canEdit && (
             <button
               onClick={() => setShowParams(!showParams)}
               className={`p-0.5 sm:p-1 rounded transition-colors text-xs ${
-                hasParams ? 'text-cyan-400 hover:text-cyan-300' : 'text-slate-400 hover:text-slate-300'
-              } hover:bg-slate-600`}
+                hasParams ? 'text-cyan-400 hover:text-cyan-300' : 'theme-text-muted hover:theme-text-secondary'
+              } theme-hover`}
               title="Paramètres prévus"
             >
               ⚙️
@@ -1049,11 +1049,11 @@ function PalanqueeCard({
 
       {/* Panneau des paramètres prévus */}
       {showParams && canEdit && (
-        <div className="p-2 bg-slate-800/60 border-b border-slate-600 space-y-2">
-          <div className="text-[10px] sm:text-xs text-slate-400 font-medium">Params Prévus</div>
+        <div className="p-2 theme-bg-card border-b theme-border space-y-2">
+          <div className="text-[10px] sm:text-xs theme-text-muted font-medium">Params Prévus</div>
           <div className="grid grid-cols-2 gap-1.5">
             <div>
-              <label className="text-[9px] sm:text-[10px] text-slate-500 block mb-0.5">Durée (min)</label>
+              <label className="text-[9px] sm:text-[10px] theme-text-dimmed block mb-0.5">Durée (min)</label>
               <input
                 type="number"
                 value={localParams.planned_time}
@@ -1061,11 +1061,11 @@ function PalanqueeCard({
                 placeholder="40"
                 min="0"
                 max="120"
-                className="w-full px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-[10px] sm:text-xs"
+                className="w-full px-1 py-0.5 theme-bg-input rounded text-[10px] sm:text-xs"
               />
             </div>
             <div>
-              <label className="text-[9px] sm:text-[10px] text-slate-500 block mb-0.5">Prof. (m)</label>
+              <label className="text-[9px] sm:text-[10px] theme-text-dimmed block mb-0.5">Prof. (m)</label>
               <input
                 type="number"
                 value={localParams.planned_depth}
@@ -1073,14 +1073,14 @@ function PalanqueeCard({
                 placeholder="20"
                 min="0"
                 max="60"
-                className="w-full px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-[10px] sm:text-xs"
+                className="w-full px-1 py-0.5 theme-bg-input rounded text-[10px] sm:text-xs"
               />
             </div>
           </div>
           <div className="flex justify-end gap-1">
             <button
               onClick={() => setShowParams(false)}
-              className="px-2 py-0.5 text-slate-400 hover:text-slate-300 text-[10px] sm:text-xs"
+              className="px-2 py-0.5 theme-text-muted hover:theme-text-secondary text-[10px] sm:text-xs"
             >
               Annuler
             </button>
@@ -1096,7 +1096,7 @@ function PalanqueeCard({
 
       {/* Affichage des paramètres prévus (quand définis et panneau fermé) */}
       {hasParams && !showParams && (
-        <div className="px-2 py-1 bg-cyan-900/30 border-b border-slate-600 flex items-center gap-2 text-[10px] sm:text-xs text-cyan-300">
+        <div className="px-2 py-1 bg-cyan-900/30 border-b theme-border flex items-center gap-2 text-[10px] sm:text-xs text-cyan-300">
           {palanquee.planned_time && (
             <span>⏱️ {palanquee.planned_time}'</span>
           )}
@@ -1112,7 +1112,7 @@ function PalanqueeCard({
         onDragLeave={() => setGpOver(false)}
         onDrop={e => { if (canEdit && canAddGP) { e.preventDefault(); setGpOver(false); onDropGP(palanquee.id, gps.length) } }}
         onClick={() => { if (canEdit && canAddGP && hasSelectedParticipant) onTapAddGP(palanquee.id, gps.length) }}
-        className={`p-1.5 sm:p-2 border-b border-slate-600 min-h-[36px] sm:min-h-[44px] transition-colors ${
+        className={`p-1.5 sm:p-2 border-b theme-border min-h-[36px] sm:min-h-[44px] transition-colors ${
           gpOver && canAddGP && canEdit
             ? 'bg-purple-500/20 border-purple-500'
             : (isDragging && canAddGP && draggedIsEncadrant && canEdit) || (hasSelectedParticipant && canAddGP && selectedIsEncadrant && canEdit)
@@ -1120,7 +1120,7 @@ function PalanqueeCard({
             : ''
         } ${hasSelectedParticipant && canAddGP && canEdit ? 'cursor-pointer sm:cursor-default' : ''}`}
       >
-        <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1 flex items-center justify-between">
+        <div className="text-[10px] sm:text-xs theme-text-dimmed mb-0.5 sm:mb-1 flex items-center justify-between">
           <span>GP</span>
           <span className={gps.length >= MAX_GPS ? 'text-orange-400' : ''}>{gps.length}/{MAX_GPS}</span>
         </div>
@@ -1136,7 +1136,7 @@ function PalanqueeCard({
               />
             ))}
             {canAddGP && (isDragging && draggedIsEncadrant && canEdit) && (
-              <div className="text-slate-500 text-[10px] sm:text-xs text-center py-0.5 border border-dashed border-slate-600 rounded hidden sm:block">
+              <div className="theme-text-dimmed text-[10px] sm:text-xs text-center py-0.5 border border-dashed theme-border rounded hidden sm:block">
                 ↓
               </div>
             )}
@@ -1149,8 +1149,8 @@ function PalanqueeCard({
         ) : (
           <div className={`text-[10px] sm:text-xs text-center py-0.5 sm:py-1 ${
             hasSelectedParticipant && selectedIsEncadrant && canEdit 
-              ? 'text-cyan-400 border border-dashed border-cyan-500/50 rounded sm:border-none sm:text-slate-500' 
-              : 'text-slate-500'
+              ? 'text-cyan-400 border border-dashed border-cyan-500/50 rounded sm:border-none sm:theme-text-dimmed' 
+              : 'theme-text-dimmed'
           }`}>
             {isDragging && draggedIsEncadrant && canEdit ? '↓' : 
              hasSelectedParticipant && selectedIsEncadrant && canEdit ? <span className="sm:hidden">+ Ajouter ici</span> : '—'}
@@ -1173,7 +1173,7 @@ function PalanqueeCard({
             : ''
         } ${hasSelectedParticipant && canAddStudent && canEdit ? 'cursor-pointer sm:cursor-default' : ''}`}
       >
-        <div className="text-[10px] sm:text-xs text-slate-500 mb-0.5 sm:mb-1 flex items-center justify-between">
+        <div className="text-[10px] sm:text-xs theme-text-dimmed mb-0.5 sm:mb-1 flex items-center justify-between">
           <span>Élèves</span>
           <span className={students.length >= MAX_STUDENTS ? 'text-orange-400' : ''}>
             {students.length}/{MAX_STUDENTS}
@@ -1182,8 +1182,8 @@ function PalanqueeCard({
         {students.length === 0 ? (
           <div className={`text-[10px] sm:text-xs text-center py-2 sm:py-3 ${
             hasSelectedParticipant && !selectedIsEncadrant && canEdit 
-              ? 'text-cyan-400 border border-dashed border-cyan-500/50 rounded sm:border-none sm:text-slate-500' 
-              : 'text-slate-500'
+              ? 'text-cyan-400 border border-dashed border-cyan-500/50 rounded sm:border-none sm:theme-text-dimmed' 
+              : 'theme-text-dimmed'
           }`}>
             {isDragging && !draggedIsEncadrant && canEdit ? '↓' : 
              hasSelectedParticipant && !selectedIsEncadrant && canEdit ? <span className="sm:hidden">+ Ajouter ici</span> : '—'}
@@ -1202,7 +1202,7 @@ function PalanqueeCard({
           </>
         )}
         {students.length > 0 && canAddStudent && isDragging && !draggedIsEncadrant && canEdit && (
-          <div className="text-slate-500 text-[10px] sm:text-xs text-center py-0.5 sm:py-1 border border-dashed border-slate-600 rounded hidden sm:block">
+          <div className="theme-text-dimmed text-[10px] sm:text-xs text-center py-0.5 sm:py-1 border border-dashed theme-border rounded hidden sm:block">
             ↓
           </div>
         )}
@@ -1229,14 +1229,14 @@ function MemberRow({
 }) {
   return (
     <div className={`flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded text-[11px] sm:text-xs ${
-      isGP ? 'bg-purple-900/40' : 'bg-slate-600/40'
+      isGP ? 'bg-purple-900/40' : 'theme-bg-card'
     }`}>
       {isGP && (
         <span className="bg-purple-600 text-white px-0.5 sm:px-1 rounded text-[10px] sm:text-xs flex-shrink-0">GP</span>
       )}
       
       <div className="flex-1 min-w-0">
-        <p className="text-white truncate font-medium">
+        <p className="theme-text truncate font-medium">
           {member.last_name.toUpperCase()} {member.first_name.charAt(0)}.
         </p>
       </div>

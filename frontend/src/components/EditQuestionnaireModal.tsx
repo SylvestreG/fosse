@@ -86,7 +86,7 @@ export default function EditQuestionnaireModal({
     <Modal isOpen={isOpen} onClose={onClose} title={`Modifier - ${questionnaire.first_name} ${questionnaire.last_name}`}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <p className="text-sm text-slate-300">Email: {questionnaire.email}</p>
+          <p className="text-sm theme-text-secondary">Email: {questionnaire.email}</p>
         </div>
 
         <div className="space-y-3">
@@ -95,9 +95,9 @@ export default function EditQuestionnaireModal({
               type="checkbox"
               checked={formData.wants_regulator}
               onChange={(e) => setFormData({ ...formData, wants_regulator: e.target.checked })}
-              className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+              className="rounded theme-border theme-bg-card text-blue-500 focus:ring-blue-500"
             />
-            <span className="text-sm text-slate-200">Souhaite un détendeur</span>
+            <span className="text-sm theme-text-secondary">Souhaite un détendeur</span>
           </label>
 
           {questionnaire.is_encadrant && (
@@ -107,9 +107,9 @@ export default function EditQuestionnaireModal({
                   type="checkbox"
                   checked={formData.wants_2nd_reg}
                   onChange={(e) => setFormData({ ...formData, wants_2nd_reg: e.target.checked })}
-                  className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                  className="rounded theme-border theme-bg-card text-blue-500 focus:ring-blue-500"
                 />
-                <span className="text-sm text-slate-200">Souhaite 2ème détendeur</span>
+                <span className="text-sm theme-text-secondary">Souhaite 2ème détendeur</span>
               </label>
 
               <label className="flex items-center space-x-2 cursor-pointer">
@@ -117,9 +117,9 @@ export default function EditQuestionnaireModal({
                   type="checkbox"
                   checked={formData.wants_nitrox}
                   onChange={(e) => setFormData({ ...formData, wants_nitrox: e.target.checked })}
-                  className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                  className="rounded theme-border theme-bg-card text-blue-500 focus:ring-blue-500"
                 />
-                <span className="text-sm text-slate-200">Souhaite Nitrox</span>
+                <span className="text-sm theme-text-secondary">Souhaite Nitrox</span>
               </label>
             </>
           )}
@@ -130,9 +130,9 @@ export default function EditQuestionnaireModal({
                 type="checkbox"
                 checked={formData.nitrox_training}
                 onChange={(e) => setFormData({ ...formData, nitrox_training: e.target.checked })}
-                className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                className="rounded theme-border theme-bg-card text-blue-500 focus:ring-blue-500"
               />
-              <span className="text-sm text-slate-200">🎓 Formation Nitrox (bloc nitrox)</span>
+              <span className="text-sm theme-text-secondary">🎓 Formation Nitrox (bloc nitrox)</span>
             </label>
           )}
 
@@ -141,20 +141,20 @@ export default function EditQuestionnaireModal({
               type="checkbox"
               checked={formData.wants_stab}
               onChange={(e) => setFormData({ ...formData, wants_stab: e.target.checked })}
-              className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+              className="rounded theme-border theme-bg-card text-blue-500 focus:ring-blue-500"
             />
-            <span className="text-sm text-slate-200">Souhaite stab</span>
+            <span className="text-sm theme-text-secondary">Souhaite stab</span>
           </label>
 
           {formData.wants_stab && (
             <div className="ml-6">
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium theme-text-secondary mb-1">
                 Taille stab
               </label>
               <select
                 value={formData.stab_size}
                 onChange={(e) => setFormData({ ...formData, stab_size: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-600 rounded-lg bg-slate-700 text-slate-200 focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 theme-select"
               >
                 <option value="">Sélectionner</option>
                 <option value="XS">XS</option>
@@ -171,9 +171,9 @@ export default function EditQuestionnaireModal({
               type="checkbox"
               checked={formData.comes_from_issoire}
               onChange={(e) => setFormData({ ...formData, comes_from_issoire: e.target.checked, has_car: e.target.checked ? formData.has_car : false })}
-              className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+              className="rounded theme-border theme-bg-card text-blue-500 focus:ring-blue-500"
             />
-            <span className="text-sm text-slate-200">🗺️ Vient d'Issoire</span>
+            <span className="text-sm theme-text-secondary">🗺️ Vient d'Issoire</span>
           </label>
 
           {formData.comes_from_issoire && (
@@ -183,9 +183,9 @@ export default function EditQuestionnaireModal({
                   type="checkbox"
                   checked={formData.has_car}
                   onChange={(e) => setFormData({ ...formData, has_car: e.target.checked })}
-                  className="rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-500"
+                  className="rounded theme-border theme-bg-card text-blue-500 focus:ring-blue-500"
                 />
-                <span className="text-sm text-slate-200">🚗 A une voiture</span>
+                <span className="text-sm theme-text-secondary">🚗 A une voiture</span>
               </label>
 
               {formData.has_car && (
@@ -213,14 +213,14 @@ export default function EditQuestionnaireModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-200 mb-1">
+            <label className="block text-sm font-medium theme-text-secondary mb-1">
               Commentaires
             </label>
             <textarea
               value={formData.comments}
               onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-600 rounded-lg bg-slate-700 text-slate-200 placeholder-slate-400 focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 theme-bg-input rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>

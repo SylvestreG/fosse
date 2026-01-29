@@ -72,32 +72,32 @@ export default function ValidationLogsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg p-4 border border-slate-700/50">
+        <div className="theme-card p-4 shadow">
           <div className="text-3xl font-bold text-cyan-400">{logs.length}</div>
-          <div className="text-sm text-slate-400">Total validations</div>
+          <div className="text-sm theme-text-muted">Total validations</div>
         </div>
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg p-4 border border-slate-700/50">
+        <div className="theme-card p-4 shadow">
           <div className="text-3xl font-bold text-green-400">
             {logs.filter(l => l.is_final).length}
           </div>
-          <div className="text-sm text-slate-400">Acquis validés</div>
+          <div className="text-sm theme-text-muted">Acquis validés</div>
         </div>
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg p-4 border border-slate-700/50">
+        <div className="theme-card p-4 shadow">
           <div className="text-3xl font-bold text-amber-400">
             {new Set(logs.map(l => l.student_email)).size}
           </div>
-          <div className="text-sm text-slate-400">Élèves concernés</div>
+          <div className="text-sm theme-text-muted">Élèves concernés</div>
         </div>
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg p-4 border border-slate-700/50">
+        <div className="theme-card p-4 shadow">
           <div className="text-3xl font-bold text-purple-400">
             {new Set(logs.map(l => l.instructor_email)).size}
           </div>
-          <div className="text-sm text-slate-400">Encadrants actifs</div>
+          <div className="text-sm theme-text-muted">Encadrants actifs</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg p-4 border border-slate-700/50">
+      <div className="theme-card p-4 shadow">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <input
@@ -105,14 +105,14 @@ export default function ValidationLogsPage() {
               placeholder="🔍 Rechercher (élève, encadrant, compétence...)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full px-4 py-2 theme-bg-input rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
             />
           </div>
           <div className="sm:w-48">
             <select
               value={levelFilter}
               onChange={(e) => setLevelFilter(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full px-4 py-2 theme-select"
             >
               <option value="">Tous les niveaux</option>
               {uniqueLevels.map(level => (
@@ -122,49 +122,49 @@ export default function ValidationLogsPage() {
           </div>
         </div>
         {filteredLogs.length !== logs.length && (
-          <p className="text-sm text-slate-400 mt-2">
+          <p className="text-sm theme-text-muted mt-2">
             {filteredLogs.length} résultat{filteredLogs.length > 1 ? 's' : ''} sur {logs.length}
           </p>
         )}
       </div>
 
       {/* Table */}
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg border border-slate-700/50 overflow-hidden">
+      <div className="theme-card shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-slate-700/30 text-left">
-                <th className="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Date</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Élève</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Encadrant</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Niveau</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Compétence</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-400 uppercase">Étape</th>
+              <tr className="theme-bg-input text-left">
+                <th className="px-4 py-3 text-xs font-medium theme-text-muted uppercase">Date</th>
+                <th className="px-4 py-3 text-xs font-medium theme-text-muted uppercase">Élève</th>
+                <th className="px-4 py-3 text-xs font-medium theme-text-muted uppercase">Encadrant</th>
+                <th className="px-4 py-3 text-xs font-medium theme-text-muted uppercase">Niveau</th>
+                <th className="px-4 py-3 text-xs font-medium theme-text-muted uppercase">Compétence</th>
+                <th className="px-4 py-3 text-xs font-medium theme-text-muted uppercase">Étape</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-700/50">
+            <tbody className="divide-y theme-border">
               {filteredLogs.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-8 text-center theme-text-muted">
                     Aucune validation trouvée
                   </td>
                 </tr>
               ) : (
                 filteredLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-700/30 transition-colors">
+                  <tr key={log.id} className="theme-hover transition-colors">
                     <td className="px-4 py-3">
-                      <span className="text-white font-medium">{formatDate(log.validated_at)}</span>
+                      <span className="theme-text font-medium">{formatDate(log.validated_at)}</span>
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <div className="text-white">{log.student_name}</div>
-                        <div className="text-xs text-slate-500">{log.student_email}</div>
+                        <div className="theme-text">{log.student_name}</div>
+                        <div className="text-xs theme-text-dimmed">{log.student_email}</div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <div className="text-slate-300">{log.instructor_name}</div>
-                        <div className="text-xs text-slate-500">{log.instructor_email}</div>
+                        <div className="theme-text-secondary">{log.instructor_name}</div>
+                        <div className="text-xs theme-text-dimmed">{log.instructor_email}</div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
@@ -174,8 +174,8 @@ export default function ValidationLogsPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div>
-                        <div className="text-white text-sm">{log.skill_name}</div>
-                        <div className="text-xs text-slate-500">
+                        <div className="theme-text text-sm">{log.skill_name}</div>
+                        <div className="text-xs theme-text-dimmed">
                           {log.domain_name} › {log.module_name}
                         </div>
                       </div>
