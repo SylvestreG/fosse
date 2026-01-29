@@ -435,16 +435,16 @@ export default function PalanqueesPage() {
         <div className="flex flex-col lg:grid lg:grid-cols-3 gap-4 sm:gap-6">
           
           {/* Participants non assignés - groupés */}
-          <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 sm:p-4 border border-slate-700 h-fit lg:sticky lg:top-4 max-h-[50vh] lg:max-h-[85vh] overflow-y-auto order-2 lg:order-1">
-            <h2 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3 flex items-center gap-2">
+          <div className="theme-card p-3 sm:p-4 shadow h-fit lg:sticky lg:top-4 max-h-[50vh] lg:max-h-[85vh] overflow-y-auto order-2 lg:order-1">
+            <h2 className="text-base sm:text-lg font-semibold theme-text mb-2 sm:mb-3 flex items-center gap-2">
               👥 Non assignés
-              <span className="bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full text-xs sm:text-sm">
+              <span className="theme-bg-input theme-text-secondary px-2 py-0.5 rounded-full text-xs sm:text-sm">
                 {data.unassigned_participants.length}
               </span>
             </h2>
             
             {data.unassigned_participants.length === 0 ? (
-              <p className="text-slate-400 text-sm text-center py-4">✅ Tous assignés !</p>
+              <p className="theme-text-muted text-sm text-center py-4">✅ Tous assignés !</p>
             ) : (
               <div className="space-y-4">
                 {/* Encadrants */}
@@ -567,9 +567,9 @@ export default function PalanqueesPage() {
 
             {/* Rotations et palanquées */}
             {data.rotations.length === 0 ? (
-              <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-4 sm:p-8 border border-slate-700 text-center">
-                <p className="text-slate-400 mb-1 sm:mb-2 text-sm sm:text-base">Aucune rotation</p>
-                <p className="text-slate-500 text-xs sm:text-sm">
+              <div className="theme-card p-4 sm:p-8 shadow text-center">
+                <p className="theme-text-muted mb-1 sm:mb-2 text-sm sm:text-base">Aucune rotation</p>
+                <p className="theme-text-dimmed text-xs sm:text-sm">
                   {canEdit ? 'Créez une rotation puis ajoutez des palanquées.' : 'Aucune palanquée créée pour cette session.'}
                 </p>
               </div>
@@ -626,27 +626,27 @@ export default function PalanqueesPage() {
       {/* Modal Fiche de Sécurité */}
       {showFicheModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-slate-800 rounded-lg shadow-xl max-w-lg w-full p-4 sm:p-6 border border-slate-700 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">📄 Fiche de Sécurité</h3>
+          <div className="theme-modal-bg rounded-lg shadow-xl max-w-lg w-full p-4 sm:p-6 border theme-border max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg sm:text-xl font-bold theme-text mb-3 sm:mb-4">📄 Fiche de Sécurité</h3>
             
             <div className="space-y-3 sm:space-y-4">
               <div className="grid grid-cols-2 gap-2 sm:gap-4">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Date</label>
+                  <label className="block text-xs sm:text-sm font-medium theme-text-secondary mb-1">Date</label>
                   <input
                     type="date"
                     value={ficheOptions.date}
                     onChange={e => setFicheOptions(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 theme-bg-input rounded-lg theme-text text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Club</label>
+                  <label className="block text-xs sm:text-sm font-medium theme-text-secondary mb-1">Club</label>
                   <input
                     type="text"
                     value={ficheOptions.club}
                     onChange={e => setFicheOptions(prev => ({ ...prev, club: e.target.value }))}
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 theme-bg-input rounded-lg theme-text text-sm"
                     placeholder="PALME Issoire"
                   />
                 </div>
@@ -654,41 +654,41 @@ export default function PalanqueesPage() {
               
               <div className="grid grid-cols-2 gap-2 sm:gap-4">
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Site</label>
+                  <label className="block text-xs sm:text-sm font-medium theme-text-secondary mb-1">Site</label>
                   <input
                     type="text"
                     value={ficheOptions.site}
                     onChange={e => setFicheOptions(prev => ({ ...prev, site: e.target.value }))}
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 theme-bg-input rounded-lg theme-text text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Position</label>
+                  <label className="block text-xs sm:text-sm font-medium theme-text-secondary mb-1">Position</label>
                   <input
                     type="text"
                     value={ficheOptions.position}
                     onChange={e => setFicheOptions(prev => ({ ...prev, position: e.target.value }))}
-                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 theme-bg-input rounded-lg theme-text text-sm"
                   />
                 </div>
               </div>
               
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Sécurité Surface</label>
+                <label className="block text-xs sm:text-sm font-medium theme-text-secondary mb-1">Sécurité Surface</label>
                 <input
                   type="text"
                   value={ficheOptions.securite_surface}
                   onChange={e => setFicheOptions(prev => ({ ...prev, securite_surface: e.target.value }))}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 theme-bg-input rounded-lg theme-text text-sm"
                 />
               </div>
               
               <div>
-                <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-1">Observations</label>
+                <label className="block text-xs sm:text-sm font-medium theme-text-secondary mb-1">Observations</label>
                 <textarea
                   value={ficheOptions.observations}
                   onChange={e => setFicheOptions(prev => ({ ...prev, observations: e.target.value }))}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 theme-bg-input rounded-lg theme-text text-sm"
                   rows={2}
                 />
               </div>
@@ -697,7 +697,7 @@ export default function PalanqueesPage() {
             <div className="flex justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">
               <button
                 onClick={() => setShowFicheModal(false)}
-                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 transition-colors text-sm"
+                className="px-3 py-1.5 sm:px-4 sm:py-2 theme-btn-secondary rounded-lg transition-colors text-sm"
               >
                 Annuler
               </button>

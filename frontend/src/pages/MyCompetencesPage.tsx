@@ -92,7 +92,7 @@ export default function MyCompetencesPage() {
       <div className="space-y-6">
         <h1 className="text-3xl font-bold theme-text">🎯 Mes Compétences</h1>
         
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-xl shadow-lg overflow-hidden">
+        <div className="theme-card rounded-xl shadow-lg overflow-hidden">
           {/* Header avec illustration */}
           <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-8 text-white text-center">
             <div className="text-6xl mb-4">🤿</div>
@@ -104,17 +104,17 @@ export default function MyCompetencesPage() {
             {currentLevel ? (
               <>
                 <div className="mb-6">
-                  <span className="text-slate-400">Votre niveau actuel :</span>
+                  <span className="theme-text-muted">Votre niveau actuel :</span>
                   <div className="text-3xl font-bold text-blue-600 mt-2">{currentLevel}</div>
                 </div>
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-md mx-auto">
+                <div className="bg-amber-500/20 border border-amber-500/50 rounded-lg p-4 max-w-md mx-auto">
                   <div className="flex items-start gap-3">
                     <span className="text-2xl">💡</span>
                     <div className="text-left">
-                      <p className="text-amber-800">
+                      <p className="text-amber-300">
                         Vous n'avez pas de niveau en cours de préparation.
                       </p>
-                      <p className="text-amber-700 text-sm mt-2">
+                      <p className="text-amber-200/80 text-sm mt-2">
                         Si vous souhaitez préparer un nouveau niveau, contactez un administrateur 
                         pour qu'il configure votre formation.
                       </p>
@@ -124,11 +124,11 @@ export default function MyCompetencesPage() {
               </>
             ) : (
               <>
-          <p className="text-slate-400 text-lg mb-4">
+          <p className="theme-text-muted text-lg mb-4">
             Vous n'avez pas encore de niveau de plongée enregistré.
           </p>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-                  <p className="text-blue-800">
+                <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-4 max-w-md mx-auto">
+                  <p className="text-blue-300">
                     Contactez un administrateur pour configurer votre niveau et démarrer votre formation.
           </p>
                 </div>
@@ -138,12 +138,12 @@ export default function MyCompetencesPage() {
         </div>
 
         {/* Info */}
-        <div className="bg-slate-700/30 border border-slate-600 rounded-lg p-4">
+        <div className="theme-card p-4">
           <div className="flex gap-3">
             <span className="text-2xl">📚</span>
             <div>
-              <h3 className="font-medium text-white">À propos des compétences</h3>
-              <p className="text-sm text-slate-300 mt-1">
+              <h3 className="font-medium theme-text">À propos des compétences</h3>
+              <p className="text-sm theme-text-secondary mt-1">
                 Lorsque vous préparez un niveau, vous aurez accès ici à la liste des compétences 
                 à acquérir et pourrez suivre votre progression. Les compétences sont validées 
                 par vos encadrants lors des sessions de fosse et en mer.
@@ -275,12 +275,12 @@ export default function MyCompetencesPage() {
 
       {/* Légende des étapes */}
       {stages.length > 0 && (
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-3 sm:p-4">
-          <h3 className="text-xs sm:text-sm font-medium text-slate-200 mb-2 sm:mb-3">Légende des étapes</h3>
+        <div className="theme-card p-3 sm:p-4 shadow">
+          <h3 className="text-xs sm:text-sm font-medium theme-text-secondary mb-2 sm:mb-3">Légende des étapes</h3>
           <div className="flex flex-wrap gap-2 sm:gap-3">
             <div className="flex items-center gap-1 sm:gap-1.5">
-              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gray-200 rounded-full"></span>
-              <span className="text-xs sm:text-sm text-slate-300">Non commencé</span>
+              <span className="w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gray-400 rounded-full"></span>
+              <span className="text-xs sm:text-sm theme-text-secondary">Non commencé</span>
             </div>
             {stages.map((stage) => (
               <div key={stage.id} className="flex items-center gap-1 sm:gap-1.5">
@@ -288,7 +288,7 @@ export default function MyCompetencesPage() {
                   className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full" 
                   style={{ backgroundColor: stage.color }}
                 ></span>
-                <span className="text-xs sm:text-sm text-slate-300">
+                <span className="text-xs sm:text-sm theme-text-secondary">
                   {stage.icon} {stage.name}
                 </span>
               </div>
@@ -299,36 +299,36 @@ export default function MyCompetencesPage() {
 
       {/* Liste des compétences par domaine */}
       {!hierarchy || hierarchy.domains.length === 0 ? (
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 sm:p-8 text-center">
-          <p className="text-slate-400 text-sm sm:text-base">
+        <div className="theme-card p-6 sm:p-8 text-center shadow">
+          <p className="theme-text-muted text-sm sm:text-base">
             Aucune compétence définie pour le niveau {displayLevel}.
           </p>
-          <p className="text-gray-400 text-xs sm:text-sm mt-2">
+          <p className="theme-text-dimmed text-xs sm:text-sm mt-2">
             Les compétences seront ajoutées par un administrateur.
           </p>
         </div>
       ) : (
         <div className="space-y-4 sm:space-y-6">
           {hierarchy.domains.map((domain) => (
-            <div key={domain.id} className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow overflow-hidden">
+            <div key={domain.id} className="theme-card rounded-lg shadow overflow-hidden">
               {/* Header du domaine */}
-              <div className="px-3 sm:px-6 py-3 sm:py-4 border-b bg-gradient-to-r from-gray-50 to-gray-100">
+              <div className="px-3 sm:px-6 py-3 sm:py-4 border-b theme-border theme-bg-input">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
-                    <span className="text-base sm:text-lg font-bold text-white">{domain.name}</span>
+                    <span className="text-base sm:text-lg font-bold theme-text">{domain.name}</span>
                   </div>
                   <div className="flex items-center justify-between sm:flex-col sm:text-right">
-                    <span className="text-xl sm:text-2xl font-bold text-white">
+                    <span className="text-xl sm:text-2xl font-bold theme-text">
                       {Math.round(domain.progress.percentage)}%
                     </span>
-                    <span className="text-xs sm:text-sm text-slate-400">
+                    <span className="text-xs sm:text-sm theme-text-muted">
                       {domain.progress.validated}/{domain.progress.total} validés
                     </span>
           </div>
                 </div>
 
                 {/* Barre de progression du domaine */}
-                <div className="mt-2 sm:mt-3 h-1.5 sm:h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="mt-2 sm:mt-3 h-1.5 sm:h-2 bg-gray-300 dark:bg-gray-600 rounded-full overflow-hidden">
                   <div className="h-full flex">
                     <div 
                       className="bg-green-500 transition-all" 
@@ -343,16 +343,16 @@ export default function MyCompetencesPage() {
               </div>
 
               {/* Modules et acquis */}
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y theme-border">
                 {domain.modules.map((module) => (
                   <div key={module.id}>
                     {/* Header du module */}
-                    <div className="px-3 sm:px-6 py-2 sm:py-3 bg-slate-700/30 flex items-center justify-between">
+                    <div className="px-3 sm:px-6 py-2 sm:py-3 theme-bg-input flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-base sm:text-lg">📖</span>
-                        <span className="font-medium text-slate-100 text-sm sm:text-base">{module.name}</span>
+                        <span className="font-medium theme-text text-sm sm:text-base">{module.name}</span>
                       </div>
-                      <span className="text-xs sm:text-sm text-slate-400">
+                      <span className="text-xs sm:text-sm theme-text-muted">
                         {module.progress.validated}/{module.progress.total}
                       </span>
                     </div>
@@ -362,17 +362,17 @@ export default function MyCompetencesPage() {
                       {module.skills.map((skill, index) => (
                         <div
                           key={skill.id}
-                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 sm:py-3 border-b border-gray-50 last:border-b-0 gap-2"
+                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 sm:py-3 border-b theme-border last:border-b-0 gap-2"
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start sm:items-center gap-2 sm:gap-3">
                               <span className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-semibold">
                                 {index + 1}
                               </span>
-                              <span className="text-slate-200 text-sm sm:text-base">{skill.name}</span>
+                              <span className="theme-text text-sm sm:text-base">{skill.name}</span>
                             </div>
                             {skill.description && (
-                              <p className="text-xs text-slate-400 ml-7 sm:ml-8 mt-1 italic">
+                              <p className="text-xs theme-text-muted ml-7 sm:ml-8 mt-1 italic">
                                 💡 {skill.description}
                               </p>
                             )}
@@ -391,17 +391,17 @@ export default function MyCompetencesPage() {
                                 >
                                   {skill.validation.stage_icon} {skill.validation.stage_name}
                                 </span>
-                                <div className="text-xs text-gray-400 mt-0.5 sm:mt-1">
+                                <div className="text-xs theme-text-muted mt-0.5 sm:mt-1">
                                   {skill.validation.validated_at} — {skill.validation.validated_by_name}
                                 </div>
                                 {skill.validation.notes && (
-                                  <div className="text-xs text-slate-400 italic mt-0.5 max-w-[200px] truncate">
+                                  <div className="text-xs theme-text-muted italic mt-0.5 max-w-[200px] truncate">
                                     "{skill.validation.notes}"
                                   </div>
                                 )}
                               </div>
                             ) : (
-                              <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm bg-slate-700/50 text-slate-400">
+                              <span className="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm theme-bg-input theme-text-muted">
                                 ⏳ Non commencé
                               </span>
                             )}
