@@ -20,6 +20,42 @@ import { useAuthStore } from '../lib/auth'
 const MAX_STUDENTS = 4
 const MAX_GPS = 2
 
+// Hiérarchie des niveaux de plongée (du plus bas au plus haut)
+const LEVEL_HIERARCHY: Record<string, number> = {
+  'N1': 1,
+  'PE40': 2,
+  'PA20': 3,
+  'N2': 4,
+  'PA40': 5,
+  'PE60': 6,
+  'PA60': 7,
+  'N3': 8,
+  'N4': 9,
+  'N5': 10,
+  'E1': 11,
+  'E2': 12,
+  'E3': 13,
+  'E4': 14,
+}
+
+// Extrait le niveau le plus haut d'une chaîne diving_level (ex: "N1,N2,preparing_N3" -> "N2")
+function getHighestLevel(divingLevel?: string): string | undefined {
+  if (!divingLevel) return undefined
+  
+  const levels = divingLevel
+    .split(',')
+    .map(l => l.trim())
+    .filter(l => !l.startsWith('preparing_'))
+  
+  if (levels.length === 0) return undefined
+  
+  return levels.reduce((highest, current) => {
+    const highestRank = LEVEL_HIERARCHY[highest] || 0
+    const currentRank = LEVEL_HIERARCHY[current] || 0
+    return currentRank > highestRank ? current : highest
+  }, levels[0])
+}
+
 export default function PalanqueesPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const { email, impersonating, isAdmin } = useAuthStore()
@@ -814,10 +850,10 @@ function DraggableParticipant({
     }
   }
 
-  // Extraire le niveau d'affichage (instructor_level pour encadrants, sinon diving_level le plus haut)
+  // Extraire le niveau d'affichage (instructor_level pour encadrants, sinon le plus haut niveau validé)
   const displayLevel = participant.is_encadrant 
     ? participant.instructor_level 
-    : participant.diving_level?.split(',').filter(l => !l.startsWith('preparing_'))[0]
+    : getHighestLevel(participant.diving_level)
 
   return (
     <div
@@ -1258,10 +1294,10 @@ function MemberRow({
   canEdit: boolean
   onRemove: (memberId: string) => void
 }) {
-  // Niveau d'affichage : instructor_level pour GP/E, sinon diving_level
+  // Niveau d'affichage : instructor_level pour GP/E, sinon le plus haut niveau validé
   const displayLevel = isGP || member.is_encadrant
     ? member.instructor_level
-    : member.diving_level?.split(',').filter(l => !l.startsWith('preparing_'))[0]
+    : getHighestLevel(member.diving_level)
   
   return (
     <div className={`flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded text-[11px] sm:text-xs ${
