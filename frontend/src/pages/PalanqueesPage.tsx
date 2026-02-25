@@ -1003,10 +1003,11 @@ function RotationCard({
         </div>
       ) : (
         <div className="p-2 sm:p-3 grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-          {rotation.palanquees.map(palanquee => (
+          {rotation.palanquees.map((palanquee, index) => (
             <PalanqueeCard
               key={palanquee.id}
               palanquee={palanquee}
+              displayNumber={index + 1}
               isDragging={isDragging}
               draggedIsEncadrant={draggedIsEncadrant}
               hasSelectedParticipant={!!selectedParticipant}
@@ -1029,6 +1030,7 @@ function RotationCard({
 
 function PalanqueeCard({
   palanquee,
+  displayNumber,
   isDragging,
   draggedIsEncadrant,
   hasSelectedParticipant,
@@ -1043,6 +1045,7 @@ function PalanqueeCard({
   onUpdateParams,
 }: {
   palanquee: Palanquee
+  displayNumber: number
   isDragging: boolean
   draggedIsEncadrant: boolean
   hasSelectedParticipant: boolean
@@ -1086,7 +1089,7 @@ function PalanqueeCard({
       <div className="p-1.5 sm:p-2 theme-bg-input flex items-center justify-between">
         <div className="flex items-center gap-1">
           <span className="theme-text font-semibold text-xs sm:text-sm">
-            Pal. {palanquee.number}
+            Pal. {displayNumber}
           </span>
           {canEdit && (
             <button
