@@ -4,6 +4,7 @@ use crate::models::{
     CreateSortieRequest, SortieResponse, SortieWithDivesResponse, UpdateSortieRequest,
     CopyAttendeesRequest, CopyAttendeesResponse, SessionResponse, DiveDirectorRequest, DiveDirectorResponse,
 };
+use crate::models::DiverLevel;
 use axum::{
     extract::{Path, State},
     Json,
@@ -547,6 +548,8 @@ pub async fn get_sortie_questionnaires(
         if let Some(person) = person {
             let email_job = email_jobs_list.iter().find(|e| e.person_id == q.person_id);
             
+            let preparing_level = person.diving_level.as_ref()
+                .and_then(|s| DiverLevel::extract_preparing_level(s));
             responses.push(QuestionnaireDetailResponse {
                 id: q.id,
                 session_id: q.session_id,
@@ -572,6 +575,8 @@ pub async fn get_sortie_questionnaires(
                 submitted_at: q.submitted_at.map(|dt| dt.to_string()),
                 magic_link: email_job.map(|e| e.questionnaire_token.to_string()),
                 email_status: email_job.map(|e| e.status.clone()),
+                diving_level: person.diving_level.clone(),
+                preparing_level,
             });
         }
     }

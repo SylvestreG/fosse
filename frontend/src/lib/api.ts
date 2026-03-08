@@ -150,6 +150,8 @@ export interface QuestionnaireDetail {
   submitted_at?: string
   magic_link?: string
   email_status?: string
+  diving_level?: string
+  preparing_level?: string
 }
 
 export interface Person {

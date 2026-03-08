@@ -345,7 +345,10 @@ impl QuestionnaireService {
                 comments: questionnaire.comments,
                 submitted_at: questionnaire.submitted_at.map(|dt| dt.to_string()),
                 magic_link,
-                email_status,
+                diving_level: person.diving_level.clone(),
+                preparing_level: person.diving_level.as_ref()
+                    .and_then(|level_str| crate::models::DiverLevel::extract_preparing_level(level_str)),
+                email_status: email_status,
             });
         }
 

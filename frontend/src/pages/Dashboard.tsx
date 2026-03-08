@@ -21,6 +21,7 @@ import MyCompetencesPage from './MyCompetencesPage'
 import GroupsPage from './GroupsPage'
 import LevelDocumentsPage from './LevelDocumentsPage'
 import ValidationLogsPage from './ValidationLogsPage'
+import SortieGroupesPage from './SortieGroupesPage'
 import { useAuthStore } from '@/lib/auth'
 import { useThemeStore } from '@/lib/theme'
 
@@ -77,6 +78,10 @@ export default function Dashboard() {
             {/* Page de validation des compétences d'un élève - admin et encadrants */}
             {(isAdmin || canValidateCompetencies) && (
               <Route path="/competences/student/:studentId" element={<StudentCompetencesPage />} />
+            )}
+            {/* Groupes par sortie et niveau - admin et encadrants */}
+            {(isAdmin || canValidateCompetencies) && (
+              <Route path="/sortie-groupes" element={<SortieGroupesPage />} />
             )}
             
             {/* Legacy competences page - redirect to new one */}

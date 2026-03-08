@@ -80,6 +80,10 @@ pub struct QuestionnaireDetailResponse {
     pub submitted_at: Option<String>,
     pub magic_link: Option<String>,
     pub email_status: Option<String>,
+    /// Niveau de plongée (ex: "N2", "N3,preparing_N4")
+    pub diving_level: Option<String>,
+    /// Niveau en cours de préparation (ex: "N4")
+    pub preparing_level: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Validate)]

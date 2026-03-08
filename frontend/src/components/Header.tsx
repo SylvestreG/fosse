@@ -89,6 +89,11 @@ export default function Header() {
               <Link to="/dashboard/competences" className={navLinkClass('/dashboard/competences')}>
                 Compétences
               </Link>
+              {(isAdmin || canValidateCompetencies) && (
+                <Link to="/dashboard/sortie-groupes" className={navLinkClass('/dashboard/sortie-groupes')}>
+                  Groupes sortie
+                </Link>
+              )}
               {isAdmin && (
                 <>
                   <Link to="/dashboard/groups" className={navLinkClass('/dashboard/groups')}>
@@ -241,6 +246,15 @@ export default function Header() {
             >
               🎯 Compétences
             </Link>
+            {(isAdmin || canValidateCompetencies) && (
+              <Link 
+                to="/dashboard/sortie-groupes" 
+                className={mobileNavLinkClass('/dashboard/sortie-groupes')}
+                onClick={closeMobileMenu}
+              >
+                👥 Groupes sortie
+              </Link>
+            )}
             {isAdmin && (
               <>
                 <Link 
