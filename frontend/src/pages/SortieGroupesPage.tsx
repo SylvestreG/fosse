@@ -46,7 +46,6 @@ export default function SortieGroupesPage() {
   // Filtres
   const [filterSkillIds, setFilterSkillIds] = useState<Set<string>>(new Set())
   const [filterStageId, setFilterStageId] = useState<string>('')
-  const [onlyPreparingLevel, setOnlyPreparingLevel] = useState(true)
   const [searchName, setSearchName] = useState('')
 
   useEffect(() => {
@@ -102,11 +101,8 @@ export default function SortieGroupesPage() {
   }
 
   const filteredStudents = useMemo(() => {
-    let list = studentsWithComp
-
-    if (onlyPreparingLevel) {
-      list = list.filter((s) => s.questionnaire.preparing_level === selectedLevel)
-    }
+    // Toujours limiter aux élèves qui préparent ce niveau
+    let list = studentsWithComp.filter((s) => s.questionnaire.preparing_level === selectedLevel)
 
     if (searchName.trim()) {
       const term = searchName.trim().toLowerCase()
@@ -117,12 +113,15 @@ export default function SortieGroupesPage() {
       )
     }
 
+    // Filtre compétences : garder uniquement les élèves qui ont validé (au moins une étape) chaque compétence sélectionnée
     if (filterSkillIds.size > 0) {
       list = list.filter((s) => {
         if (!s.competencies) return false
         const skills = collectSkills(s.competencies)
-        const skillIds = new Set(skills.map((sk) => sk.id))
-        return [...filterSkillIds].every((id) => skillIds.has(id))
+        const validatedSkillIds = new Set(
+          skills.filter((sk) => sk.validation != null).map((sk) => sk.id)
+        )
+        return [...filterSkillIds].every((id) => validatedSkillIds.has(id))
       })
     }
 
@@ -137,7 +136,7 @@ export default function SortieGroupesPage() {
     }
 
     return list
-  }, [studentsWithComp, onlyPreparingLevel, selectedLevel, searchName, filterSkillIds, filterStageId])
+  }, [studentsWithComp, selectedLevel, searchName, filterSkillIds, filterStageId])
 
   const toggleSkillFilter = (skillId: string) => {
     setFilterSkillIds((prev) => {
@@ -184,8 +183,8 @@ export default function SortieGroupesPage() {
               ))}
           </select>
         </div>
-        <div className="w-24">
-          <label className="block text-sm font-medium theme-text-secondary mb-1">Niveau</label>
+        <div className="w-32">
+          <label className="block text-sm font-medium theme-text-secondary mb-1">Niveau préparé</label>
           <select
             value={selectedLevel}
             onChange={(e) => setSelectedLevel(e.target.value)}
@@ -215,15 +214,6 @@ export default function SortieGroupesPage() {
           <div className="theme-card p-4 shadow space-y-4">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-sm font-medium theme-text">Filtres</span>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={onlyPreparingLevel}
-                  onChange={(e) => setOnlyPreparingLevel(e.target.checked)}
-                  className="rounded border theme-border"
-                />
-                <span className="text-sm theme-text-secondary">Préparant ce niveau uniquement</span>
-              </label>
               <input
                 type="text"
                 placeholder="Rechercher par nom..."
