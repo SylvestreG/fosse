@@ -15,6 +15,7 @@ import {
   CompetencyModule,
   CompetencySkill,
   Session,
+  ValidationLogEntry,
 } from '@/lib/api'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
@@ -719,6 +720,79 @@ function StudentsSection({ level, students, onViewProgress }: StudentsSectionPro
 }
 
 // ============================================================================
+// CHART CARD WITH FULLSCREEN
+// ============================================================================
+
+interface ChartCardProps {
+  chartId: string
+  title: string
+  fullscreenChartId: string | null
+  onToggleFullscreen: (id: string | null) => void
+  children: React.ReactNode
+  height?: number
+}
+
+function ChartCard({ chartId, title, fullscreenChartId, onToggleFullscreen, children, height = 300 }: ChartCardProps) {
+  const isFullscreen = fullscreenChartId === chartId
+  return (
+    <>
+      <div className="theme-card p-6 shadow relative">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold theme-text">{title}</h3>
+          <button
+            type="button"
+            onClick={() => onToggleFullscreen(isFullscreen ? null : chartId)}
+            className="p-2 rounded-lg theme-text-muted hover:theme-bg-hover transition-colors"
+            title={isFullscreen ? 'Réduire' : 'Plein écran'}
+            aria-label={isFullscreen ? 'Réduire' : 'Plein écran'}
+          >
+            {isFullscreen ? (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+            )}
+          </button>
+        </div>
+        <ResponsiveContainer width="100%" height={height}>
+          {children}
+        </ResponsiveContainer>
+      </div>
+      {isFullscreen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+          onClick={() => onToggleFullscreen(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Graphique en plein écran"
+        >
+          <div
+            className="theme-card shadow-xl max-w-[95vw] max-h-[95vh] w-full h-full flex flex-col p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold theme-text">{title}</h3>
+              <button
+                type="button"
+                onClick={() => onToggleFullscreen(null)}
+                className="p-2 rounded-lg theme-text-muted hover:theme-bg-hover"
+                aria-label="Fermer"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="flex-1 min-h-0">
+              <ResponsiveContainer width="100%" height="100%">
+                {children}
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+// ============================================================================
 // STATISTICS SECTION
 // ============================================================================
 
@@ -731,6 +805,8 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
   const [sessions, setSessions] = useState<Session[]>([])
   const [participationData, setParticipationData] = useState<{ id: string; name: string; fullName: string; eleves: number; encadrants: number; total: number }[]>([])
   const [progressData, setProgressData] = useState<Record<string, { validated: number; inProgress: number; notStarted: number }>>({})
+  const [validationLogs, setValidationLogs] = useState<ValidationLogEntry[]>([])
+  const [fullscreenChartId, setFullscreenChartId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   // Créer un map des encadrants pour lookup rapide
@@ -785,6 +861,14 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
       }
       
       setParticipationData(participations)
+
+      // Logs des validations (admin) pour graphique par mois
+      try {
+        const logsRes = await skillValidationsApi.getLogs()
+        setValidationLogs(logsRes.data)
+      } catch {
+        setValidationLogs([])
+      }
 
       // Charger la progression des compétences par niveau
       const studentsPreparingLevels = people.filter(p => p.preparing_level && LEVEL_ORDER.includes(p.preparing_level))
@@ -864,6 +948,28 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
     }
   })
 
+  // Validations par mois (et par niveau)
+  const validationsByMonthData = (() => {
+    const byMonth: Record<string, { total: number; N1: number; N2: number; N3: number }> = {}
+    for (const log of validationLogs) {
+      const d = new Date(log.validated_at)
+      if (Number.isNaN(d.getTime())) continue
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      if (!byMonth[monthKey]) byMonth[monthKey] = { total: 0, N1: 0, N2: 0, N3: 0 }
+      byMonth[monthKey].total += 1
+      const level = log.diving_level?.toUpperCase?.() || ''
+      if (LEVEL_ORDER.includes(level)) (byMonth[monthKey] as Record<string, number>)[level] += 1
+    }
+    const monthNames = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.']
+    return Object.entries(byMonth)
+      .map(([month, v]) => {
+        const [y, m] = month.split('-')
+        const name = `${monthNames[parseInt(m, 10) - 1]} ${y}`
+        return { month, ...v, name }
+      })
+      .sort((a, b) => a.month.localeCompare(b.month))
+  })()
+
   if (loading) {
     return (
       <div className="text-center py-12">
@@ -897,65 +1003,88 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
 
       {/* Graphiques en grille */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Élèves par niveau préparé */}
-        <div className="theme-card p-6 shadow">
-          <h3 className="text-lg font-bold theme-text mb-4">👨‍🎓 Élèves par niveau préparé</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={studentsByLevelData}>
+        {/* Validations par mois (par niveau) */}
+        <ChartCard chartId="validations-mois" title="📆 Validations par mois (par niveau)" fullscreenChartId={fullscreenChartId} onToggleFullscreen={setFullscreenChartId}>
+          {validationsByMonthData.length > 0 ? (
+            <BarChart data={validationsByMonthData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="level" />
+              <XAxis dataKey="name" />
               <YAxis allowDecimals={false} />
-              <Tooltip 
-                formatter={(value: number) => [value, 'Élèves']}
-                labelFormatter={(label) => LEVEL_NAMES[label] || label}
+              <Tooltip
+                labelFormatter={(label) => label}
+                formatter={(value: number) => [value, 'Validations']}
               />
-              <Bar dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+              <Legend />
+              <Bar dataKey="N1" stackId="a" fill="#3B82F6" name="N1" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="N2" stackId="a" fill="#10B981" name="N2" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="N3" stackId="a" fill="#8B5CF6" name="N3" radius={[4, 4, 0, 0]} />
             </BarChart>
-          </ResponsiveContainer>
-        </div>
+          ) : (
+            <div className="h-full flex items-center justify-center theme-text-muted">Aucune validation enregistrée</div>
+          )}
+        </ChartCard>
+
+        {/* Élèves par niveau préparé */}
+        <ChartCard chartId="eleves-niveau" title="👨‍🎓 Élèves par niveau préparé" fullscreenChartId={fullscreenChartId} onToggleFullscreen={setFullscreenChartId}>
+          <BarChart data={studentsByLevelData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="level" />
+            <YAxis allowDecimals={false} />
+            <Tooltip 
+              formatter={(value: number) => [value, 'Élèves']}
+              labelFormatter={(label) => LEVEL_NAMES[label] || label}
+            />
+            <Bar dataKey="count" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ChartCard>
 
         {/* Répartition Encadrants / Élèves */}
-        <div className="theme-card p-6 shadow">
-          <h3 className="text-lg font-bold theme-text mb-4">👥 Répartition des membres</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={encadrantsVsEleves}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-                label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-              >
-                {encadrantsVsEleves.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+        <ChartCard chartId="repartition" title="👥 Répartition des membres" fullscreenChartId={fullscreenChartId} onToggleFullscreen={setFullscreenChartId}>
+          <PieChart>
+            <Pie
+              data={encadrantsVsEleves}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              outerRadius={100}
+              fill="#8884d8"
+              dataKey="value"
+              label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+            >
+              {encadrantsVsEleves.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend />
+          </PieChart>
+        </ChartCard>
 
         {/* Niveaux actuels des membres */}
-        <div className="theme-card p-6 shadow">
-          <h3 className="text-lg font-bold theme-text mb-4">🤿 Niveaux actuels des membres</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={currentLevelData} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis type="number" allowDecimals={false} />
-              <YAxis dataKey="level" type="category" width={60} />
-              <Tooltip formatter={(value: number) => [value, 'Membres']} />
-              <Bar dataKey="count" fill="#10B981" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        <ChartCard chartId="niveaux-actuels" title="🤿 Niveaux actuels des membres" fullscreenChartId={fullscreenChartId} onToggleFullscreen={setFullscreenChartId}>
+          <BarChart data={currentLevelData} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis type="number" allowDecimals={false} />
+            <YAxis dataKey="level" type="category" width={60} />
+            <Tooltip formatter={(value: number) => [value, 'Membres']} />
+            <Bar dataKey="count" fill="#10B981" radius={[0, 4, 4, 0]} />
+          </BarChart>
+        </ChartCard>
 
         {/* Participations aux fosses - élèves vs encadrants */}
-        <div className="theme-card p-6 shadow">
-          <h3 className="text-lg font-bold theme-text mb-4">📅 Participations aux dernières fosses</h3>
+        <div className="theme-card p-6 shadow relative">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold theme-text">📅 Participations aux dernières fosses</h3>
+            <button
+              type="button"
+              onClick={() => setFullscreenChartId(fullscreenChartId === 'participations' ? null : 'participations')}
+              className="p-2 rounded-lg theme-text-muted hover:theme-bg-hover transition-colors"
+              title={fullscreenChartId === 'participations' ? 'Réduire' : 'Plein écran'}
+              aria-label="Plein écran"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+            </button>
+          </div>
           {participationData.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={participationData}>
@@ -991,28 +1120,66 @@ function StatisticsSection({ people }: StatisticsSectionProps) {
               Aucune donnée de participation disponible
             </div>
           )}
+          {fullscreenChartId === 'participations' && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80" onClick={() => setFullscreenChartId(null)} role="dialog" aria-modal="true">
+              <div className="theme-card shadow-xl max-w-[95vw] max-h-[95vh] w-full h-full flex flex-col p-6" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold theme-text">📅 Participations aux dernières fosses</h3>
+                  <button type="button" onClick={() => setFullscreenChartId(null)} className="p-2 rounded-lg theme-text-muted hover:theme-bg-hover" aria-label="Fermer">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+                <div className="flex-1 min-h-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={participationData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={10} />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip 
+                        cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length > 0 && payload[0]?.payload) {
+                            const data = payload[0].payload
+                            return (
+                              <div className="theme-card p-3">
+                                <p className="font-semibold theme-text mb-2">📅 {data.fullName}</p>
+                                <p className="text-green-600">👨‍🎓 Élèves : {data.eleves}</p>
+                                <p className="text-blue-600">👨‍🏫 Encadrants : {data.encadrants}</p>
+                                <p className="theme-text-secondary font-medium border-t theme-border mt-2 pt-2">Total : {data.eleves + data.encadrants}</p>
+                              </div>
+                            )
+                          }
+                          return null
+                        }}
+                      />
+                      <Legend formatter={(value) => value === 'eleves' ? '👨‍🎓 Élèves' : '👨‍🏫 Encadrants'} />
+                      <Bar dataKey="eleves" stackId="a" fill="#10B981" name="eleves" radius={[0, 0, 0, 0]} />
+                      <Bar dataKey="encadrants" stackId="a" fill="#3B82F6" name="encadrants" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Progression des compétences par niveau */}
-      <div className="theme-card p-6 shadow">
-        <h3 className="text-lg font-bold theme-text mb-4">📈 Progression des compétences par niveau</h3>
-        <ResponsiveContainer width="100%" height={350}>
-          <BarChart data={progressChartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="level" />
-            <YAxis allowDecimals={false} />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="Validé" stackId="a" fill="#10B981" />
-            <Bar dataKey="En cours" stackId="a" fill="#F59E0B" />
-            <Bar dataKey="Non commencé" stackId="a" fill="#E5E7EB" />
-          </BarChart>
-        </ResponsiveContainer>
-        <p className="text-sm theme-text-muted mt-2 text-center">
-          Agrégation des compétences des élèves préparant chaque niveau
-        </p>
-      </div>
+      <ChartCard chartId="progression" title="📈 Progression des compétences par niveau" fullscreenChartId={fullscreenChartId} onToggleFullscreen={setFullscreenChartId} height={350}>
+        <BarChart data={progressChartData}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="level" />
+          <YAxis allowDecimals={false} />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="Validé" stackId="a" fill="#10B981" />
+          <Bar dataKey="En cours" stackId="a" fill="#F59E0B" />
+          <Bar dataKey="Non commencé" stackId="a" fill="#E5E7EB" />
+        </BarChart>
+      </ChartCard>
+      <p className="text-sm theme-text-muted mt-2 text-center -mt-4">
+        Agrégation des compétences des élèves préparant chaque niveau
+      </p>
 
       {/* Tableau détaillé par niveau */}
       <div className="theme-card shadow overflow-hidden">
