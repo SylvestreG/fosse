@@ -5,7 +5,7 @@ use std::io::Write;
 
 use crate::entities::{
     level_documents, skill_document_positions, skill_validations,
-    people,
+    validation_stages, people,
 };
 use crate::errors::AppError;
 use crate::models::diving_level::DivingLevel;
@@ -54,14 +54,28 @@ impl PdfGenerator {
             .all(db)
             .await?;
         
-        // Récupérer les validations de la personne
+        // Récupérer les étapes "validé en mer" (is_final = true) pour n'afficher que ces validations dans le PDF
+        let final_stage_ids: std::collections::HashSet<Uuid> = validation_stages::Entity::find()
+            .filter(validation_stages::Column::IsFinal.eq(true))
+            .all(db)
+            .await?
+            .into_iter()
+            .map(|s| s.id)
+            .collect();
+        
+        // Récupérer les validations de la personne (uniquement celles validées en mer)
         let validations = skill_validations::Entity::find()
             .filter(skill_validations::Column::PersonId.eq(person_id))
             .all(db)
             .await?;
         
+        let validations_validées_mer: Vec<_> = validations
+            .into_iter()
+            .filter(|v| final_stage_ids.contains(&v.stage_id))
+            .collect();
+        
         // Créer un map des validations par skill_id
-        let validation_map: std::collections::HashMap<Uuid, _> = validations
+        let validation_map: std::collections::HashMap<Uuid, _> = validations_validées_mer
             .into_iter()
             .map(|v| (v.skill_id, v))
             .collect();
