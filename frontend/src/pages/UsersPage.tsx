@@ -6,8 +6,8 @@ import Toast from '@/components/Toast'
 import Modal from '@/components/Modal'
 
 // Constantes pour les filtres
-const ALL_LEVELS = ['N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2', 'E3', 'E4']
-const PREPARING_LEVELS = ['N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2']
+const ALL_LEVELS = ['PESH6', 'PESH12', 'N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2', 'E3', 'E4']
+const PREPARING_LEVELS = ['PESH6', 'PESH12', 'N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2']
 
 export default function UsersPage() {
   const [people, setPeople] = useState<Person[]>([])
@@ -434,83 +434,146 @@ interface DivingLevelModalProps {
   onSuccess: () => void
 }
 
+const CLASSIC_HIERARCHY = ['N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2', 'E3', 'E4'] as const
+
+type ClassicLevelKey = (typeof CLASSIC_HIERARCHY)[number]
+
+const LEVEL_RANK: Record<string, number> = {
+  PESH6: 6,
+  PESH12: 8,
+  N1: 10,
+  PE40: 11,
+  PA20: 11,
+  N2: 20,
+  PA40: 21,
+  PE60: 21,
+  PA60: 21,
+  N3: 30,
+  E1: 35,
+  N4: 40,
+  N5: 50,
+  E2: 55,
+  E3: 60,
+  E4: 70,
+}
+
 function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  
-  // Parse le niveau actuel
+
   const currentLevels = person.diving_level ? person.diving_level.split(',').map(l => l.trim()) : []
-  
-  const [completeLevels, setCompleteLevels] = useState({
-    N1: currentLevels.includes('N1'),
-    N2: currentLevels.includes('N2'),
-    N3: currentLevels.includes('N3'),
-    E1: currentLevels.includes('E1'),
-    N4: currentLevels.includes('N4'),
-    N5: currentLevels.includes('N5'),
-    E2: currentLevels.includes('E2'),
-    E3: currentLevels.includes('E3'),
-    E4: currentLevels.includes('E4'),
+
+  const [pesh, setPesh] = useState({
+    PESH6: currentLevels.includes('PESH6'),
+    PESH12: currentLevels.includes('PESH12'),
+  })
+
+  const [classicLevels, setClassicLevels] = useState(() => {
+    const o: Record<ClassicLevelKey, boolean> = {
+      N1: false,
+      N2: false,
+      N3: false,
+      E1: false,
+      N4: false,
+      N5: false,
+      E2: false,
+      E3: false,
+      E4: false,
+    }
+    CLASSIC_HIERARCHY.forEach((l) => {
+      o[l] = currentLevels.includes(l)
+    })
+    return o
   })
 
   const [preparingLevel, setPreparingLevel] = useState(person.preparing_level || '')
 
-  // Hiérarchie des niveaux
-  const levelHierarchy = ['N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2', 'E3', 'E4']
-
-  // Calculer le niveau le plus haut validé
-  const getHighestLevel = () => {
-    for (let i = levelHierarchy.length - 1; i >= 0; i--) {
-      if (completeLevels[levelHierarchy[i] as keyof typeof completeLevels]) {
-        return levelHierarchy[i]
+  const setPeshLevel = (level: 'PESH6' | 'PESH12', checked: boolean) => {
+    setPesh((prev) => {
+      if (level === 'PESH12') {
+        return { PESH6: checked ? true : prev.PESH6, PESH12: checked }
       }
+      return { PESH6: checked, PESH12: checked ? prev.PESH12 : false }
+    })
+  }
+
+  const maxValidatedRank = (): number => {
+    let m = 0
+    if (pesh.PESH6) m = Math.max(m, LEVEL_RANK.PESH6)
+    if (pesh.PESH12) m = Math.max(m, LEVEL_RANK.PESH12)
+    CLASSIC_HIERARCHY.forEach((l) => {
+      if (classicLevels[l]) m = Math.max(m, LEVEL_RANK[l] ?? 0)
+    })
+    return m
+  }
+
+  const getHighestClassicLevel = (): ClassicLevelKey | null => {
+    for (let i = CLASSIC_HIERARCHY.length - 1; i >= 0; i--) {
+      const l = CLASSIC_HIERARCHY[i]
+      if (classicLevels[l]) return l
     }
     return null
   }
 
-  // Handler pour gérer la cascade de niveaux
-  const handleLevelChange = (level: string, checked: boolean) => {
-    const newLevels = { ...completeLevels }
-    
-    if (checked) {
-      // Si on coche un niveau, cocher tous les niveaux précédents
-      const currentIndex = levelHierarchy.indexOf(level)
-      for (let i = 0; i <= currentIndex; i++) {
-        const prevLevel = levelHierarchy[i] as keyof typeof completeLevels
-        newLevels[prevLevel] = true
-      }
-    } else {
-      // Si on décoche un niveau, décocher tous les niveaux suivants
-      const currentIndex = levelHierarchy.indexOf(level)
-      for (let i = currentIndex; i < levelHierarchy.length; i++) {
-        const nextLevel = levelHierarchy[i] as keyof typeof completeLevels
-        newLevels[nextLevel] = false
-      }
-    }
-    
-    setCompleteLevels(newLevels)
+  const getHighestLevelLabel = (): string | null => {
+    const entries: [string, number][] = []
+    if (pesh.PESH6) entries.push(['PESH6', LEVEL_RANK.PESH6])
+    if (pesh.PESH12) entries.push(['PESH12', LEVEL_RANK.PESH12])
+    CLASSIC_HIERARCHY.forEach((l) => {
+      if (classicLevels[l]) entries.push([l, LEVEL_RANK[l]])
+    })
+    if (entries.length === 0) return null
+    return entries.reduce((a, b) => (b[1] > a[1] ? b : a))[0]
   }
 
-  // Obtenir les options de niveau préparé selon le niveau actuel
+  const handleClassicLevelChange = (level: ClassicLevelKey, checked: boolean) => {
+    const newLevels = { ...classicLevels }
+    if (checked) {
+      const idx = CLASSIC_HIERARCHY.indexOf(level)
+      for (let i = 0; i <= idx; i++) {
+        newLevels[CLASSIC_HIERARCHY[i]] = true
+      }
+    } else {
+      const idx = CLASSIC_HIERARCHY.indexOf(level)
+      for (let i = idx; i < CLASSIC_HIERARCHY.length; i++) {
+        newLevels[CLASSIC_HIERARCHY[i]] = false
+      }
+    }
+    setClassicLevels(newLevels)
+  }
+
   const getPreparingOptions = () => {
-    const highest = getHighestLevel()
-    const options = [{ value: '', label: 'Aucun' }]
-    
-    if (!highest) {
-      // Pas de niveau → peut préparer N1 ou N2
+    const options: { value: string; label: string }[] = [{ value: '', label: 'Aucun' }]
+    const maxR = maxValidatedRank()
+
+    if (maxR === 0) {
+      options.push({ value: 'PESH6', label: 'PESH6 (parcours adapté)' })
       options.push({ value: 'N1', label: 'N1' })
       options.push({ value: 'N2', label: 'N2' })
       return options
     }
 
-    const currentIndex = levelHierarchy.indexOf(highest)
-    
-    // Ajouter le niveau suivant s'il existe
-    if (currentIndex < levelHierarchy.length - 1) {
-      const nextLevel = levelHierarchy[currentIndex + 1]
+    if (maxR <= LEVEL_RANK.PESH6) {
+      options.push({ value: 'PESH12', label: 'PESH12 (adapté)' })
+      options.push({ value: 'N1', label: 'N1 (classique)' })
+      return options
+    }
+
+    if (maxR <= LEVEL_RANK.PESH12) {
+      options.push({ value: 'N1', label: 'N1 (classique)' })
+      return options
+    }
+
+    const highest = getHighestClassicLevel()
+    if (!highest) {
+      options.push({ value: 'N1', label: 'N1' })
+      return options
+    }
+    const currentIndex = CLASSIC_HIERARCHY.indexOf(highest)
+    if (currentIndex < CLASSIC_HIERARCHY.length - 1) {
+      const nextLevel = CLASSIC_HIERARCHY[currentIndex + 1]
       options.push({ value: nextLevel, label: nextLevel })
     }
-    
     return options
   }
 
@@ -520,19 +583,17 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
     setError('')
 
     try {
-      // Construire la chaîne diving_level avec les niveaux validés
       const levels: string[] = []
-      Object.entries(completeLevels).forEach(([level, checked]) => {
-        if (checked) levels.push(level)
+      if (pesh.PESH6) levels.push('PESH6')
+      if (pesh.PESH12) levels.push('PESH12')
+      CLASSIC_HIERARCHY.forEach((l) => {
+        if (classicLevels[l]) levels.push(l)
       })
-      
-      // Ajouter le niveau préparé s'il y en a un
       if (preparingLevel) {
         levels.push(`preparing_${preparingLevel}`)
       }
-      
       const diving_level = levels.length > 0 ? levels.join(',') : undefined
-      
+
       await peopleApi.update(person.id, { diving_level })
       onSuccess()
     } catch (err: any) {
@@ -547,19 +608,43 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && <div className="bg-red-500/20 text-red-400 border border-red-500/50 p-3 rounded">{error}</div>}
         
-        {/* Niveaux complets */}
+        {/* Parcours adapté PESH (handicap) — cascade indépendante du parcours classique */}
         <div>
-          <h3 className="font-semibold text-lg mb-3 theme-text">🎓 Niveaux validés</h3>
+          <h3 className="font-semibold text-lg mb-2 theme-text">♿ Parcours adapté (PESH)</h3>
           <p className="text-sm theme-text-secondary mb-3">
-            💡 Cocher un niveau coche automatiquement tous les niveaux précédents
+            Niveaux séparés du parcours N1+ ; PESH12 implique PESH6.
+          </p>
+          <div className="grid grid-cols-2 gap-3 max-w-md">
+            {(['PESH6', 'PESH12'] as const).map((level) => (
+              <label
+                key={level}
+                className="flex items-center space-x-2 p-3 border theme-border rounded-lg theme-hover cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={pesh[level]}
+                  onChange={(e) => setPeshLevel(level, e.target.checked)}
+                  className="w-4 h-4 accent-cyan-500"
+                />
+                <span className="font-medium theme-text">{level}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Niveaux classiques */}
+        <div>
+          <h3 className="font-semibold text-lg mb-3 theme-text">🎓 Parcours classique (N1+)</h3>
+          <p className="text-sm theme-text-secondary mb-3">
+            💡 Cocher un niveau coche automatiquement tous les niveaux précédents de ce parcours
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {levelHierarchy.map((level) => (
+            {CLASSIC_HIERARCHY.map((level) => (
               <label key={level} className="flex items-center space-x-2 p-3 border theme-border rounded-lg theme-hover cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={completeLevels[level as keyof typeof completeLevels]} 
-                  onChange={(e) => handleLevelChange(level, e.target.checked)}
+                <input
+                  type="checkbox"
+                  checked={classicLevels[level]}
+                  onChange={(e) => handleClassicLevelChange(level, e.target.checked)}
                   className="w-4 h-4 accent-cyan-500"
                 />
                 <span className="font-medium theme-text">{level}</span>
@@ -591,7 +676,7 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
         <div className="bg-cyan-500/10 p-4 rounded-lg border border-cyan-500/30">
           <h4 className="font-semibold text-cyan-300 mb-2">📊 Aperçu du résultat</h4>
           <p className="text-sm theme-text-secondary">
-            <strong>Niveau validé :</strong> {getHighestLevel() || 'Aucun'}
+            <strong>Niveau validé :</strong> {getHighestLevelLabel() || 'Aucun'}
           </p>
           {preparingLevel && (
             <p className="text-sm text-amber-400 mt-1">
@@ -599,8 +684,10 @@ function DivingLevelModal({ person, onClose, onSuccess }: DivingLevelModalProps)
             </p>
           )}
           {(() => {
-            const highest = getHighestLevel()
-            const isInstructor = highest && levelHierarchy.indexOf(highest) >= levelHierarchy.indexOf('E2')
+            const highestClassic = getHighestClassicLevel()
+            const isInstructor =
+              highestClassic &&
+              CLASSIC_HIERARCHY.indexOf(highestClassic) >= CLASSIC_HIERARCHY.indexOf('E2')
             if (isInstructor) {
               return (
                 <p className="text-sm text-green-400 mt-1">

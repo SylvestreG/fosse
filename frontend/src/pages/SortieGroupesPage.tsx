@@ -13,7 +13,7 @@ import {
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
 
-const LEVEL_ORDER = ['N1', 'N2', 'N3']
+const LEVEL_ORDER = ['PESH6', 'PESH12', 'N1', 'N2', 'N3']
 
 type StudentWithCompetencies = {
   questionnaire: QuestionnaireDetail

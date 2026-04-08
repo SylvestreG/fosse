@@ -4,6 +4,9 @@ use std::fmt;
 /// Représente un niveau de plongée complet ou une compétence intermédiaire
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DivingLevel {
+    /// Parcours adapté handicap (FFE) — filiation à part, sous le parcours N1 classique
+    Pesh6,
+    Pesh12,
     // Niveaux principaux
     N1,
     N2,
@@ -31,6 +34,8 @@ impl DivingLevel {
     /// Retourne la hiérarchie du niveau (plus le nombre est élevé, plus le niveau est haut)
     pub fn hierarchy(&self) -> u8 {
         match self {
+            DivingLevel::Pesh6 => 6,
+            DivingLevel::Pesh12 => 8,
             DivingLevel::N1 => 10,
             DivingLevel::PE40 => 11,
             DivingLevel::PA20 => 11,
@@ -75,6 +80,8 @@ impl DivingLevel {
     /// Parse une chaîne en DivingLevel
     pub fn parse(s: &str) -> Option<DivingLevel> {
         match s.to_uppercase().as_str() {
+            "PESH6" => Some(DivingLevel::Pesh6),
+            "PESH12" => Some(DivingLevel::Pesh12),
             "N1" => Some(DivingLevel::N1),
             "N2" => Some(DivingLevel::N2),
             "N3" => Some(DivingLevel::N3),
@@ -97,6 +104,8 @@ impl DivingLevel {
 impl fmt::Display for DivingLevel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
+            DivingLevel::Pesh6 => "PESH6",
+            DivingLevel::Pesh12 => "PESH12",
             DivingLevel::N1 => "N1",
             DivingLevel::N2 => "N2",
             DivingLevel::N3 => "N3",
@@ -262,6 +271,8 @@ mod tests {
     
     #[test]
     fn test_hierarchy_ordering() {
+        assert!(DivingLevel::Pesh12.hierarchy() > DivingLevel::Pesh6.hierarchy());
+        assert!(DivingLevel::N1.hierarchy() > DivingLevel::Pesh12.hierarchy());
         assert!(DivingLevel::N2.hierarchy() > DivingLevel::N1.hierarchy());
         assert!(DivingLevel::N3.hierarchy() > DivingLevel::N2.hierarchy());
         assert!(DivingLevel::E2.hierarchy() > DivingLevel::N5.hierarchy());
@@ -275,11 +286,17 @@ mod tests {
         assert_eq!(DivingLevel::parse("E2"), Some(DivingLevel::E2));
         assert_eq!(DivingLevel::parse("E3"), Some(DivingLevel::E3));
         assert_eq!(DivingLevel::parse("invalid"), None);
+        assert_eq!(DivingLevel::parse("PESH6"), Some(DivingLevel::Pesh6));
+        assert_eq!(DivingLevel::parse("pesh12"), Some(DivingLevel::Pesh12));
     }
     
     #[test]
     fn test_is_instructor() {
         // Les niveaux N ne sont pas encadrants
+        let mut level = DiverLevel::new();
+        level.add_validated(DivingLevel::Pesh12);
+        assert!(!level.is_instructor());
+
         let mut level = DiverLevel::new();
         level.add_validated(DivingLevel::N1);
         assert!(!level.is_instructor());

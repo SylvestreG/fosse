@@ -5,10 +5,12 @@ import Modal from '@/components/Modal'
 import Toast from '@/components/Toast'
 
 // Ordre des niveaux
-const LEVEL_ORDER = ['N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2', 'E3', 'E4']
+const LEVEL_ORDER = ['PESH6', 'PESH12', 'N1', 'N2', 'N3', 'E1', 'N4', 'N5', 'E2', 'E3', 'E4']
 
 // Noms complets des niveaux
 const LEVEL_NAMES: Record<string, string> = {
+  PESH6: 'PESH 6 m — Parcours adapté (handicap)',
+  PESH12: 'PESH 12 m — Parcours adapté (handicap)',
   N1: 'Niveau 1 - Plongeur Encadré',
   N2: 'Niveau 2 - Plongeur Autonome 20m',
   N3: 'Niveau 3 - Plongeur Autonome 60m',

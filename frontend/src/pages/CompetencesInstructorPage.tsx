@@ -15,11 +15,13 @@ import {
   PieChart, Pie, Cell
 } from 'recharts'
 
-// Ordre des niveaux - limité à N1, N2, N3 pour l'instant
-const LEVEL_ORDER = ['N1', 'N2', 'N3']
+// Ordre des niveaux (PESH = parcours adapté, hors progression N1+)
+const LEVEL_ORDER = ['PESH6', 'PESH12', 'N1', 'N2', 'N3']
 
 // Noms complets des niveaux
 const LEVEL_NAMES: Record<string, string> = {
+  PESH6: 'PESH 6 m (adapté)',
+  PESH12: 'PESH 12 m (adapté)',
   N1: 'Niveau 1 - Plongeur Encadré',
   N2: 'Niveau 2 - Plongeur Autonome 20m',
   N3: 'Niveau 3 - Plongeur Autonome 60m',

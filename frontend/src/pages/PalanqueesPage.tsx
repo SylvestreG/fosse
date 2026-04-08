@@ -23,6 +23,8 @@ const MAX_GPS = 2
 
 // Hiérarchie des niveaux de plongée (du plus bas au plus haut)
 const LEVEL_HIERARCHY: Record<string, number> = {
+  'PESH6': 0,
+  'PESH12': 0.5,
   'N1': 1,
   'PE40': 2,
   'PA20': 3,
@@ -439,7 +441,7 @@ export default function PalanqueesPage() {
     const nitroxConfirmed = students.filter(p => p.nitrox_confirmed_formation)
     const remainingStudents = students.filter(p => !p.nitrox_training && !p.nitrox_confirmed_formation)
     
-    const preparingLevels = ['N1', 'N2', 'N3', 'N4']
+    const preparingLevels = ['PESH6', 'PESH12', 'N1', 'N2', 'N3', 'N4']
     const byPreparingLevel: Record<string, UnassignedParticipant[]> = {}
     preparingLevels.forEach(level => {
       byPreparingLevel[level] = remainingStudents.filter(p => p.preparing_level === level)
@@ -598,7 +600,7 @@ export default function PalanqueesPage() {
                 )}
                 
                 {/* Par niveau préparé */}
-                {['N1', 'N2', 'N3', 'N4'].map(level => {
+                {['PESH6', 'PESH12', 'N1', 'N2', 'N3', 'N4'].map(level => {
                   const students = grouped.byPreparingLevel[level]
                   if (!students || students.length === 0) return null
                   return (

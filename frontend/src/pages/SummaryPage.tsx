@@ -492,7 +492,7 @@ export default function SummaryPage() {
         
         // Groupe 2: Par niveau préparé (les élèves pas en formation nitrox)
         const remainingStudents = students.filter(p => !p.nitrox_training)
-        const preparingLevels = ['N1', 'N2', 'N3', 'N4']
+        const preparingLevels = ['PESH6', 'PESH12', 'N1', 'N2', 'N3', 'N4']
         const studentsByPreparingLevel: Record<string, typeof students> = {}
         preparingLevels.forEach(level => {
           studentsByPreparingLevel[level] = remainingStudents.filter(p => p.preparing_level === level)
