@@ -12,9 +12,12 @@ export default function SortiePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const isAdminUI = useAuthStore((s) => s.isAdminView())
-  const { directorSorties } = useSortiesAccess()
-  const canManageSortieParticipants =
+  const { directorSorties, loadingDirectorSorties } = useSortiesAccess()
+  /** DP sortie (questionnaire DP et/ou dive_directors) : liste chargée via /me/sorties-director-access */
+  const isSortieDirector =
     isAdminUI || (!!id && directorSorties.some((s) => s.id === id))
+  const sortieDirectorListReady = isAdminUI || !loadingDirectorSorties
+  const canUseSortieDirectorTools = isSortieDirector && sortieDirectorListReady
   const [sortie, setSortie] = useState<SortieWithDives | null>(null)
   const [questionnaires, setQuestionnaires] = useState<QuestionnaireDetail[]>([])
   const [diveDirectors, setDiveDirectors] = useState<Record<string, DiveDirector[]>>({})
@@ -170,16 +173,18 @@ export default function SortiePage() {
                 className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded text-xs"
               >
                 {getDPName(dp.questionnaire_id)}
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleRemoveDP(dive.id, dp.id) }}
-                  className="hover:text-red-400 ml-1"
-                  title="Retirer ce DP"
-                >
-                  ×
-                </button>
+                {canUseSortieDirectorTools && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleRemoveDP(dive.id, dp.id) }}
+                    className="hover:text-red-400 ml-1"
+                    title="Retirer ce DP"
+                  >
+                    ×
+                  </button>
+                )}
               </span>
             ))}
-            {dps.length < 4 && (
+            {canUseSortieDirectorTools && dps.length < 4 && (
               <button
                 onClick={() => setShowDPModal(dive.id)}
                 className="px-2 py-0.5 text-xs theme-btn-secondary rounded"
@@ -246,7 +251,7 @@ export default function SortiePage() {
         return formations.length > 0 ? formations.join(', ') : '-'
       }
     },
-    ...(canManageSortieParticipants
+    ...(canUseSortieDirectorTools
       ? [
           {
             key: 'actions',
@@ -345,7 +350,7 @@ export default function SortiePage() {
           <h2 className="text-lg font-semibold theme-text">
             Participants inscrits ({questionnaires.length})
           </h2>
-          {canManageSortieParticipants && (
+          {canUseSortieDirectorTools && (
             <Button size="sm" onClick={() => setShowAddParticipantModal(true)}>
               + Ajouter un participant
             </Button>
@@ -354,7 +359,7 @@ export default function SortiePage() {
         {questionnaires.length === 0 ? (
           <div className="text-center py-8">
             <p className="theme-text-secondary mb-4">Aucun participant inscrit</p>
-            {canManageSortieParticipants && (
+            {canUseSortieDirectorTools && (
               <Button onClick={() => setShowAddParticipantModal(true)}>
                 Ajouter le premier participant
               </Button>

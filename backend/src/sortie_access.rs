@@ -56,7 +56,8 @@ async fn next_upcoming_sortie_id(db: &DatabaseConnection) -> Result<Option<Uuid>
     Ok(row.map(|s| s.id))
 }
 
-/// Sorties où la personne a été DP, plus la prochaine sortie à venir si encadrant ou ancien DP.
+/// Sorties où la personne a été / est DP (`is_directeur_plongee` et/ou `dive_directors`),
+/// plus la prochaine sortie à venir si encadrant ou ancien DP.
 pub async fn director_accessible_sortie_ids(
     db: &DatabaseConnection,
     person_id: Uuid,
@@ -75,6 +76,16 @@ pub async fn director_accessible_sortie_ids(
     let q_ids: Vec<Uuid> = sortie_questionnaires.iter().map(|q| q.id).collect();
     let mut was_dp = false;
 
+    // DP au niveau sortie (drapeau questionnaire), même sans ligne dive_directors
+    for q in &sortie_questionnaires {
+        if q.is_directeur_plongee {
+            if let Some(sid) = q.sortie_id {
+                set.insert(sid);
+                was_dp = true;
+            }
+        }
+    }
+
     if !q_ids.is_empty() {
         let dds = DiveDirectors::find()
             .filter(dive_directors::Column::QuestionnaireId.is_in(q_ids.clone()))
@@ -83,7 +94,9 @@ pub async fn director_accessible_sortie_ids(
             .map_err(|_| {
                 AppError::Database(sea_orm::DbErr::Custom("Failed to query dive directors".to_string()))
             })?;
-        was_dp = !dds.is_empty();
+        if !dds.is_empty() {
+            was_dp = true;
+        }
         for dd in dds {
             let session = Sessions::find_by_id(dd.session_id)
                 .one(db)

@@ -560,19 +560,30 @@ export default function MySessionsPage() {
                         }`}>
                           ✅ Inscrit {isEncadrant ? '(Encadrant)' : ''}
                         </span>
-                        {sessionsWithPalanquees.has(session.id) || sessionsWhereDP.has(session.id) ? (
-                          <Button 
-                            variant="secondary" 
-                            size="sm"
-                            onClick={() => navigate(`/dashboard/palanquees/${session.id}`)}
-                          >
-                            🤿 Palanquées {!sessionsWithPalanquees.has(session.id) && sessionsWhereDP.has(session.id) ? '(à définir)' : ''}
-                          </Button>
-                        ) : (
-                          <span className="px-3 py-1.5 text-sm theme-badge rounded-lg cursor-not-allowed">
-                            🤿 Palanquées (non définies)
-                          </span>
-                        )}
+                        <div className="flex flex-col items-end gap-2">
+                          {sessionsWithPalanquees.has(session.id) || sessionsWhereDP.has(session.id) ? (
+                            <Button 
+                              variant="secondary" 
+                              size="sm"
+                              onClick={() => navigate(`/dashboard/palanquees/${session.id}`)}
+                            >
+                              🤿 Palanquées {!sessionsWithPalanquees.has(session.id) && sessionsWhereDP.has(session.id) ? '(à définir)' : ''}
+                            </Button>
+                          ) : (
+                            <span className="px-3 py-1.5 text-sm theme-badge rounded-lg cursor-not-allowed">
+                              🤿 Palanquées (non définies)
+                            </span>
+                          )}
+                          {isSortieDive && session.sortie_id && sessionsWhereDP.has(session.id) && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => navigate(`/dashboard/sorties/${session.sortie_id}`)}
+                            >
+                              👥 Participants (sortie)
+                            </Button>
+                          )}
+                        </div>
                       </>
                     ) : (
                       <span className="inline-flex items-center px-4 py-2 theme-badge rounded-full font-medium border">
@@ -662,6 +673,15 @@ export default function MySessionsPage() {
                               🤿 Palanquées
                             </Button>
                           )}
+                          {isSortieDive && session.sortie_id && isDpPast && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => navigate(`/dashboard/sorties/${session.sortie_id}`)}
+                            >
+                              👥 Participants (sortie)
+                            </Button>
+                          )}
                           {isInstructor && studentsInTraining > 0 && (
                             <span className="text-sm text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
                               🎯 {studentsInTraining} en formation
@@ -675,7 +695,9 @@ export default function MySessionsPage() {
                       {myPalanquees.length === 0 && (
                         <p className="text-sm theme-text-secondary py-2">
                           {isDpPast
-                            ? 'Vous êtes directeur·rice de plongée : utilisez le bouton « Palanquées » pour consulter ou modifier les groupes.'
+                            ? isSortieDive
+                              ? 'Directeur·rice de plongée : « Palanquées » pour les groupes ; « Participants (sortie) » pour la liste d’inscrits à la sortie.'
+                              : 'Vous êtes directeur·rice de plongée : utilisez le bouton « Palanquées » pour consulter ou modifier les groupes.'
                             : 'Aucune palanquée enregistrée avec votre nom sur cette session (ou accès aux palanquées indisponible).'}
                         </p>
                       )}
