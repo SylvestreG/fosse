@@ -1,5 +1,6 @@
 import { useEffect, useState, DragEvent } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import axios from 'axios'
 import { 
   palanqueesApi, 
   sessionsApi,
@@ -18,8 +19,27 @@ import {
 import { useAuthStore } from '../lib/auth'
 import { isExternalClubGearLocation } from '../lib/fosseLocations'
 
+function emailsMatch(a: string | undefined | null, b: string | undefined | null): boolean {
+  if (!a || !b) return false
+  return a.trim().toLowerCase() === b.trim().toLowerCase()
+}
+
 const MAX_STUDENTS = 4
 const MAX_GPS = 2
+
+function participantInRotation(rotation: Rotation, questionnaireId: string): boolean {
+  return rotation.palanquees.some(p =>
+    p.members.some(m => m.questionnaire_id === questionnaireId)
+  )
+}
+
+function axiosErrorMessage(err: unknown, fallback: string): string {
+  if (axios.isAxiosError(err) && err.response?.data && typeof err.response.data === 'object') {
+    const e = (err.response.data as { error?: string }).error
+    if (typeof e === 'string' && e.trim()) return e
+  }
+  return fallback
+}
 
 // Hiérarchie des niveaux de plongée (du plus bas au plus haut)
 const LEVEL_HIERARCHY: Record<string, number> = {
@@ -130,8 +150,8 @@ export default function PalanqueesPage() {
   
   // Déterminer si l'utilisateur peut éditer
   // Peut éditer si: admin (non impersonnifié) OU DP de la session (via questionnaire ou dive_directors pour les sorties)
-  const myQuestionnaire = questionnaires.find(q => q.email === currentEmail)
-  const isCurrentUserDP = !!(myQuestionnaire?.is_directeur_plongee) || 
+  const myQuestionnaire = questionnaires.find(q => emailsMatch(q.email, currentEmail))
+  const isCurrentUserDP = !!(myQuestionnaire?.is_directeur_plongee) ||
     !!(myQuestionnaire && diveDirectors.some(dp => dp.questionnaire_id === myQuestionnaire.id))
   const canEdit = (isAdmin && !impersonating) || isCurrentUserDP
   
@@ -144,6 +164,7 @@ export default function PalanqueesPage() {
     position: '',
     securite_surface: '',
     observations: '',
+    plongee_scope: 'all' as 'all' | '1' | '2',
   })
   const [downloading, setDownloading] = useState(false)
 
@@ -285,6 +306,7 @@ export default function PalanqueesPage() {
       loadData()
     } catch (err) {
       console.error('Erreur ajout membre:', err)
+      alert(axiosErrorMessage(err, 'Impossible d’ajouter ce participant'))
     }
   }
 
@@ -321,38 +343,26 @@ export default function PalanqueesPage() {
   // Mobile: ajouter le participant sélectionné à une palanquée
   const handleTapAddToGP = (palanqueeId: string, rotation: Rotation, currentGPCount: number) => {
     if (!selectedParticipant || currentGPCount >= MAX_GPS) return
-    
-    // Vérifier si l'encadrant est déjà dans cette rotation
-    if (selectedParticipant.is_encadrant) {
-      const alreadyInRotation = rotation.palanquees.some(p => 
-        p.members.some(m => m.questionnaire_id === selectedParticipant.questionnaire_id)
-      )
-      if (alreadyInRotation) {
-        alert('Cet encadrant est déjà assigné à une palanquée dans cette rotation')
-        setSelectedParticipant(null)
-        return
-      }
+
+    if (participantInRotation(rotation, selectedParticipant.questionnaire_id)) {
+      alert('Ce participant est déjà dans une palanquée de cette rotation')
+      setSelectedParticipant(null)
+      return
     }
-    
+
     handleAddMember(palanqueeId, selectedParticipant, 'GP')
     setSelectedParticipant(null)
   }
 
   const handleTapAddToStudents = (palanqueeId: string, rotation: Rotation, currentStudentCount: number) => {
     if (!selectedParticipant || currentStudentCount >= MAX_STUDENTS) return
-    
-    // Vérifier si l'encadrant est déjà dans cette rotation
-    if (selectedParticipant.is_encadrant) {
-      const alreadyInRotation = rotation.palanquees.some(p => 
-        p.members.some(m => m.questionnaire_id === selectedParticipant.questionnaire_id)
-      )
-      if (alreadyInRotation) {
-        alert('Cet encadrant est déjà assigné à une palanquée dans cette rotation')
-        setSelectedParticipant(null)
-        return
-      }
+
+    if (participantInRotation(rotation, selectedParticipant.questionnaire_id)) {
+      alert('Ce participant est déjà dans une palanquée de cette rotation')
+      setSelectedParticipant(null)
+      return
     }
-    
+
     handleAddMember(palanqueeId, selectedParticipant, 'P')
     setSelectedParticipant(null)
   }
@@ -361,12 +371,17 @@ export default function PalanqueesPage() {
     if (!sessionId) return
     setDownloading(true)
     try {
-      const res = await palanqueesApi.downloadFicheSecurite(sessionId, ficheOptions)
+      const { plongee_scope, ...ficheFields } = ficheOptions
+      const res = await palanqueesApi.downloadFicheSecurite(sessionId, {
+        ...ficheFields,
+        plongee_number: plongee_scope === 'all' ? undefined : (Number(plongee_scope) as 1 | 2),
+      })
       const blob = new Blob([res.data], { type: 'application/pdf' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `Fiche_Securite_${session?.name || sessionId}.pdf`
+      const pSuffix = plongee_scope === 'all' ? '' : `_Plongee${plongee_scope}`
+      a.download = `Fiche_Securite_${session?.name || sessionId}${pSuffix}.pdf`
       a.click()
       window.URL.revokeObjectURL(url)
       setShowFicheModal(false)
@@ -395,18 +410,13 @@ export default function PalanqueesPage() {
         setDraggedParticipant(null)
         return
       }
-      
-      // Vérifier si l'encadrant est déjà dans cette rotation
-      if (draggedParticipant.is_encadrant) {
-        const alreadyInRotation = rotation.palanquees.some(p => 
-          p.members.some(m => m.questionnaire_id === draggedParticipant.questionnaire_id)
-        )
-        if (alreadyInRotation) {
-          alert('Cet encadrant est déjà assigné à une palanquée dans cette rotation')
-          setDraggedParticipant(null)
-          return
-        }
+
+      if (participantInRotation(rotation, draggedParticipant.questionnaire_id)) {
+        alert('Ce participant est déjà dans une palanquée de cette rotation')
+        setDraggedParticipant(null)
+        return
       }
+
       handleAddMember(palanqueeId, draggedParticipant, 'GP')
       setDraggedParticipant(null)
     }
@@ -414,17 +424,12 @@ export default function PalanqueesPage() {
 
   const handleDropStudent = (palanqueeId: string, rotation: Rotation) => {
     if (draggedParticipant) {
-      // Vérifier si l'encadrant est déjà dans cette rotation
-      if (draggedParticipant.is_encadrant) {
-        const alreadyInRotation = rotation.palanquees.some(p => 
-          p.members.some(m => m.questionnaire_id === draggedParticipant.questionnaire_id)
-        )
-        if (alreadyInRotation) {
-          alert('Cet encadrant est déjà assigné à une palanquée dans cette rotation')
-          setDraggedParticipant(null)
-          return
-        }
+      if (participantInRotation(rotation, draggedParticipant.questionnaire_id)) {
+        alert('Ce participant est déjà dans une palanquée de cette rotation')
+        setDraggedParticipant(null)
+        return
       }
+
       handleAddMember(palanqueeId, draggedParticipant, 'P')
       setDraggedParticipant(null)
     }
@@ -852,6 +857,28 @@ export default function PalanqueesPage() {
                   rows={2}
                 />
               </div>
+
+              {externalGear && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium theme-text-secondary mb-1">
+                    Portée du PDF
+                  </label>
+                  <select
+                    value={ficheOptions.plongee_scope}
+                    onChange={e =>
+                      setFicheOptions(prev => ({
+                        ...prev,
+                        plongee_scope: e.target.value as 'all' | '1' | '2',
+                      }))
+                    }
+                    className="w-full px-2 sm:px-3 py-1.5 sm:py-2 theme-bg-input rounded-lg theme-text text-sm"
+                  >
+                    <option value="all">Toutes les plongées</option>
+                    <option value="1">Plongée 1 uniquement</option>
+                    <option value="2">Plongée 2 uniquement</option>
+                  </select>
+                </div>
+              )}
             </div>
             
             <div className="flex justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">

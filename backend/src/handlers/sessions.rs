@@ -112,21 +112,30 @@ pub async fn get_session(
             .one(db.as_ref())
             .await?;
         
-        let is_registered = if let Some(person) = person {
-            // Vérifier s'il a un questionnaire pour cette session
-            Questionnaires::find()
-                .filter(questionnaires::Column::SessionId.eq(id))
-                .filter(questionnaires::Column::PersonId.eq(person.id))
-                .one(db.as_ref())
-                .await?
-                .is_some()
+        let is_registered = if let Some(ref person) = person {
+            if let Some(sortie_id) = session.sortie_id {
+                // Plongée d’une sortie mer : le questionnaire est lié à la sortie, pas au session_id de la plongée
+                Questionnaires::find()
+                    .filter(questionnaires::Column::SortieId.eq(sortie_id))
+                    .filter(questionnaires::Column::PersonId.eq(person.id))
+                    .one(db.as_ref())
+                    .await?
+                    .is_some()
+            } else {
+                Questionnaires::find()
+                    .filter(questionnaires::Column::SessionId.eq(id))
+                    .filter(questionnaires::Column::PersonId.eq(person.id))
+                    .one(db.as_ref())
+                    .await?
+                    .is_some()
+            }
         } else {
             false
         };
-        
+
         if !is_registered {
             return Err(AppError::Forbidden(
-                "Vous devez être inscrit à cette session pour voir ses détails".to_string()
+                "Vous devez être inscrit à cette session pour voir ses détails".to_string(),
             ));
         }
     }

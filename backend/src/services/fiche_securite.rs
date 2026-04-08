@@ -71,6 +71,13 @@ pub async fn generate_fiche_securite(
     let mut rota_in_plongee: i32 = 0;
 
     for rotation in rotations_list {
+        if let Some(only) = options.plongee_number {
+            match rotation.plongee_number {
+                Some(p) if p == only => {}
+                _ => continue,
+            }
+        }
+
         let group_changed = last_plongee.map(|p| p != rotation.plongee_number).unwrap_or(true);
         if group_changed {
             rota_in_plongee = 0;
@@ -193,6 +200,8 @@ pub struct FicheSecuriteOptions {
     pub position: Option<String>,
     pub securite_surface: Option<String>,
     pub observations: Option<String>,
+    /// Si `Some(1)` ou `Some(2)`, n’inclut que les rotations de cette plongée (sites partenaires).
+    pub plongee_number: Option<i32>,
 }
 
 // Constantes de mise en page

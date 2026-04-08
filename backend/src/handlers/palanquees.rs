@@ -254,11 +254,32 @@ pub async fn add_member(
     Path(palanquee_id): Path<Uuid>,
     Json(payload): Json<AddMemberRequest>,
 ) -> Result<Json<PalanqueeMemberResponse>, AppError> {
-    // Vérifier que la palanquée existe
-    let _palanquee = Palanquees::find_by_id(palanquee_id)
+    let palanquee = Palanquees::find_by_id(palanquee_id)
         .one(db.as_ref())
         .await?
         .ok_or_else(|| AppError::NotFound("Palanquée not found".to_string()))?;
+
+    let sibling_ids: Vec<Uuid> = Palanquees::find()
+        .filter(palanquees::Column::RotationId.eq(palanquee.rotation_id))
+        .all(db.as_ref())
+        .await?
+        .into_iter()
+        .map(|p| p.id)
+        .collect();
+
+    let already_in_rotation = !sibling_ids.is_empty()
+        && PalanqueeMembers::find()
+            .filter(palanquee_members::Column::PalanqueeId.is_in(sibling_ids))
+            .filter(palanquee_members::Column::QuestionnaireId.eq(payload.questionnaire_id))
+            .one(db.as_ref())
+            .await?
+            .is_some();
+
+    if already_in_rotation {
+        return Err(AppError::Validation(
+            "Ce participant est déjà dans une palanquée de cette rotation".to_string(),
+        ));
+    }
 
     // Vérifier que le questionnaire existe et récupérer les infos
     let questionnaire = Questionnaires::find_by_id(payload.questionnaire_id)
@@ -658,6 +679,8 @@ pub struct FicheSecuriteQueryParams {
     pub position: Option<String>,
     pub securite_surface: Option<String>,
     pub observations: Option<String>,
+    /// Filtre optionnel pour sites multi-plongée (1 ou 2) : PDF limité à cette plongée.
+    pub plongee_number: Option<i32>,
 }
 
 /// Génère et télécharge la fiche de sécurité PDF
@@ -666,6 +689,7 @@ pub async fn download_fiche_securite(
     Path(session_id): Path<Uuid>,
     Query(params): Query<FicheSecuriteQueryParams>,
 ) -> Result<impl IntoResponse, AppError> {
+    let plongee_filter = params.plongee_number.filter(|n| (1..=2).contains(n));
     let options = FicheSecuriteOptions {
         date: params.date,
         club: params.club,
@@ -673,11 +697,16 @@ pub async fn download_fiche_securite(
         position: params.position,
         securite_surface: params.securite_surface,
         observations: params.observations,
+        plongee_number: plongee_filter,
+    };
+
+    let filename = match plongee_filter {
+        Some(1) => format!("Fiche_Securite_Plongee1_{}.pdf", session_id),
+        Some(2) => format!("Fiche_Securite_Plongee2_{}.pdf", session_id),
+        _ => format!("Fiche_Securite_{}.pdf", session_id),
     };
 
     let pdf_data = generate_fiche_securite(db.as_ref(), session_id, options).await?;
-
-    let filename = format!("Fiche_Securite_{}.pdf", session_id);
     let headers = [
         (header::CONTENT_TYPE, "application/pdf".to_string()),
         (

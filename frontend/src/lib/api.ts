@@ -829,6 +829,8 @@ export const palanqueesApi = {
     position?: string
     securite_surface?: string
     observations?: string
+    /** 1 ou 2 : PDF limité à cette plongée (sites multi-plongée). */
+    plongee_number?: 1 | 2
   }) => {
     const params = new URLSearchParams()
     if (options?.date) params.append('date', options.date)
@@ -837,6 +839,9 @@ export const palanqueesApi = {
     if (options?.position) params.append('position', options.position)
     if (options?.securite_surface) params.append('securite_surface', options.securite_surface)
     if (options?.observations) params.append('observations', options.observations)
+    if (options?.plongee_number != null) {
+      params.append('plongee_number', String(options.plongee_number))
+    }
     
     const queryString = params.toString()
     const url = `/sessions/${sessionId}/fiche-securite${queryString ? '?' + queryString : ''}`
