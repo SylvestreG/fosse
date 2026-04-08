@@ -95,10 +95,11 @@ pub async fn get_session(
         .ok_or(AppError::NotFound("Session not found".to_string()))?;
 
     // Vérifier les permissions d'accès:
-    // - Admin ou a la permission SessionsView -> accès
-    // - Sinon, doit être inscrit à cette session
-    let has_admin_access = auth.has_permission(Permission::SessionsView);
-    
+    // - Permission SessionsView, ou admin réel (pas en impersonation : sinon on applique les droits « participant »)
+    // - Sinon, inscription à la session / sortie
+    let has_admin_access = auth.has_permission(Permission::SessionsView)
+        || crate::sortie_access::acting_as_real_admin(&auth);
+
     if !has_admin_access {
         // Récupérer l'email de l'utilisateur (impersonnifié ou réel)
         let user_email = auth.claims.impersonating

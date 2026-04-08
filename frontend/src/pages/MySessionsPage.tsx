@@ -327,6 +327,27 @@ export default function MySessionsPage() {
           // Ignorer
         }
       }
+
+      // Inclure les plongées passées des sorties « accès DP » (évite les trous si l’inscription n’a pas été résolue plus haut)
+      try {
+        const directorSortiesRes = await sortiesApi.listDirectorAccess()
+        const seenPastDiveIds = new Set(pastSortieDives.map(d => d.id))
+        for (const s of directorSortiesRes.data) {
+          try {
+            const sd = await sortiesApi.get(s.id)
+            for (const d of sd.data.dives) {
+              if (new Date(d.start_date) < now && !seenPastDiveIds.has(d.id)) {
+                pastSortieDives.push(d)
+                seenPastDiveIds.add(d.id)
+              }
+            }
+          } catch {
+            // Ignorer
+          }
+        }
+      } catch {
+        // Ignorer
+      }
       
       // Combiner et trier toutes les sessions futures
       const allFutureSessions = [...futureFosseSessions, ...allSortieDives]
@@ -412,8 +433,16 @@ export default function MySessionsPage() {
           let myQuest: QuestionnaireDetail | undefined
           
           if (session.sortie_id) {
-            // Plongée de sortie - utiliser l'inscription de la sortie
+            // Plongée de sortie - inscription depuis le cache, ou rechargement (ex. plongée ajoutée via accès DP)
             myQuest = mySortieRegistrations.get(session.sortie_id)
+            if (!myQuest) {
+              try {
+                const qr = await sortiesApi.getQuestionnaires(session.sortie_id)
+                myQuest = qr.data.find(q => emailsMatch(q.email, targetEmail))
+              } catch {
+                // Ignorer
+              }
+            }
           } else {
             // Fosse classique
             const questRes = await questionnairesApi.listDetail(session.id)

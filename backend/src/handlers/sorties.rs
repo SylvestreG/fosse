@@ -496,7 +496,7 @@ pub async fn add_dive_director(
         .ok_or(AppError::NotFound("Session not found".to_string()))?;
 
     if let Some(sortie_id) = session.sortie_id {
-        if !auth.claims.is_admin {
+        if !crate::sortie_access::acting_as_real_admin(&auth) {
             ensure_sortie_director_tool_access(db.as_ref(), &auth, sortie_id).await?;
         }
     }
@@ -583,7 +583,7 @@ pub async fn remove_dive_director(
         .ok_or(AppError::NotFound("Session not found".to_string()))?;
 
     if let Some(sortie_id) = session.sortie_id {
-        if !auth.claims.is_admin {
+        if !crate::sortie_access::acting_as_real_admin(&auth) {
             ensure_sortie_director_tool_access(db.as_ref(), &auth, sortie_id).await?;
         }
     }

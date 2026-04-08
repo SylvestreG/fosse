@@ -416,10 +416,11 @@ pub async fn get_session_palanquees(
         .ok_or_else(|| AppError::NotFound("Session not found".to_string()))?;
 
     // Vérifier les permissions d'accès:
-    // - Admin ou a la permission SessionsView -> accès complet
-    // - Sinon, doit être inscrit à cette session (ou à la sortie parente)
-    let has_admin_access = auth.has_permission(crate::models::Permission::SessionsView);
-    
+    // - SessionsView, ou admin réel (hors impersonation — en impersonation : droits du compte impersonné)
+    // - Sinon, inscription session / sortie
+    let has_admin_access = auth.has_permission(crate::models::Permission::SessionsView)
+        || crate::sortie_access::acting_as_real_admin(&auth);
+
     if !has_admin_access {
         // Récupérer l'email de l'utilisateur (impersonnifié ou réel)
         let user_email = auth.claims.impersonating

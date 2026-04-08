@@ -131,12 +131,17 @@ pub async fn director_accessible_sortie_ids(
     Ok(set)
 }
 
+/// Admin connecté en propre personne (pas en impersonation).
+pub fn acting_as_real_admin(auth: &AuthUser) -> bool {
+    auth.claims.is_admin && auth.claims.impersonating.is_none()
+}
+
 pub async fn ensure_sortie_read_access(
     db: &DatabaseConnection,
     auth: &AuthUser,
     sortie_id: Uuid,
 ) -> Result<(), AppError> {
-    if auth.claims.is_admin {
+    if acting_as_real_admin(auth) {
         return Ok(());
     }
     let email = auth_effective_email(auth);
@@ -163,7 +168,7 @@ pub async fn ensure_sortie_director_tool_access(
     auth: &AuthUser,
     sortie_id: Uuid,
 ) -> Result<(), AppError> {
-    if auth.claims.is_admin {
+    if acting_as_real_admin(auth) {
         return Ok(());
     }
     let email = auth_effective_email(auth);
@@ -188,7 +193,7 @@ pub async fn ensure_questionnaire_mutation_access(
     auth: &AuthUser,
     questionnaire: &questionnaires::Model,
 ) -> Result<(), AppError> {
-    if auth.claims.is_admin {
+    if acting_as_real_admin(auth) {
         return Ok(());
     }
     if let Some(sortie_id) = questionnaire.sortie_id {
