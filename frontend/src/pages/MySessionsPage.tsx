@@ -5,6 +5,11 @@ import { useAuthStore } from '@/lib/auth'
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
 
+function emailsMatch(a: string | undefined | null, b: string | undefined | null): boolean {
+  if (!a || !b) return false
+  return a.trim().toLowerCase() === b.trim().toLowerCase()
+}
+
 interface MyRegistration {
   questionnaire: QuestionnaireDetail
   isEncadrant: boolean
@@ -261,7 +266,7 @@ export default function MySessionsPage() {
       let me: Person | null = null
       if (targetEmail) {
         const peopleRes = await peopleApi.list(targetEmail)
-        me = peopleRes.data.find(p => p.email === targetEmail) || null
+        me = peopleRes.data.find(p => emailsMatch(p.email, targetEmail)) || null
         setMyPerson(me)
       }
       
@@ -274,7 +279,7 @@ export default function MySessionsPage() {
         sortiesMap.set(sortie.id, sortie)
         try {
           const questRes = await sortiesApi.getQuestionnaires(sortie.id)
-          const myQuest = questRes.data.find(q => q.email === targetEmail)
+          const myQuest = questRes.data.find(q => emailsMatch(q.email, targetEmail))
           if (myQuest) {
             mySortieRegistrations.set(sortie.id, myQuest)
           }
@@ -344,7 +349,7 @@ export default function MySessionsPage() {
           // C'est une fosse classique
           try {
             const questRes = await questionnairesApi.listDetail(session.id)
-            const myQuest = questRes.data.find(q => q.email === targetEmail)
+            const myQuest = questRes.data.find(q => emailsMatch(q.email, targetEmail))
             if (myQuest) {
               registrations.set(session.id, {
                 questionnaire: myQuest,
@@ -409,34 +414,36 @@ export default function MySessionsPage() {
           } else {
             // Fosse classique
             const questRes = await questionnairesApi.listDetail(session.id)
-            myQuest = questRes.data.find(q => q.email === targetEmail)
+            myQuest = questRes.data.find(q => emailsMatch(q.email, targetEmail))
           }
           
-          if (myQuest) {
-            // Charger les palanquées
+          if (!myQuest) {
+            continue
+          }
+
+          const myStudents: PalanqueeMember[] = []
+          const myPalanquees: { rotationNumber: number; palanqueeNumber: number; members: PalanqueeMember[] }[] = []
+
+          try {
             const palanqueesRes = await palanqueesApi.getSessionPalanquees(session.id)
-            
-            // Trouver mes palanquées et les élèves
-            const myStudents: PalanqueeMember[] = []
-            const myPalanquees: { rotationNumber: number; palanqueeNumber: number; members: PalanqueeMember[] }[] = []
-            
+
             for (const rotation of palanqueesRes.data.rotations) {
               for (const palanquee of rotation.palanquees) {
                 const amIMember = palanquee.members.some(m => m.questionnaire_id === myQuest!.id)
-                
+
                 if (amIMember) {
                   myPalanquees.push({
                     rotationNumber: rotation.number,
                     palanqueeNumber: palanquee.number,
                     members: palanquee.members
                   })
-                  
-                  const amIGP = palanquee.members.some(m => 
+
+                  const amIGP = palanquee.members.some(m =>
                     m.questionnaire_id === myQuest!.id && (m.role === 'GP' || m.role === 'E')
                   )
-                  
+
                   if (amIGP) {
-                    const students = palanquee.members.filter(m => 
+                    const students = palanquee.members.filter(m =>
                       m.role === 'P' && m.questionnaire_id !== myQuest!.id
                     )
                     myStudents.push(...students)
@@ -444,20 +451,20 @@ export default function MySessionsPage() {
                 }
               }
             }
-            
-            const uniqueStudents = myStudents
-              .filter((student, index, self) =>
-                index === self.findIndex(s => s.person_id === student.person_id)
-              )
-            
-            if (myPalanquees.length > 0) {
-              pastWithStudents.push({
-                session,
-                myStudents: uniqueStudents,
-                myPalanquees
-              })
-            }
+          } catch {
+            // Pas d’accès palanquées ou erreur : on affiche quand même la session passée si inscrit
           }
+
+          const uniqueStudents = myStudents.filter(
+            (student, index, self) =>
+              index === self.findIndex(s => s.person_id === student.person_id)
+          )
+
+          pastWithStudents.push({
+            session,
+            myStudents: uniqueStudents,
+            myPalanquees
+          })
         } catch (e) {
           // Ignorer
         }
@@ -635,6 +642,11 @@ export default function MySessionsPage() {
 
                     {/* Affichage des palanquées pour tous */}
                     <div className="space-y-3">
+                      {myPalanquees.length === 0 && (
+                        <p className="text-sm theme-text-secondary py-2">
+                          Aucune palanquée enregistrée avec votre nom sur cette session (ou accès aux palanquées indisponible).
+                        </p>
+                      )}
                       {myPalanquees.map((pal, idx) => {
                         const gps = pal.members.filter(m => m.role === 'GP' || m.role === 'E')
                         const students = pal.members.filter(m => m.role === 'P')
