@@ -267,6 +267,8 @@ export interface SessionSummary {
   total_car_seats: number
   participants: ParticipantInfo[]
   optimization_mode: boolean
+  /** Présent pour masquer air/matériel côté UI sur les fosses partenaires */
+  location?: string | null
 }
 
 export const sessionsApi = {

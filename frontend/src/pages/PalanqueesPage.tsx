@@ -16,6 +16,7 @@ import {
   DiveDirector
 } from '../lib/api'
 import { useAuthStore } from '../lib/auth'
+import { isExternalClubGearLocation } from '../lib/fosseLocations'
 
 const MAX_STUDENTS = 4
 const MAX_GPS = 2
@@ -178,6 +179,15 @@ export default function PalanqueesPage() {
 
   const handleCreateRotation = async () => {
     if (!sessionId) return
+    if (
+      session &&
+      isExternalClubGearLocation(session.location) &&
+      data &&
+      data.rotations.length >= 1
+    ) {
+      alert('Sur ce site : une seule rotation — ajoutez deux palanquées (1 et 2) pour le groupe.')
+      return
+    }
     try {
       await palanqueesApi.createRotation(sessionId)
       loadData()
@@ -197,6 +207,13 @@ export default function PalanqueesPage() {
   }
 
   const handleCreatePalanquee = async (rotationId: string) => {
+    if (session && isExternalClubGearLocation(session.location) && data) {
+      const totalPal = data.rotations.reduce((n, r) => n + r.palanquees.length, 0)
+      if (totalPal >= 2) {
+        alert('Sur ce site : au plus 2 palanquées pour l’ensemble du groupe (pal. 1 et 2).')
+        return
+      }
+    }
     try {
       await palanqueesApi.createPalanquee(rotationId)
       loadData()
@@ -412,6 +429,8 @@ export default function PalanqueesPage() {
   }
 
   const grouped = groupParticipants(data.unassigned_participants)
+  const externalGear = isExternalClubGearLocation(session?.location)
+  const totalPalanquees = data.rotations.reduce((n, r) => n + r.palanquees.length, 0)
 
   return (
     <div className="min-h-screen theme-bg-gradient py-4 sm:py-8">
@@ -433,6 +452,11 @@ export default function PalanqueesPage() {
                   <span className="text-yellow-500"> — Lecture seule</span>
                 )}
               </p>
+              {externalGear && (
+                <p className="text-amber-400/90 text-xs sm:text-sm mt-1">
+                  Site partenaire : jusqu’à 2 palanquées pour le groupe ; pas de gestion air / matériel club.
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <Link
@@ -572,15 +596,27 @@ export default function PalanqueesPage() {
               <div className="flex justify-end">
                 <button
                   onClick={handleCreateRotation}
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors text-sm sm:text-base"
+                  disabled={externalGear && data.rotations.length >= 1}
+                  title={
+                    externalGear && data.rotations.length >= 1
+                      ? 'Une seule rotation sur ce site (2 palanquées max)'
+                      : undefined
+                  }
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors text-sm sm:text-base disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-green-600"
                 >
                   ➕ <span className="hidden sm:inline">Rotation</span><span className="sm:hidden">Rot.</span>
                 </button>
               </div>
             )}
 
-            {/* Indicateur des bouteilles disponibles (seulement si summary accessible et pas une sortie) */}
-            {summary && !session?.sortie_id && (() => {
+            {externalGear && totalPalanquees > 2 && (
+              <div className="theme-card p-3 border-amber-600/50 text-amber-200 text-sm">
+                Ce site prévoit au plus 2 palanquées. Supprimez les palanquées en trop si besoin.
+              </div>
+            )}
+
+            {/* Indicateur des bouteilles (fosse club uniquement) */}
+            {summary && !session?.sortie_id && !externalGear && (() => {
               // Calcul identique à SummaryPage pour les bouteilles optimisées
               const studentsAirCount = summary.students_count - summary.nitrox_training_count
               const studentsNitroxCount = summary.nitrox_training_count
@@ -658,6 +694,8 @@ export default function PalanqueesPage() {
                     availableAir={availableAir}
                     availableNitrox={availableNitrox}
                     isSortie={!!session?.sortie_id}
+                    hideBottleTracking={externalGear}
+                    disableAddPalanquee={externalGear && totalPalanquees >= 2}
                     canEdit={canEdit}
                     onCreatePalanquee={handleCreatePalanquee}
                     onDeleteRotation={handleDeleteRotation}
@@ -905,6 +943,8 @@ function RotationCard({
   availableAir,
   availableNitrox,
   isSortie,
+  hideBottleTracking,
+  disableAddPalanquee,
   canEdit,
   onCreatePalanquee,
   onDeleteRotation,
@@ -923,6 +963,9 @@ function RotationCard({
   availableAir: number
   availableNitrox: number
   isSortie: boolean
+  /** Fosse partenaire : pas de comptage air / nitrox */
+  hideBottleTracking: boolean
+  disableAddPalanquee: boolean
   canEdit: boolean
   onCreatePalanquee: (rotationId: string) => void
   onDeleteRotation: (id: string) => void
@@ -943,9 +986,11 @@ function RotationCard({
   const airExceeded = airCount > availableAir
   const nitroxExceeded = nitroxCount > availableNitrox
 
+  const trackBottles = !isSortie && !hideBottleTracking
+
   return (
     <div className={`theme-card shadow ${
-      !isSortie && (airExceeded || nitroxExceeded) ? 'border-red-500' : ''
+      trackBottles && (airExceeded || nitroxExceeded) ? 'border-red-500' : ''
     }`}>
       <div className="p-2 sm:p-3 border-b theme-border">
         <div className="flex items-start sm:items-center justify-between gap-2">
@@ -956,7 +1001,7 @@ function RotationCard({
                 ({allMembers.length})
               </span>
             </h3>
-            {allMembers.length > 0 && !isSortie && (
+            {allMembers.length > 0 && trackBottles && (
               <div className="flex items-center gap-1 text-xs font-normal">
                 <span className={`px-1 sm:px-1.5 py-0.5 rounded ${
                   airExceeded ? 'bg-red-600 text-white' : 'bg-blue-600/80 text-white'
@@ -980,7 +1025,9 @@ function RotationCard({
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <button
                 onClick={() => onCreatePalanquee(rotation.id)}
-                className="px-2 py-1 sm:px-2.5 bg-green-600/80 text-white rounded hover:bg-green-600 transition-colors text-xs sm:text-sm"
+                disabled={disableAddPalanquee}
+                title={disableAddPalanquee ? 'Au plus 2 palanquées sur ce site' : undefined}
+                className="px-2 py-1 sm:px-2.5 bg-green-600/80 text-white rounded hover:bg-green-600 transition-colors text-xs sm:text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-green-600/80"
               >
                 + <span className="hidden sm:inline">Palanquée</span><span className="sm:hidden">Pal.</span>
               </button>

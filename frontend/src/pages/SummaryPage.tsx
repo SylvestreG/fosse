@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { sessionsApi, questionnairesApi, SessionSummary, Session } from '@/lib/api'
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
+import { isExternalClubGearLocation } from '@/lib/fosseLocations'
 
 export default function SummaryPage() {
   const { id } = useParams<{ id: string }>()
@@ -114,6 +115,8 @@ export default function SummaryPage() {
     )
   }
 
+  const hideClubGearSections = isExternalClubGearLocation(session.location)
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -125,6 +128,11 @@ export default function SummaryPage() {
           <p className="theme-text-secondary">
             {new Date(session.start_date).toLocaleDateString('fr-FR')} • {session.location}
           </p>
+          {hideClubGearSections && (
+            <p className="text-sm text-amber-400/90 mt-2">
+              Fosse partenaire : air et matériel non gérés par le club.
+            </p>
+          )}
         </div>
         <Button onClick={exportCSV}>📥 Exporter CSV</Button>
       </div>
@@ -164,7 +172,7 @@ export default function SummaryPage() {
       </div>
 
       {/* Section Bouteilles */}
-      {(() => {
+      {!hideClubGearSections && (() => {
         // Calcul des bouteilles avec optimisation si activée
         // En mode optimisation: les élèves font 2 rotations donc on divise par 2 (arrondi sup)
         // Le bloc de secours est inclus dans la division avec les élèves air
@@ -248,6 +256,7 @@ export default function SummaryPage() {
       })()}
 
       {/* Section Matériel */}
+      {!hideClubGearSections && (
       <div className="theme-card p-6 shadow">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold theme-text">🛠️ Matériel</h2>
@@ -284,8 +293,9 @@ export default function SummaryPage() {
           />
         </div>
       </div>
+      )}
 
-      {summary && summary.stab_sizes && summary.stab_sizes.length > 0 && (
+      {!hideClubGearSections && summary && summary.stab_sizes && summary.stab_sizes.length > 0 && (
         <div className="theme-card p-6 shadow">
           <h2 className="text-xl font-semibold mb-4 theme-text">🦺 Répartition Tailles Stab</h2>
           <div className="grid grid-cols-2 md:grid-cols-6 gap-4">

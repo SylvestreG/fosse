@@ -313,6 +313,7 @@ pub async fn get_session_summary(
         total_car_seats,
         participants,
         optimization_mode: session.optimization_mode,
+        location: session.location.clone(),
     }))
 }
 

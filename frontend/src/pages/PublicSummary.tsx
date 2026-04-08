@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { sessionsApi, SessionSummary, ParticipantInfo } from '@/lib/api'
+import { isExternalClubGearLocation } from '@/lib/fosseLocations'
 
 export default function PublicSummary() {
   const { token } = useParams<{ token: string }>()
@@ -56,31 +57,7 @@ export default function PublicSummary() {
     return null
   }
 
-  // Calcul des bouteilles avec optimisation si activée
-  const studentsAirCount = summary.students_count - summary.nitrox_training_count
-  const studentsNitroxCount = summary.nitrox_training_count
-  const backupTank = 1
-
-  const studentsAirPlusBackup = studentsAirCount + backupTank
-  const optimizedStudentAirPlusBackup = summary.optimization_mode 
-    ? Math.ceil(studentsAirPlusBackup / 2) 
-    : studentsAirPlusBackup
-  const optimizedStudentNitroxBottles = summary.optimization_mode 
-    ? Math.ceil(studentsNitroxCount / 2) 
-    : studentsNitroxCount
-
-  const encadrantsNitroxCount = summary.nitrox_count
-  const optimizedNitroxBottles = encadrantsNitroxCount + optimizedStudentNitroxBottles
-
-  const encadrantsAirCount = summary.encadrants_count - summary.nitrox_count
-  const optimizedAirBottles = encadrantsAirCount + optimizedStudentAirPlusBackup
-
-  const optimizedTotalBottles = optimizedNitroxBottles + optimizedAirBottles
-  
-  // Économies par type
-  const savedAirBottles = summary.optimization_mode ? (studentsAirPlusBackup - optimizedStudentAirPlusBackup) : 0
-  const savedNitroxBottles = summary.optimization_mode ? (studentsNitroxCount - optimizedStudentNitroxBottles) : 0
-  const savedBottles = savedAirBottles + savedNitroxBottles
+  const hideClubGearSections = isExternalClubGearLocation(summary.location ?? undefined)
 
   // Groupement des élèves
   const students = summary.participants.filter(p => !p.is_encadrant)
@@ -101,6 +78,11 @@ export default function PublicSummary() {
           <p className="text-slate-300">
             Statistiques et liste des participants
           </p>
+          {hideClubGearSections && (
+            <p className="text-sm text-amber-200/90 mt-3">
+              Fosse partenaire : air et matériel non gérés par le club.
+            </p>
+          )}
         </div>
 
         {/* Statistics */}
@@ -122,77 +104,100 @@ export default function PublicSummary() {
           />
         </div>
 
-        {/* Bouteilles */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 border border-slate-700">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-white">📦 Bouteilles</h2>
-            <div className="flex items-center gap-3">
-              {summary.optimization_mode && (
-                <span className="text-sm text-green-400 bg-green-500/20 px-3 py-1 rounded-full border border-green-500/30">
-                  🔄 Mode 2 rotations (-{savedBottles} bouteilles)
-                </span>
-              )}
-              <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
-                Inclut bloc de secours (Air)
-              </span>
-            </div>
-          </div>
-          {summary.optimization_mode && (
-            <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-              <p className="text-sm text-green-300">
-                <strong>🔄 Optimisation activée :</strong> Les élèves font 2 rotations avec les mêmes blocs. 
-                Air (élèves + secours): {studentsAirPlusBackup} → {optimizedStudentAirPlusBackup} (-{savedAirBottles}), Nitrox: {studentsNitroxCount} → {optimizedStudentNitroxBottles} (-{savedNitroxBottles}).
-              </p>
-            </div>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard 
-              title="Bouteilles Totales" 
-              value={optimizedTotalBottles} 
-              icon="🫧" 
-              color="blue" 
-              subtitle={summary.optimization_mode ? `${savedBottles} économisées` : "1 par personne + secours"} 
-            />
-            <StatCard 
-              title="Bouteilles Nitrox" 
-              value={optimizedNitroxBottles} 
-              icon="⚡" 
-              color="yellow" 
-              subtitle={summary.optimization_mode && savedNitroxBottles > 0 ? `${savedNitroxBottles} économisées` : undefined}
-            />
-            <StatCard 
-              title="Bouteilles Air" 
-              value={optimizedAirBottles} 
-              icon="💨" 
-              color="gray" 
-              subtitle={summary.optimization_mode ? `${savedAirBottles} économisées` : "Inclut bloc de secours"} 
-            />
-          </div>
-        </div>
+        {!hideClubGearSections && (() => {
+          const studentsAirCount = summary.students_count - summary.nitrox_training_count
+          const studentsNitroxCount = summary.nitrox_training_count
+          const backupTank = 1
+          const studentsAirPlusBackup = studentsAirCount + backupTank
+          const optimizedStudentAirPlusBackup = summary.optimization_mode
+            ? Math.ceil(studentsAirPlusBackup / 2)
+            : studentsAirPlusBackup
+          const optimizedStudentNitroxBottles = summary.optimization_mode
+            ? Math.ceil(studentsNitroxCount / 2)
+            : studentsNitroxCount
+          const encadrantsNitroxCount = summary.nitrox_count
+          const optimizedNitroxBottles = encadrantsNitroxCount + optimizedStudentNitroxBottles
+          const encadrantsAirCount = summary.encadrants_count - summary.nitrox_count
+          const optimizedAirBottles = encadrantsAirCount + optimizedStudentAirPlusBackup
+          const optimizedTotalBottles = optimizedNitroxBottles + optimizedAirBottles
+          const savedAirBottles = summary.optimization_mode ? (studentsAirPlusBackup - optimizedStudentAirPlusBackup) : 0
+          const savedNitroxBottles = summary.optimization_mode ? (studentsNitroxCount - optimizedStudentNitroxBottles) : 0
+          const savedBottles = savedAirBottles + savedNitroxBottles
 
-        {/* Matériel */}
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 border border-slate-700">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-white">🛠️ Matériel</h2>
-            <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
-              Inclut +1 détendeur et +1 stab de secours
-            </span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard title="Détendeurs" value={summary.regulators_count} icon="🫧" color="cyan" subtitle="Inclut secours" />
-            <StatCard title="2ème Détendeurs" value={summary.second_reg_count} icon="🔧" color="cyan" />
-            <StatCard title="Stabs" value={summary.stab_count} icon="🦺" color="orange" subtitle="Inclut secours" />
-            <StatCard
-              title="Véhicules"
-              value={`${summary.vehicles_count} (${summary.total_car_seats} places)`}
-              icon="🚗"
-              color="green"
-            />
-          </div>
-        </div>
+          return (
+            <>
+              <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 border border-slate-700">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-white">📦 Bouteilles</h2>
+                  <div className="flex items-center gap-3">
+                    {summary.optimization_mode && (
+                      <span className="text-sm text-green-400 bg-green-500/20 px-3 py-1 rounded-full border border-green-500/30">
+                        🔄 Mode 2 rotations (-{savedBottles} bouteilles)
+                      </span>
+                    )}
+                    <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
+                      Inclut bloc de secours (Air)
+                    </span>
+                  </div>
+                </div>
+                {summary.optimization_mode && (
+                  <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                    <p className="text-sm text-green-300">
+                      <strong>🔄 Optimisation activée :</strong> Les élèves font 2 rotations avec les mêmes blocs.
+                      Air (élèves + secours): {studentsAirPlusBackup} → {optimizedStudentAirPlusBackup} (-{savedAirBottles}), Nitrox: {studentsNitroxCount} → {optimizedStudentNitroxBottles} (-{savedNitroxBottles}).
+                    </p>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <StatCard
+                    title="Bouteilles Totales"
+                    value={optimizedTotalBottles}
+                    icon="🫧"
+                    color="blue"
+                    subtitle={summary.optimization_mode ? `${savedBottles} économisées` : '1 par personne + secours'}
+                  />
+                  <StatCard
+                    title="Bouteilles Nitrox"
+                    value={optimizedNitroxBottles}
+                    icon="⚡"
+                    color="yellow"
+                    subtitle={summary.optimization_mode && savedNitroxBottles > 0 ? `${savedNitroxBottles} économisées` : undefined}
+                  />
+                  <StatCard
+                    title="Bouteilles Air"
+                    value={optimizedAirBottles}
+                    icon="💨"
+                    color="gray"
+                    subtitle={summary.optimization_mode ? `${savedAirBottles} économisées` : 'Inclut bloc de secours'}
+                  />
+                </div>
+              </div>
+
+              <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 border border-slate-700">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-semibold text-white">🛠️ Matériel</h2>
+                  <span className="text-sm text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
+                    Inclut +1 détendeur et +1 stab de secours
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <StatCard title="Détendeurs" value={summary.regulators_count} icon="🫧" color="cyan" subtitle="Inclut secours" />
+                  <StatCard title="2ème Détendeurs" value={summary.second_reg_count} icon="🔧" color="cyan" />
+                  <StatCard title="Stabs" value={summary.stab_count} icon="🦺" color="orange" subtitle="Inclut secours" />
+                  <StatCard
+                    title="Véhicules"
+                    value={`${summary.vehicles_count} (${summary.total_car_seats} places)`}
+                    icon="🚗"
+                    color="green"
+                  />
+                </div>
+              </div>
+            </>
+          )
+        })()}
 
         {/* Stabs par taille */}
-        {summary.stab_sizes && summary.stab_sizes.length > 0 && (
+        {!hideClubGearSections && summary.stab_sizes && summary.stab_sizes.length > 0 && (
           <div className="bg-slate-800/50 backdrop-blur-xl rounded-lg shadow p-6 border border-slate-700">
             <h2 className="text-xl font-semibold mb-4 text-white">🦺 Répartition Tailles Stab</h2>
             <div className="grid grid-cols-2 md:grid-cols-6 gap-4">

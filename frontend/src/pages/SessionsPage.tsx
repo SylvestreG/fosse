@@ -8,6 +8,7 @@ import Table from '@/components/Table'
 import Toast from '@/components/Toast'
 import EditQuestionnaireModal from '@/components/EditQuestionnaireModal'
 import AddParticipantModal from '@/components/AddParticipantModal'
+import { isExternalClubGearLocation } from '@/lib/fosseLocations'
 
 export default function SessionsPage() {
   const navigate = useNavigate()
@@ -278,15 +279,17 @@ export default function SessionsPage() {
               <h2 className="text-2xl font-semibold theme-text">{selectedSession.name}</h2>
             </div>
             <div className="flex space-x-2 flex-wrap gap-2 items-center">
-              <label className="flex items-center space-x-2 cursor-pointer theme-card px-3 py-2">
-                <input
-                  type="checkbox"
-                  checked={selectedSession.optimization_mode}
-                  onChange={handleToggleOptimization}
-                  className="rounded text-green-500 focus:ring-green-500"
-                />
-                <span className="text-sm theme-text-secondary">🔄 Mode 2 rotations</span>
-              </label>
+              {!isExternalClubGearLocation(selectedSession.location) && (
+                <label className="flex items-center space-x-2 cursor-pointer theme-card px-3 py-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedSession.optimization_mode}
+                    onChange={handleToggleOptimization}
+                    className="rounded text-green-500 focus:ring-green-500"
+                  />
+                  <span className="text-sm theme-text-secondary">🔄 Mode 2 rotations</span>
+                </label>
+              )}
               <div className="flex items-center gap-2 theme-card px-3 py-2">
                 <span className="text-sm theme-text-secondary">👤 DP:</span>
                 <select

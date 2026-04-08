@@ -20,6 +20,8 @@ pub struct SessionSummary {
     pub total_car_seats: i64,
     pub participants: Vec<ParticipantInfo>,
     pub optimization_mode: bool,
+    /// Lieu de la session (pour adapter l’UI récap / public)
+    pub location: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
