@@ -11,3 +11,11 @@ export function isExternalClubGearLocation(location: string | null | undefined):
   if (!location) return false
   return (EXTERNAL_CLUB_GEAR_LOCATIONS as readonly string[]).includes(location.trim())
 }
+
+/** Fosse piscine Coubertin : matériel et transport (Issoire / Clermont, voiture) dans l’app. */
+export function isCoubertinClubFosseLocation(location: string | null | undefined): boolean {
+  const t = (location ?? '').trim()
+  // Anciennes sessions sans lieu : comportement historique = fosse club Coubertin
+  if (t === '') return true
+  return t === 'Coubertin'
+}

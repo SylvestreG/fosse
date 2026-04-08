@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sessionsApi, questionnairesApi, peopleApi, palanqueesApi, sortiesApi, Session, Person, QuestionnaireDetail, PalanqueeMember, Sortie } from '@/lib/api'
 import { useAuthStore } from '@/lib/auth'
+import { isCoubertinClubFosseLocation } from '@/lib/fosseLocations'
 import Button from '@/components/Button'
 import Toast from '@/components/Toast'
 
@@ -581,8 +582,11 @@ export default function MySessionsPage() {
                   </div>
                 </div>
 
-                {/* Détails d'inscription - seulement pour les fosses (pas de gestion matériel pour les sorties) */}
-                {isRegistered && registration && !isSortieDive && (
+                {/* Matériel / transport : uniquement fosse Coubertin (pas sorties, pas fosses partenaires) */}
+                {isRegistered &&
+                  registration &&
+                  !isSortieDive &&
+                  isCoubertinClubFosseLocation(session.location) && (
                   <RegistrationDetails
                     registration={registration.questionnaire}
                     isEncadrant={isEncadrant}
