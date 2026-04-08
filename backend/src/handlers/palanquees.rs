@@ -15,8 +15,17 @@ use axum::{
 };
 use chrono::Utc;
 use sea_orm::*;
+use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use uuid::Uuid;
+
+/// Fosses partenaires : un élève peut être planifié sur la plongée 1 puis sur la plongée 2.
+fn student_stays_in_pool_until_both_plongees(session_location: &Option<String>) -> bool {
+    matches!(
+        session_location.as_deref().map(str::trim),
+        Some("Le Puy-en-Velay" | "Montluçon")
+    )
+}
 
 // ============ ROTATIONS ============
 
@@ -442,14 +451,23 @@ pub async fn get_session_palanquees(
 
     let mut rotations_responses = vec![];
     let mut assigned_questionnaire_ids: Vec<Uuid> = vec![];
+    // Fosses partenaires : plongées (1 et/ou 2) où l’élève est déjà dans une palanquée
+    let mut student_plongee_coverage: HashMap<Uuid, HashSet<i32>> = HashMap::new();
 
     for rotation in rotations_list {
         let palanquees_list = get_palanquees_for_rotation(db.as_ref(), rotation.id).await?;
         
-        // Collecter les IDs des questionnaires assignés
         for palanquee in &palanquees_list {
             for member in &palanquee.members {
                 assigned_questionnaire_ids.push(member.questionnaire_id);
+                if let Some(pn) = rotation.plongee_number {
+                    if pn == 1 || pn == 2 {
+                        student_plongee_coverage
+                            .entry(member.questionnaire_id)
+                            .or_default()
+                            .insert(pn);
+                    }
+                }
             }
         }
         
@@ -461,6 +479,8 @@ pub async fn get_session_palanquees(
             palanquees: palanquees_list,
         });
     }
+
+    let partner_dual_plongee = student_stays_in_pool_until_both_plongees(&session.location);
 
     // Récupérer tous les questionnaires (de la session ou de la sortie parente)
     let all_questionnaires = if let Some(sortie_id) = session.sortie_id {
@@ -479,10 +499,21 @@ pub async fn get_session_palanquees(
 
     let mut unassigned_participants = vec![];
     for q in all_questionnaires {
-        // Les encadrants restent toujours disponibles (ils peuvent faire plusieurs rotations)
-        // Les élèves sont retirés une fois assignés
-        let is_assigned = assigned_questionnaire_ids.contains(&q.id);
-        if q.is_encadrant || !is_assigned {
+        // Encadrants : toujours dans le vivier (plusieurs rotations / palanquées).
+        // Élèves : fosse club = retirés dès la première assignation ;
+        // Montluçon / Puy = restent tant qu’ils ne sont pas sur plongée 1 et plongée 2.
+        let keep_student_in_pool = if q.is_encadrant {
+            true
+        } else if partner_dual_plongee {
+            let covered = student_plongee_coverage.get(&q.id);
+            let has_p1 = covered.map(|s| s.contains(&1)).unwrap_or(false);
+            let has_p2 = covered.map(|s| s.contains(&2)).unwrap_or(false);
+            !(has_p1 && has_p2)
+        } else {
+            !assigned_questionnaire_ids.contains(&q.id)
+        };
+
+        if keep_student_in_pool {
             let person = People::find_by_id(q.person_id)
                 .one(db.as_ref())
                 .await?

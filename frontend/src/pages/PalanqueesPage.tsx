@@ -493,9 +493,14 @@ export default function PalanqueesPage() {
                 )}
               </p>
               {externalGear && (
-                <p className="text-amber-400/90 text-xs sm:text-sm mt-1">
-                  Site partenaire : plongées 1 et 2, chacune avec ses rotas et palanquées ; pas de gestion air / matériel club.
-                </p>
+                <div className="text-amber-400/90 text-xs sm:text-sm mt-1 space-y-1">
+                  <p>
+                    Site partenaire : plongées 1 et 2, chacune avec ses rotas et palanquées ; pas de gestion air / matériel club.
+                  </p>
+                  <p>
+                    Un élève peut être sur les deux plongées : il reste dans « Non assignés » tant qu’il n’est pas placé sur la plongée 1 et sur la plongée 2.
+                  </p>
+                </div>
               )}
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
