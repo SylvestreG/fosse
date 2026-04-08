@@ -746,6 +746,8 @@ export interface Rotation {
   id: string
   session_id: string
   number: number
+  /** 1 ou 2 : plongée du jour (fosses partenaires) */
+  plongee_number?: number | null
   palanquees: Palanquee[]
 }
 
@@ -775,8 +777,15 @@ export const palanqueesApi = {
     api.get<SessionPalanquees>(`/sessions/${sessionId}/palanquees`),
   
   // Rotations
-  createRotation: (sessionId: string, number?: number) => 
-    api.post<Rotation>('/rotations', { session_id: sessionId, number }),
+  createRotation: (
+    sessionId: string,
+    opts?: { number?: number; plongee_number?: 1 | 2 }
+  ) =>
+    api.post<Rotation>('/rotations', {
+      session_id: sessionId,
+      number: opts?.number,
+      plongee_number: opts?.plongee_number,
+    }),
   listRotations: (sessionId: string) => 
     api.get<Rotation[]>(`/sessions/${sessionId}/rotations`),
   deleteRotation: (id: string) => 

@@ -1,6 +1,6 @@
 /**
  * Fosses partenaires : le club ne fournit pas l’air ni le matériel.
- * Jusqu’à 2 palanquées pour le groupe (une rotation, pal. 1 et 2).
+ * Organisation type Plongée 1 / Plongée 2, chacune avec des rotas puis des palanquées.
  * Valeurs alignées sur le sélecteur de lieu (SessionsPage).
  */
 export const EXTERNAL_CLUB_GEAR_LOCATIONS = ['Le Puy-en-Velay', 'Montluçon'] as const

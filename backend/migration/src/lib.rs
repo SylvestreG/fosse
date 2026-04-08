@@ -31,6 +31,7 @@ mod m20240101_000028_add_sortie_to_sessions;
 mod m20240101_000029_add_sortie_to_questionnaires;
 mod m20240101_000030_create_dive_directors;
 mod m20240101_000031_add_sortie_to_email_jobs;
+mod m20240101_000032_add_plongee_number_to_rotations;
 
 pub struct Migrator;
 
@@ -69,6 +70,7 @@ impl MigratorTrait for Migrator {
         Box::new(m20240101_000029_add_sortie_to_questionnaires::Migration),
         Box::new(m20240101_000030_create_dive_directors::Migration),
         Box::new(m20240101_000031_add_sortie_to_email_jobs::Migration),
+        Box::new(m20240101_000032_add_plongee_number_to_rotations::Migration),
         ]
     }
 }

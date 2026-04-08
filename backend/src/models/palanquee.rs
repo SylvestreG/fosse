@@ -9,6 +9,8 @@ pub struct RotationResponse {
     pub id: Uuid,
     pub session_id: Uuid,
     pub number: i32,
+    /// 1 ou 2 pour les fosses partenaires (plongées du jour)
+    pub plongee_number: Option<i32>,
     pub palanquees: Vec<PalanqueeResponse>,
 }
 
@@ -16,6 +18,7 @@ pub struct RotationResponse {
 pub struct CreateRotationRequest {
     pub session_id: Uuid,
     pub number: Option<i32>, // Auto-increment si non fourni
+    pub plongee_number: Option<i32>,
 }
 
 // ============ PALANQUEES ============

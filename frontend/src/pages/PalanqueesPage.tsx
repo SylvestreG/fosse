@@ -57,6 +57,57 @@ function getHighestLevel(divingLevel?: string): string | undefined {
   }, levels[0])
 }
 
+type PalanqueesDisplaySection = {
+  key: string
+  sectionTitle: string | null
+  rotations: { rotation: Rotation; rotationLabel: string }[]
+}
+
+/** Fosse partenaire : regroupe sous Plongée 1 / 2 ; sinon liste plate « Rot. n ». */
+function buildPalanqueesDisplaySections(
+  rotations: Rotation[],
+  externalGear: boolean
+): PalanqueesDisplaySection[] {
+  if (!externalGear) {
+    return [
+      {
+        key: 'all',
+        sectionTitle: null,
+        rotations: rotations.map(r => ({
+          rotation: r,
+          rotationLabel: `Rot. ${r.number}`,
+        })),
+      },
+    ]
+  }
+  const buckets: Record<'p1' | 'p2' | 'other', Rotation[]> = {
+    p1: [],
+    p2: [],
+    other: [],
+  }
+  for (const r of rotations) {
+    if (r.plongee_number === 1) buckets.p1.push(r)
+    else if (r.plongee_number === 2) buckets.p2.push(r)
+    else buckets.other.push(r)
+  }
+  const out: PalanqueesDisplaySection[] = []
+  const push = (key: 'p1' | 'p2' | 'other', title: string, list: Rotation[]) => {
+    if (list.length === 0) return
+    out.push({
+      key,
+      sectionTitle: title,
+      rotations: list.map((r, idx) => ({
+        rotation: r,
+        rotationLabel: key === 'other' ? `Rot. ${r.number}` : `Rota ${idx + 1}`,
+      })),
+    })
+  }
+  push('p1', '🤿 Plongée 1', buckets.p1)
+  push('p2', '🤿 Plongée 2', buckets.p2)
+  push('other', 'Autres rotations', buckets.other)
+  return out
+}
+
 export default function PalanqueesPage() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const { email, impersonating, isAdmin } = useAuthStore()
@@ -177,19 +228,15 @@ export default function PalanqueesPage() {
     setLoading(false)
   }
 
-  const handleCreateRotation = async () => {
+  const handleCreateRotation = async (plongeeNumber?: 1 | 2) => {
     if (!sessionId) return
-    if (
-      session &&
-      isExternalClubGearLocation(session.location) &&
-      data &&
-      data.rotations.length >= 1
-    ) {
-      alert('Sur ce site : une seule rotation — ajoutez deux palanquées (1 et 2) pour le groupe.')
-      return
-    }
+    const ext = session && isExternalClubGearLocation(session.location)
     try {
-      await palanqueesApi.createRotation(sessionId)
+      if (ext && plongeeNumber) {
+        await palanqueesApi.createRotation(sessionId, { plongee_number: plongeeNumber })
+      } else {
+        await palanqueesApi.createRotation(sessionId)
+      }
       loadData()
     } catch (err) {
       console.error('Erreur création rotation:', err)
@@ -207,13 +254,6 @@ export default function PalanqueesPage() {
   }
 
   const handleCreatePalanquee = async (rotationId: string) => {
-    if (session && isExternalClubGearLocation(session.location) && data) {
-      const totalPal = data.rotations.reduce((n, r) => n + r.palanquees.length, 0)
-      if (totalPal >= 2) {
-        alert('Sur ce site : au plus 2 palanquées pour l’ensemble du groupe (pal. 1 et 2).')
-        return
-      }
-    }
     try {
       await palanqueesApi.createPalanquee(rotationId)
       loadData()
@@ -430,7 +470,7 @@ export default function PalanqueesPage() {
 
   const grouped = groupParticipants(data.unassigned_participants)
   const externalGear = isExternalClubGearLocation(session?.location)
-  const totalPalanquees = data.rotations.reduce((n, r) => n + r.palanquees.length, 0)
+  const displaySections = buildPalanqueesDisplaySections(data.rotations, externalGear)
 
   return (
     <div className="min-h-screen theme-bg-gradient py-4 sm:py-8">
@@ -454,7 +494,7 @@ export default function PalanqueesPage() {
               </p>
               {externalGear && (
                 <p className="text-amber-400/90 text-xs sm:text-sm mt-1">
-                  Site partenaire : jusqu’à 2 palanquées pour le groupe ; pas de gestion air / matériel club.
+                  Site partenaire : plongées 1 et 2, chacune avec ses rotas et palanquées ; pas de gestion air / matériel club.
                 </p>
               )}
             </div>
@@ -593,25 +633,33 @@ export default function PalanqueesPage() {
             
             {/* Actions */}
             {canEdit && (
-              <div className="flex justify-end">
-                <button
-                  onClick={handleCreateRotation}
-                  disabled={externalGear && data.rotations.length >= 1}
-                  title={
-                    externalGear && data.rotations.length >= 1
-                      ? 'Une seule rotation sur ce site (2 palanquées max)'
-                      : undefined
-                  }
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors text-sm sm:text-base disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-green-600"
-                >
-                  ➕ <span className="hidden sm:inline">Rotation</span><span className="sm:hidden">Rot.</span>
-                </button>
-              </div>
-            )}
-
-            {externalGear && totalPalanquees > 2 && (
-              <div className="theme-card p-3 border-amber-600/50 text-amber-200 text-sm">
-                Ce site prévoit au plus 2 palanquées. Supprimez les palanquées en trop si besoin.
+              <div className="flex flex-wrap justify-end gap-2">
+                {externalGear ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handleCreateRotation(1)}
+                      className="px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors text-sm sm:text-base"
+                    >
+                      ➕ <span className="hidden sm:inline">Rota · </span>Plongée 1
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCreateRotation(2)}
+                      className="px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors text-sm sm:text-base"
+                    >
+                      ➕ <span className="hidden sm:inline">Rota · </span>Plongée 2
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleCreateRotation()}
+                    className="px-3 py-1.5 sm:px-4 sm:py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 transition-colors text-sm sm:text-base"
+                  >
+                    ➕ <span className="hidden sm:inline">Rotation</span><span className="sm:hidden">Rot.</span>
+                  </button>
+                )}
               </div>
             )}
 
@@ -659,56 +707,70 @@ export default function PalanqueesPage() {
               <div className="theme-card p-4 sm:p-8 shadow text-center">
                 <p className="theme-text-muted mb-1 sm:mb-2 text-sm sm:text-base">Aucune rotation</p>
                 <p className="theme-text-dimmed text-xs sm:text-sm">
-                  {canEdit ? 'Créez une rotation puis ajoutez des palanquées.' : 'Aucune palanquée créée pour cette session.'}
+                  {canEdit
+                    ? externalGear
+                      ? 'Ajoutez une rota sous Plongée 1 ou Plongée 2, puis des palanquées.'
+                      : 'Créez une rotation puis ajoutez des palanquées.'
+                    : 'Aucune palanquée créée pour cette session.'}
                 </p>
               </div>
             ) : (
-              data.rotations.map(rotation => {
-                // Calculer les bouteilles disponibles (valeurs par défaut si pas de summary)
-                const availableAir = summary ? (() => {
-                  const studentsAirCount = summary.students_count - summary.nitrox_training_count
-                  const backupTank = 1
-                  const studentsAirPlusBackup = studentsAirCount + backupTank
-                  const optimizedStudentAirPlusBackup = session?.optimization_mode 
-                    ? Math.ceil(studentsAirPlusBackup / 2) 
-                    : studentsAirPlusBackup
-                  const encadrantsAirCount = summary.encadrants_count - summary.nitrox_count
-                  return encadrantsAirCount + optimizedStudentAirPlusBackup
-                })() : 999 // Valeur haute pour ne pas bloquer l'affichage
-                
-                const availableNitrox = summary ? (() => {
-                  const studentsNitroxCount = summary.nitrox_training_count
-                  const optimizedStudentNitroxBottles = session?.optimization_mode 
-                    ? Math.ceil(studentsNitroxCount / 2) 
-                    : studentsNitroxCount
-                  return summary.nitrox_count + optimizedStudentNitroxBottles
-                })() : 999
+              displaySections.map(section => (
+                <div key={section.key} className="space-y-3 sm:space-y-4">
+                  {section.sectionTitle && (
+                    <h2 className="text-base sm:text-lg font-semibold theme-text border-b theme-border pb-2">
+                      {section.sectionTitle}
+                    </h2>
+                  )}
+                  {section.rotations.map(({ rotation, rotationLabel }) => {
+                    const availableAir = summary ? (() => {
+                      const studentsAirCount = summary.students_count - summary.nitrox_training_count
+                      const backupTank = 1
+                      const studentsAirPlusBackup = studentsAirCount + backupTank
+                      const optimizedStudentAirPlusBackup = session?.optimization_mode
+                        ? Math.ceil(studentsAirPlusBackup / 2)
+                        : studentsAirPlusBackup
+                      const encadrantsAirCount = summary.encadrants_count - summary.nitrox_count
+                      return encadrantsAirCount + optimizedStudentAirPlusBackup
+                    })() : 999
 
-                return (
-                  <RotationCard
-                    key={rotation.id}
-                    rotation={rotation}
-                    isDragging={!!draggedParticipant && canEdit}
-                    draggedIsEncadrant={draggedParticipant?.is_encadrant || false}
-                    selectedParticipant={selectedParticipant}
-                    availableAir={availableAir}
-                    availableNitrox={availableNitrox}
-                    isSortie={!!session?.sortie_id}
-                    hideBottleTracking={externalGear}
-                    disableAddPalanquee={externalGear && totalPalanquees >= 2}
-                    canEdit={canEdit}
-                    onCreatePalanquee={handleCreatePalanquee}
-                    onDeleteRotation={handleDeleteRotation}
-                    onDeletePalanquee={handleDeletePalanquee}
-                    onDropGP={(palanqueeId, gpCount) => handleDropGP(palanqueeId, rotation, gpCount)}
-                    onDropStudent={(palanqueeId) => handleDropStudent(palanqueeId, rotation)}
-                    onTapAddGP={(palanqueeId, gpCount) => handleTapAddToGP(palanqueeId, rotation, gpCount)}
-                    onTapAddStudent={(palanqueeId, studentCount) => handleTapAddToStudents(palanqueeId, rotation, studentCount)}
-                    onRemoveMember={handleRemoveMember}
-                    onUpdateParams={handleUpdatePalanqueeParams}
-                  />
-                )
-              })
+                    const availableNitrox = summary ? (() => {
+                      const studentsNitroxCount = summary.nitrox_training_count
+                      const optimizedStudentNitroxBottles = session?.optimization_mode
+                        ? Math.ceil(studentsNitroxCount / 2)
+                        : studentsNitroxCount
+                      return summary.nitrox_count + optimizedStudentNitroxBottles
+                    })() : 999
+
+                    return (
+                      <RotationCard
+                        key={rotation.id}
+                        rotation={rotation}
+                        rotationTitle={rotationLabel}
+                        isDragging={!!draggedParticipant && canEdit}
+                        draggedIsEncadrant={draggedParticipant?.is_encadrant || false}
+                        selectedParticipant={selectedParticipant}
+                        availableAir={availableAir}
+                        availableNitrox={availableNitrox}
+                        isSortie={!!session?.sortie_id}
+                        hideBottleTracking={externalGear}
+                        canEdit={canEdit}
+                        onCreatePalanquee={handleCreatePalanquee}
+                        onDeleteRotation={handleDeleteRotation}
+                        onDeletePalanquee={handleDeletePalanquee}
+                        onDropGP={(palanqueeId, gpCount) => handleDropGP(palanqueeId, rotation, gpCount)}
+                        onDropStudent={(palanqueeId) => handleDropStudent(palanqueeId, rotation)}
+                        onTapAddGP={(palanqueeId, gpCount) => handleTapAddToGP(palanqueeId, rotation, gpCount)}
+                        onTapAddStudent={(palanqueeId, studentCount) =>
+                          handleTapAddToStudents(palanqueeId, rotation, studentCount)
+                        }
+                        onRemoveMember={handleRemoveMember}
+                        onUpdateParams={handleUpdatePalanqueeParams}
+                      />
+                    )
+                  })}
+                </div>
+              ))
             )}
           </div>
         </div>
@@ -937,6 +999,7 @@ function DraggableParticipant({
 
 function RotationCard({
   rotation,
+  rotationTitle,
   isDragging,
   draggedIsEncadrant,
   selectedParticipant,
@@ -944,7 +1007,6 @@ function RotationCard({
   availableNitrox,
   isSortie,
   hideBottleTracking,
-  disableAddPalanquee,
   canEdit,
   onCreatePalanquee,
   onDeleteRotation,
@@ -957,6 +1019,8 @@ function RotationCard({
   onUpdateParams,
 }: {
   rotation: Rotation
+  /** Libellé affiché : « Rot. n » ou « Rota k » sous une plongée */
+  rotationTitle: string
   isDragging: boolean
   draggedIsEncadrant: boolean
   selectedParticipant: UnassignedParticipant | null
@@ -965,7 +1029,6 @@ function RotationCard({
   isSortie: boolean
   /** Fosse partenaire : pas de comptage air / nitrox */
   hideBottleTracking: boolean
-  disableAddPalanquee: boolean
   canEdit: boolean
   onCreatePalanquee: (rotationId: string) => void
   onDeleteRotation: (id: string) => void
@@ -996,7 +1059,7 @@ function RotationCard({
         <div className="flex items-start sm:items-center justify-between gap-2">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 flex-wrap">
             <h3 className="text-sm sm:text-base font-semibold theme-text flex items-center gap-1 sm:gap-2">
-              🔄 Rot. {rotation.number}
+              🔄 {rotationTitle}
               <span className="theme-text-muted text-xs sm:text-sm font-normal">
                 ({allMembers.length})
               </span>
@@ -1025,9 +1088,7 @@ function RotationCard({
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <button
                 onClick={() => onCreatePalanquee(rotation.id)}
-                disabled={disableAddPalanquee}
-                title={disableAddPalanquee ? 'Au plus 2 palanquées sur ce site' : undefined}
-                className="px-2 py-1 sm:px-2.5 bg-green-600/80 text-white rounded hover:bg-green-600 transition-colors text-xs sm:text-sm disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-green-600/80"
+                className="px-2 py-1 sm:px-2.5 bg-green-600/80 text-white rounded hover:bg-green-600 transition-colors text-xs sm:text-sm"
               >
                 + <span className="hidden sm:inline">Palanquée</span><span className="sm:hidden">Pal.</span>
               </button>

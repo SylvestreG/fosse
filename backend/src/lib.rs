@@ -6,5 +6,6 @@ pub mod errors;
 pub mod handlers;
 pub mod middleware;
 pub mod models;
+pub mod rotation_order;
 pub mod services;
 

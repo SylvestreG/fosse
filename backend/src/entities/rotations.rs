@@ -8,6 +8,8 @@ pub struct Model {
     pub id: Uuid,
     pub session_id: Uuid,
     pub number: i32,
+    /// 1 ou 2 : plongée du jour (Montluçon, Puy-en-Velay). `None` = fosse club / plat.
+    pub plongee_number: Option<i32>,
     pub created_at: DateTime,
     pub updated_at: DateTime,
 }

@@ -135,6 +135,7 @@ pub async fn create_sortie(
             id: Set(Uuid::new_v4()),
             session_id: Set(session.id),
             number: Set(1),
+            plongee_number: Set(None),
             created_at: Set(now),
             updated_at: Set(now),
         };

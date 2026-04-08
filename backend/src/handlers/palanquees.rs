@@ -44,11 +44,16 @@ pub async fn create_rotation(
         }
     };
 
+    let plongee_number = payload
+        .plongee_number
+        .filter(|&n| n == 1 || n == 2);
+
     let now = Utc::now().naive_utc();
     let rotation = rotations::ActiveModel {
         id: Set(Uuid::new_v4()),
         session_id: Set(payload.session_id),
         number: Set(number),
+        plongee_number: Set(plongee_number),
         created_at: Set(now),
         updated_at: Set(now),
     };
@@ -59,6 +64,7 @@ pub async fn create_rotation(
         id: rotation.id,
         session_id: rotation.session_id,
         number: rotation.number,
+        plongee_number: rotation.plongee_number,
         palanquees: vec![],
     }))
 }
@@ -70,9 +76,9 @@ pub async fn list_rotations(
 ) -> Result<Json<Vec<RotationResponse>>, AppError> {
     let rotations_list = Rotations::find()
         .filter(rotations::Column::SessionId.eq(session_id))
-        .order_by_asc(rotations::Column::Number)
         .all(db.as_ref())
         .await?;
+    let rotations_list = crate::rotation_order::sort_rotations(rotations_list);
 
     let mut responses = vec![];
     for rotation in rotations_list {
@@ -81,6 +87,7 @@ pub async fn list_rotations(
             id: rotation.id,
             session_id: rotation.session_id,
             number: rotation.number,
+            plongee_number: rotation.plongee_number,
             palanquees: palanquees_list,
         });
     }
@@ -429,9 +436,9 @@ pub async fn get_session_palanquees(
     // Récupérer toutes les rotations avec leurs palanquées
     let rotations_list = Rotations::find()
         .filter(rotations::Column::SessionId.eq(session_id))
-        .order_by_asc(rotations::Column::Number)
         .all(db.as_ref())
         .await?;
+    let rotations_list = crate::rotation_order::sort_rotations(rotations_list);
 
     let mut rotations_responses = vec![];
     let mut assigned_questionnaire_ids: Vec<Uuid> = vec![];
@@ -450,6 +457,7 @@ pub async fn get_session_palanquees(
             id: rotation.id,
             session_id: rotation.session_id,
             number: rotation.number,
+            plongee_number: rotation.plongee_number,
             palanquees: palanquees_list,
         });
     }

@@ -24,7 +24,8 @@ pub struct FicheSecuriteData {
 
 #[derive(Debug)]
 pub struct RotationData {
-    pub numero: i32,
+    /// Bandeau PDF, ex. « Plongée 1 — Rota 1 » ou « Rotation 3 »
+    pub heading: String,
     pub palanquees: Vec<PalanqueeData>,
 }
 
@@ -56,16 +57,31 @@ pub async fn generate_fiche_securite(
         .await?
         .ok_or_else(|| AppError::NotFound("Session not found".to_string()))?;
 
-    let rotations_list = rotations::Entity::find()
-        .filter(rotations::Column::SessionId.eq(session_id))
-        .order_by_asc(rotations::Column::Number)
-        .all(db)
-        .await?;
+    let rotations_list = crate::rotation_order::sort_rotations(
+        rotations::Entity::find()
+            .filter(rotations::Column::SessionId.eq(session_id))
+            .all(db)
+            .await?,
+    );
 
     let mut rotations_data = vec![];
     let mut unique_questionnaire_ids: HashSet<Uuid> = HashSet::new();
 
+    let mut last_plongee: Option<Option<i32>> = None;
+    let mut rota_in_plongee: i32 = 0;
+
     for rotation in rotations_list {
+        let group_changed = last_plongee.map(|p| p != rotation.plongee_number).unwrap_or(true);
+        if group_changed {
+            rota_in_plongee = 0;
+            last_plongee = Some(rotation.plongee_number);
+        }
+        rota_in_plongee += 1;
+
+        let heading = match rotation.plongee_number {
+            Some(p) if (1..=2).contains(&p) => format!("Plongée {p} - Rota {rota_in_plongee}"),
+            _ => format!("Rotation {}", rotation.number),
+        };
         let palanquees_list = palanquees::Entity::find()
             .filter(palanquees::Column::RotationId.eq(rotation.id))
             .order_by_asc(palanquees::Column::Number)
@@ -131,7 +147,7 @@ pub async fn generate_fiche_securite(
         }
 
         rotations_data.push(RotationData {
-            numero: rotation.number,
+            heading,
             palanquees: palanquees_data,
         });
     }
@@ -397,7 +413,14 @@ fn draw_rotation(content: &mut String, rotation: &RotationData, mut y: f32) -> f
     // Bandeau de rotation - fond vert foncé avec texte blanc
     writeln!(content, "0.15 0.45 0.25 rg {} {} {} {} re f", MARGIN, y - ROTATION_HEADER_HEIGHT, width, ROTATION_HEADER_HEIGHT).unwrap();
     writeln!(content, "1 1 1 rg").unwrap(); // Texte blanc
-    writeln!(content, "BT /F2 12 Tf {} {} Td (ROTATION {}) Tj ET", MARGIN + 15.0, y - 15.0, rotation.numero).unwrap();
+    writeln!(
+        content,
+        "BT /F2 12 Tf {} {} Td ({}) Tj ET",
+        MARGIN + 15.0,
+        y - 15.0,
+        escape_pdf(&rotation.heading)
+    )
+    .unwrap();
     writeln!(content, "0 g").unwrap();
     y -= ROTATION_HEADER_HEIGHT;
     
