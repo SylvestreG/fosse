@@ -8,4 +8,5 @@ pub mod middleware;
 pub mod models;
 pub mod rotation_order;
 pub mod services;
+pub mod sortie_access;
 

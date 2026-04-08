@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { sortiesApi, Sortie, SortieType } from '@/lib/api'
+import { useAuthStore } from '@/lib/auth'
+import { useSortiesAccess } from '@/contexts/SortiesAccessContext'
 import Button from '@/components/Button'
 import Input from '@/components/Input'
 import Modal from '@/components/Modal'
@@ -9,6 +11,8 @@ import Toast from '@/components/Toast'
 
 export default function SortiesPage() {
   const navigate = useNavigate()
+  const isAdminUI = useAuthStore((s) => s.isAdminView())
+  const { directorSorties, loadingDirectorSorties } = useSortiesAccess()
   const [sorties, setSorties] = useState<Sortie[]>([])
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -27,8 +31,28 @@ export default function SortiesPage() {
   })
 
   useEffect(() => {
-    loadSorties()
-  }, [])
+    let cancelled = false
+    if (isAdminUI) {
+      setLoading(true)
+      sortiesApi
+        .list()
+        .then((response) => {
+          if (!cancelled) setSorties(response.data)
+        })
+        .catch(() => {
+          if (!cancelled) setToast({ message: 'Erreur lors du chargement des sorties', type: 'error' })
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+    } else {
+      setSorties(directorSorties)
+      setLoading(loadingDirectorSorties)
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [isAdminUI, directorSorties, loadingDirectorSorties])
 
   // Auto-générer le nom basé sur lieu et date
   useEffect(() => {
@@ -45,6 +69,7 @@ export default function SortiesPage() {
   }, [formData.location, formData.start_date, formData.sortie_type])
 
   const loadSorties = async () => {
+    if (!isAdminUI) return
     try {
       const response = await sortiesApi.list()
       setSorties(response.data)
@@ -174,13 +199,15 @@ export default function SortiesPage() {
           >
             Gérer
           </Button>
-          <Button
-            size="sm"
-            variant="danger"
-            onClick={() => handleDeleteSortie(sortie)}
-          >
-            Supprimer
-          </Button>
+          {isAdminUI && (
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => handleDeleteSortie(sortie)}
+            >
+              Supprimer
+            </Button>
+          )}
         </div>
       )
     }
@@ -198,17 +225,25 @@ export default function SortiesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold theme-text">Sorties</h1>
-        <Button onClick={() => setShowCreateModal(true)}>
-          Nouvelle sortie
-        </Button>
+        {isAdminUI && (
+          <Button onClick={() => setShowCreateModal(true)}>
+            Nouvelle sortie
+          </Button>
+        )}
       </div>
 
       {sorties.length === 0 ? (
         <div className="theme-card rounded-lg p-8 text-center">
-          <p className="theme-text-secondary">Aucune sortie pour le moment</p>
-          <Button className="mt-4" onClick={() => setShowCreateModal(true)}>
-            Créer une sortie
-          </Button>
+          <p className="theme-text-secondary">
+            {isAdminUI
+              ? 'Aucune sortie pour le moment'
+              : 'Aucune sortie accessible (directeur de plongée ou prochaine sortie pour encadrants).'}
+          </p>
+          {isAdminUI && (
+            <Button className="mt-4" onClick={() => setShowCreateModal(true)}>
+              Créer une sortie
+            </Button>
+          )}
         </div>
       ) : (
         <Table data={sorties} columns={columns} />

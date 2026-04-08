@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { sortiesApi, sessionsApi, questionnairesApi, SortieWithDives, QuestionnaireDetail, Session, DiveDirector } from '@/lib/api'
+import { useAuthStore } from '@/lib/auth'
+import { useSortiesAccess } from '@/contexts/SortiesAccessContext'
 import Button from '@/components/Button'
 import Table from '@/components/Table'
 import Toast from '@/components/Toast'
@@ -9,6 +11,10 @@ import AddSortieParticipantModal from '@/components/AddSortieParticipantModal'
 export default function SortiePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const isAdminUI = useAuthStore((s) => s.isAdminView())
+  const { directorSorties } = useSortiesAccess()
+  const canManageSortieParticipants =
+    isAdminUI || (!!id && directorSorties.some((s) => s.id === id))
   const [sortie, setSortie] = useState<SortieWithDives | null>(null)
   const [questionnaires, setQuestionnaires] = useState<QuestionnaireDetail[]>([])
   const [diveDirectors, setDiveDirectors] = useState<Record<string, DiveDirector[]>>({})
@@ -240,28 +246,32 @@ export default function SortiePage() {
         return formations.length > 0 ? formations.join(', ') : '-'
       }
     },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (_: any, q: QuestionnaireDetail) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() => setEditingParticipant(q)}
-            className="text-blue-400 hover:text-blue-300 text-sm"
-            title="Modifier"
-          >
-            ✏️
-          </button>
-          <button
-            onClick={() => handleDeleteParticipant(q.id)}
-            className="text-red-400 hover:text-red-300 text-sm"
-            title="Supprimer"
-          >
-            🗑️
-          </button>
-        </div>
-      )
-    },
+    ...(canManageSortieParticipants
+      ? [
+          {
+            key: 'actions',
+            label: 'Actions',
+            render: (_: any, q: QuestionnaireDetail) => (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditingParticipant(q)}
+                  className="text-blue-400 hover:text-blue-300 text-sm"
+                  title="Modifier"
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={() => handleDeleteParticipant(q.id)}
+                  className="text-red-400 hover:text-red-300 text-sm"
+                  title="Supprimer"
+                >
+                  🗑️
+                </button>
+              </div>
+            ),
+          },
+        ]
+      : []),
   ]
 
   return (
@@ -335,16 +345,20 @@ export default function SortiePage() {
           <h2 className="text-lg font-semibold theme-text">
             Participants inscrits ({questionnaires.length})
           </h2>
-          <Button size="sm" onClick={() => setShowAddParticipantModal(true)}>
-            + Ajouter un participant
-          </Button>
+          {canManageSortieParticipants && (
+            <Button size="sm" onClick={() => setShowAddParticipantModal(true)}>
+              + Ajouter un participant
+            </Button>
+          )}
         </div>
         {questionnaires.length === 0 ? (
           <div className="text-center py-8">
             <p className="theme-text-secondary mb-4">Aucun participant inscrit</p>
-            <Button onClick={() => setShowAddParticipantModal(true)}>
-              Ajouter le premier participant
-            </Button>
+            {canManageSortieParticipants && (
+              <Button onClick={() => setShowAddParticipantModal(true)}>
+                Ajouter le premier participant
+              </Button>
+            )}
           </div>
         ) : (
           <Table data={questionnaires} columns={participantsColumns} />

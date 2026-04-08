@@ -1,12 +1,17 @@
-use crate::entities::{prelude::*, questionnaires, rotations, sessions, sorties, dive_directors};
+use crate::entities::{prelude::*, people, questionnaires, rotations, sessions, sorties, dive_directors};
 use crate::errors::AppError;
+use crate::middleware::acl::AuthUser;
+use crate::sortie_access::{
+    auth_effective_email, director_accessible_sortie_ids, ensure_sortie_director_tool_access,
+    ensure_sortie_read_access, person_id_by_email,
+};
 use crate::models::{
     CreateSortieRequest, SortieResponse, SortieWithDivesResponse, UpdateSortieRequest,
     CopyAttendeesRequest, CopyAttendeesResponse, SessionResponse, DiveDirectorRequest, DiveDirectorResponse,
 };
 use crate::models::DiverLevel;
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     Json,
 };
 use chrono::{Duration, Utc};
@@ -50,11 +55,45 @@ fn session_to_response(session: &sessions::Model) -> SessionResponse {
     }
 }
 
+/// Liste des sorties visibles pour un DP / encadrant (historique DP + prochaine sortie le cas échéant).
+pub async fn list_sorties_director_access(
+    State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
+) -> Result<Json<Vec<SortieResponse>>, AppError> {
+    let email = auth_effective_email(&auth);
+    let Some(pid) = person_id_by_email(db.as_ref(), email).await? else {
+        return Ok(Json(vec![]));
+    };
+    let ids = director_accessible_sortie_ids(db.as_ref(), pid).await?;
+    if ids.is_empty() {
+        return Ok(Json(vec![]));
+    }
+    let id_vec: Vec<Uuid> = ids.into_iter().collect();
+    let sorties_list = Sorties::find()
+        .filter(sorties::Column::Id.is_in(id_vec))
+        .order_by_desc(sorties::Column::StartDate)
+        .all(db.as_ref())
+        .await
+        .map_err(|_| {
+            AppError::Database(sea_orm::DbErr::Custom("Failed to query sorties".to_string()))
+        })?;
+
+    let responses: Vec<SortieResponse> = sorties_list.iter().map(sortie_to_response).collect();
+    Ok(Json(responses))
+}
+
 /// Create a new sortie with auto-generated dives (sessions)
 pub async fn create_sortie(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Json(payload): Json<CreateSortieRequest>,
 ) -> Result<Json<SortieWithDivesResponse>, AppError> {
+    if !auth.claims.is_admin {
+        return Err(AppError::Forbidden(
+            "Seuls les administrateurs peuvent créer une sortie".to_string(),
+        ));
+    }
+
     payload
         .validate()
         .map_err(|e| AppError::Validation(e.to_string()))?;
@@ -175,6 +214,7 @@ pub async fn list_sorties(
 /// Get a sortie with its dives
 pub async fn get_sortie(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<SortieWithDivesResponse>, AppError> {
     let sortie = Sorties::find_by_id(id)
@@ -182,6 +222,8 @@ pub async fn get_sortie(
         .await
         .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query sortie".to_string())))?
         .ok_or(AppError::NotFound("Sortie not found".to_string()))?;
+
+    ensure_sortie_read_access(db.as_ref(), &auth, id).await?;
 
     // Get all dives for this sortie, ordered by dive_number
     let dives = Sessions::find()
@@ -205,9 +247,16 @@ pub async fn get_sortie(
 /// Update a sortie
 pub async fn update_sortie(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateSortieRequest>,
 ) -> Result<Json<SortieResponse>, AppError> {
+    if !auth.claims.is_admin {
+        return Err(AppError::Forbidden(
+            "Seuls les administrateurs peuvent modifier une sortie".to_string(),
+        ));
+    }
+
     payload
         .validate()
         .map_err(|e| AppError::Validation(e.to_string()))?;
@@ -243,8 +292,15 @@ pub async fn update_sortie(
 /// Delete a sortie (cascade deletes sessions/dives)
 pub async fn delete_sortie(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, AppError> {
+    if !auth.claims.is_admin {
+        return Err(AppError::Forbidden(
+            "Seuls les administrateurs peuvent supprimer une sortie".to_string(),
+        ));
+    }
+
     let sortie = Sorties::find_by_id(id)
         .one(db.as_ref())
         .await
@@ -264,6 +320,7 @@ pub async fn delete_sortie(
 /// Copy attendees from one dive to another within the same sortie
 pub async fn copy_attendees(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Path(sortie_id): Path<Uuid>,
     Json(payload): Json<CopyAttendeesRequest>,
 ) -> Result<Json<CopyAttendeesResponse>, AppError> {
@@ -273,6 +330,8 @@ pub async fn copy_attendees(
         .await
         .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query sortie".to_string())))?
         .ok_or(AppError::NotFound("Sortie not found".to_string()))?;
+
+    ensure_sortie_director_tool_access(db.as_ref(), &auth, sortie_id).await?;
 
     // Verify source and target dives belong to this sortie
     let source_dive = Sessions::find_by_id(payload.source_dive_id)
@@ -388,8 +447,21 @@ pub async fn copy_attendees(
 /// Get dive directors for a dive (session within a sortie)
 pub async fn get_dive_directors(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Path(session_id): Path<Uuid>,
 ) -> Result<Json<Vec<DiveDirectorResponse>>, AppError> {
+    let session = Sessions::find_by_id(session_id)
+        .one(db.as_ref())
+        .await
+        .map_err(|_| {
+            AppError::Database(sea_orm::DbErr::Custom("Failed to query session".to_string()))
+        })?
+        .ok_or(AppError::NotFound("Session not found".to_string()))?;
+
+    if let Some(sortie_id) = session.sortie_id {
+        ensure_sortie_read_access(db.as_ref(), &auth, sortie_id).await?;
+    }
+
     let directors = DiveDirectors::find()
         .filter(dive_directors::Column::SessionId.eq(session_id))
         .all(db.as_ref())
@@ -412,6 +484,7 @@ pub async fn get_dive_directors(
 /// Add a dive director to a dive
 pub async fn add_dive_director(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Path(session_id): Path<Uuid>,
     Json(payload): Json<DiveDirectorRequest>,
 ) -> Result<Json<DiveDirectorResponse>, AppError> {
@@ -421,6 +494,12 @@ pub async fn add_dive_director(
         .await
         .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query session".to_string())))?
         .ok_or(AppError::NotFound("Session not found".to_string()))?;
+
+    if let Some(sortie_id) = session.sortie_id {
+        if !auth.claims.is_admin {
+            ensure_sortie_director_tool_access(db.as_ref(), &auth, sortie_id).await?;
+        }
+    }
 
     // For sorties, verify the questionnaire belongs to the sortie
     if let Some(sortie_id) = session.sortie_id {
@@ -482,6 +561,7 @@ pub async fn add_dive_director(
 /// Remove a dive director from a dive
 pub async fn remove_dive_director(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Path((session_id, director_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<serde_json::Value>, AppError> {
     let director = DiveDirectors::find_by_id(director_id)
@@ -492,6 +572,20 @@ pub async fn remove_dive_director(
 
     if director.session_id != session_id {
         return Err(AppError::Validation("Dive director does not belong to this session".to_string()));
+    }
+
+    let session = Sessions::find_by_id(session_id)
+        .one(db.as_ref())
+        .await
+        .map_err(|_| {
+            AppError::Database(sea_orm::DbErr::Custom("Failed to query session".to_string()))
+        })?
+        .ok_or(AppError::NotFound("Session not found".to_string()))?;
+
+    if let Some(sortie_id) = session.sortie_id {
+        if !auth.claims.is_admin {
+            ensure_sortie_director_tool_access(db.as_ref(), &auth, sortie_id).await?;
+        }
     }
 
     director
@@ -507,9 +601,10 @@ pub async fn remove_dive_director(
 /// Get questionnaires for a sortie
 pub async fn get_sortie_questionnaires(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Path(sortie_id): Path<Uuid>,
 ) -> Result<Json<Vec<crate::models::QuestionnaireDetailResponse>>, AppError> {
-    use crate::entities::{people, email_jobs};
+    use crate::entities::email_jobs;
     use crate::models::QuestionnaireDetailResponse;
 
     // Verify sortie exists
@@ -518,6 +613,8 @@ pub async fn get_sortie_questionnaires(
         .await
         .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query sortie".to_string())))?
         .ok_or(AppError::NotFound("Sortie not found".to_string()))?;
+
+    ensure_sortie_read_access(db.as_ref(), &auth, sortie_id).await?;
 
     // Get questionnaires
     let questionnaires_list = Questionnaires::find()

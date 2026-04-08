@@ -157,6 +157,7 @@ pub fn create_app(db: DatabaseConnection, config: Config) -> Router {
         .route("/api/v1/skill-validations/logs", get(get_validation_logs))
         // Hierarchy views
         .route("/api/v1/my-competencies", get(get_my_competencies))
+        .route("/api/v1/me/sorties-director-access", get(list_sorties_director_access))
         .route("/api/v1/person-competencies/:person_id", get(get_person_competencies))
         // Groups and permissions management
         .route("/api/v1/permissions", get(list_permissions))

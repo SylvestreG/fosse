@@ -1,9 +1,14 @@
 use crate::config::Config;
+use crate::entities::prelude::*;
 use crate::errors::AppError;
+use crate::middleware::acl::AuthUser;
 use crate::models::{CreateQuestionnaireRequest, QuestionnaireDetailResponse, QuestionnaireResponse, QuestionnaireTokenData, SubmitQuestionnaireRequest, UpdateQuestionnaireRequest, SetDirecteurPlongeeRequest};
 use crate::services::QuestionnaireService;
+use crate::sortie_access::{
+    auth_effective_email, ensure_questionnaire_mutation_access, ensure_sortie_director_tool_access,
+};
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use sea_orm::{DatabaseConnection, EntityTrait};
@@ -36,12 +41,21 @@ pub async fn submit_questionnaire(
 /// Créer un questionnaire directement (auto-inscription)
 pub async fn create_questionnaire(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Json(payload): Json<CreateQuestionnaireRequest>,
 ) -> Result<Json<QuestionnaireResponse>, AppError> {
     payload
         .validate()
         .map_err(|e| AppError::Validation(e.to_string()))?;
-    
+
+    if let Some(sid) = payload.sortie_id {
+        let me = auth_effective_email(&auth);
+        let is_self = payload.email.trim().eq_ignore_ascii_case(me.trim());
+        if !is_self {
+            ensure_sortie_director_tool_access(db.as_ref(), &auth, sid).await?;
+        }
+    }
+
     let response = QuestionnaireService::create_direct(db.as_ref(), payload).await?;
     Ok(Json(response))
 }
@@ -76,6 +90,7 @@ pub async fn list_questionnaires_detail(
 
 pub async fn update_questionnaire(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateQuestionnaireRequest>,
 ) -> Result<Json<QuestionnaireResponse>, AppError> {
@@ -83,25 +98,35 @@ pub async fn update_questionnaire(
         .validate()
         .map_err(|e| AppError::Validation(e.to_string()))?;
 
+    let questionnaire = Questionnaires::find_by_id(id)
+        .one(db.as_ref())
+        .await
+        .map_err(|_| {
+            AppError::Database(sea_orm::DbErr::Custom("Failed to query questionnaire".to_string()))
+        })?
+        .ok_or_else(|| AppError::NotFound("Questionnaire not found".to_string()))?;
+
+    ensure_questionnaire_mutation_access(db.as_ref(), &auth, &questionnaire).await?;
+
     let response = QuestionnaireService::update(db.as_ref(), id, payload).await?;
     Ok(Json(response))
 }
 
 pub async fn delete_questionnaire(
     State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, AppError> {
-    use crate::entities::prelude::*;
     use sea_orm::ActiveModelTrait;
-    
-    // Find the questionnaire
+
     let questionnaire = Questionnaires::find_by_id(id)
         .one(db.as_ref())
         .await
         .map_err(|_| AppError::Database(sea_orm::DbErr::Custom("Failed to query questionnaire".to_string())))?
         .ok_or(AppError::NotFound("Questionnaire not found".to_string()))?;
-    
-    // Delete the questionnaire - convert to ActiveModel first
+
+    ensure_questionnaire_mutation_access(db.as_ref(), &auth, &questionnaire).await?;
+
     let active_model: crate::entities::questionnaires::ActiveModel = questionnaire.into();
     active_model
         .delete(db.as_ref())

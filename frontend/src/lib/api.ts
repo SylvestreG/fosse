@@ -297,6 +297,8 @@ export const sessionsApi = {
 }
 
 export const sortiesApi = {
+  /** Sorties où l’utilisateur a été DP (+ prochaine sortie si encadrant / ancien DP) */
+  listDirectorAccess: () => api.get<Sortie[]>('/me/sorties-director-access'),
   create: (data: {
     name: string
     location: string

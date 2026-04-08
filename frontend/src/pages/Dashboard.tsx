@@ -24,6 +24,7 @@ import ValidationLogsPage from './ValidationLogsPage'
 import SortieGroupesPage from './SortieGroupesPage'
 import { useAuthStore } from '@/lib/auth'
 import { useThemeStore } from '@/lib/theme'
+import { SortiesAccessProvider } from '@/contexts/SortiesAccessContext'
 
 export default function Dashboard() {
   const { impersonating, isAdmin: storeIsAdmin, canValidateCompetencies } = useAuthStore()
@@ -37,6 +38,7 @@ export default function Dashboard() {
     <div className={`min-h-screen theme-bg-gradient ${impersonating ? 'ring-4 ring-red-500 ring-inset' : ''} ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>
       <ImpersonationBanner />
       <div className={impersonating ? 'pt-12' : ''}>
+        <SortiesAccessProvider isAdmin={isAdmin}>
         <Header />
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Routes>
@@ -45,9 +47,9 @@ export default function Dashboard() {
             {/* Sessions - différent selon admin ou non */}
             <Route path="/sessions" element={isAdmin ? <SessionsPage /> : <MySessionsPage />} />
             
-            {/* Sorties - admin seulement */}
-            {isAdmin && <Route path="/sorties" element={<SortiesPage />} />}
-            {isAdmin && <Route path="/sorties/:id" element={<SortiePage />} />}
+            {/* Sorties : admin (liste complète) ou DP / encadrant (liste API restreinte) */}
+            <Route path="/sorties" element={<SortiesPage />} />
+            <Route path="/sorties/:id" element={<SortiePage />} />
             
             {/* Summary - admin seulement */}
             {isAdmin && <Route path="/summary/:id" element={<SummaryPage />} />}
@@ -100,6 +102,7 @@ export default function Dashboard() {
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>
         </main>
+        </SortiesAccessProvider>
       </div>
     </div>
   )

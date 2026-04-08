@@ -8,6 +8,7 @@ mod middleware;
 mod models;
 mod rotation_order;
 mod services;
+mod sortie_access;
 
 use config::Config;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuthStore } from '@/lib/auth'
+import { useSortiesAccess } from '@/contexts/SortiesAccessContext'
 import { useThemeStore } from '@/lib/theme'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 
@@ -10,6 +11,7 @@ export default function Header() {
   const location = useLocation()
   const isAdmin = isAdminView()
   const canValidateCompetencies = canValidate()
+  const { showSortiesNav } = useSortiesAccess()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = () => {
@@ -72,7 +74,7 @@ export default function Header() {
               <Link to="/dashboard/sessions" className={navLinkClass('/dashboard/sessions')}>
                 Sessions
               </Link>
-              {isAdmin && (
+              {showSortiesNav && (
                 <Link to="/dashboard/sorties" className={navLinkClass('/dashboard/sorties')}>
                   Sorties
                 </Link>
@@ -213,7 +215,7 @@ export default function Header() {
             >
               📅 Sessions
             </Link>
-            {isAdmin && (
+            {showSortiesNav && (
               <Link 
                 to="/dashboard/sorties" 
                 className={mobileNavLinkClass('/dashboard/sorties')}
