@@ -612,6 +612,15 @@ export default function MySessionsPage() {
                               👥 Participants (sortie)
                             </Button>
                           )}
+                          {!isSortieDive && sessionsWhereDP.has(session.id) && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => navigate(`/dashboard/fosse-session/${session.id}/participants`)}
+                            >
+                              👥 Questionnaires / participants
+                            </Button>
+                          )}
                         </div>
                       </>
                     ) : (
@@ -711,6 +720,15 @@ export default function MySessionsPage() {
                               👥 Participants (sortie)
                             </Button>
                           )}
+                          {!isSortieDive && isDpPast && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => navigate(`/dashboard/fosse-session/${session.id}/participants`)}
+                            >
+                              👥 Questionnaires / participants
+                            </Button>
+                          )}
                           {isInstructor && studentsInTraining > 0 && (
                             <span className="text-sm text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
                               🎯 {studentsInTraining} en formation
@@ -726,7 +744,7 @@ export default function MySessionsPage() {
                           {isDpPast
                             ? isSortieDive
                               ? 'Directeur·rice de plongée : « Palanquées » pour les groupes ; « Participants (sortie) » pour la liste d’inscrits à la sortie.'
-                              : 'Vous êtes directeur·rice de plongée : utilisez le bouton « Palanquées » pour consulter ou modifier les groupes.'
+                              : 'Directeur·rice de plongée : « Palanquées » pour les groupes ; « Questionnaires / participants » pour la liste d’inscrits à la fosse.'
                             : 'Aucune palanquée enregistrée avec votre nom sur cette session (ou accès aux palanquées indisponible).'}
                         </p>
                       )}

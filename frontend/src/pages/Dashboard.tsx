@@ -4,6 +4,7 @@ import ImpersonationBanner from '@/components/ImpersonationBanner'
 import DashboardHome from './DashboardHome'
 import SessionsPage from './SessionsPage'
 import MySessionsPage from './MySessionsPage'
+import FosseSessionParticipantsPage from './FosseSessionParticipantsPage'
 import SortiesPage from './SortiesPage'
 import SortiePage from './SortiePage'
 import ImportPage from './ImportPage'
@@ -46,6 +47,7 @@ export default function Dashboard() {
             
             {/* Sessions - différent selon admin ou non */}
             <Route path="/sessions" element={isAdmin ? <SessionsPage /> : <MySessionsPage />} />
+            <Route path="/fosse-session/:sessionId/participants" element={<FosseSessionParticipantsPage />} />
             
             {/* Sorties : admin (liste complète) ou DP / encadrant (liste API restreinte) */}
             <Route path="/sorties" element={<SortiesPage />} />

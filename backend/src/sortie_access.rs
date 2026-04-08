@@ -3,6 +3,7 @@
 use crate::entities::{dive_directors, prelude::*, questionnaires, sorties};
 use crate::errors::AppError;
 use crate::middleware::acl::AuthUser;
+use crate::models::Permission;
 use chrono::Utc;
 use sea_orm::*;
 use std::collections::HashSet;
@@ -187,6 +188,45 @@ pub async fn ensure_sortie_director_tool_access(
     }
 }
 
+/// Session **fosse** (sans sortie) : admin réel, `SessionsView`, ou DP sur cette session.
+pub async fn ensure_can_manage_fosse_session_participants(
+    db: &DatabaseConnection,
+    auth: &AuthUser,
+    session_id: Uuid,
+) -> Result<(), AppError> {
+    if acting_as_real_admin(auth) {
+        return Ok(());
+    }
+    if auth.has_permission(Permission::SessionsView) {
+        return Ok(());
+    }
+    let email = auth_effective_email(auth);
+    let Some(pid) = person_id_by_email(db, email).await? else {
+        return Err(AppError::Forbidden(
+            "Gestion des participants non autorisée".to_string(),
+        ));
+    };
+    let is_dp = Questionnaires::find()
+        .filter(questionnaires::Column::SessionId.eq(session_id))
+        .filter(questionnaires::Column::PersonId.eq(pid))
+        .filter(questionnaires::Column::IsDirecteurPlongee.eq(true))
+        .one(db)
+        .await
+        .map_err(|_| {
+            AppError::Database(sea_orm::DbErr::Custom(
+                "Failed to query questionnaire".to_string(),
+            ))
+        })?
+        .is_some();
+    if is_dp {
+        Ok(())
+    } else {
+        Err(AppError::Forbidden(
+            "Gestion des participants non autorisée".to_string(),
+        ))
+    }
+}
+
 /// Admin config, accès outils DP sur une sortie, ou propriétaire (questionnaire fosse).
 pub async fn ensure_questionnaire_mutation_access(
     db: &DatabaseConnection,
@@ -208,10 +248,12 @@ pub async fn ensure_questionnaire_mutation_access(
         })?
         .ok_or_else(|| AppError::NotFound("Person not found".to_string()))?;
     if owner.email.eq_ignore_ascii_case(email) {
-        Ok(())
-    } else {
-        Err(AppError::Forbidden(
-            "Modification de ce questionnaire non autorisée".to_string(),
-        ))
+        return Ok(());
     }
+    let Some(session_id) = questionnaire.session_id else {
+        return Err(AppError::Forbidden(
+            "Modification de ce questionnaire non autorisée".to_string(),
+        ));
+    };
+    ensure_can_manage_fosse_session_participants(db, auth, session_id).await
 }
