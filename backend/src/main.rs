@@ -6,6 +6,7 @@ mod errors;
 mod handlers;
 mod middleware;
 mod models;
+mod person_lookup;
 mod rotation_order;
 mod services;
 mod sortie_access;

@@ -428,10 +428,8 @@ pub async fn get_session_palanquees(
             .unwrap_or(&auth.claims.email);
         
         // Vérifier si l'utilisateur est inscrit à cette session
-        let person = crate::entities::prelude::People::find()
-            .filter(crate::entities::people::Column::Email.eq(user_email))
-            .one(db.as_ref())
-            .await?;
+        let person =
+            crate::person_lookup::find_person_by_email_ci(db.as_ref(), user_email).await?;
         
         let is_registered = if let Some(person) = person {
             // Vérifier s'il a un questionnaire pour cette session ou la sortie parente

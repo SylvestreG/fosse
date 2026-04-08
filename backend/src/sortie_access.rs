@@ -1,6 +1,6 @@
 //! Accès aux sorties (lecture, outils DP, mutations questionnaires liés).
 
-use crate::entities::{dive_directors, people, prelude::*, questionnaires, sorties};
+use crate::entities::{dive_directors, prelude::*, questionnaires, sorties};
 use crate::errors::AppError;
 use crate::middleware::acl::AuthUser;
 use chrono::Utc;
@@ -20,14 +20,11 @@ pub async fn person_id_by_email(
     db: &DatabaseConnection,
     email: &str,
 ) -> Result<Option<Uuid>, AppError> {
-    Ok(People::find()
-        .filter(people::Column::Email.eq(email))
-        .one(db)
-        .await
-        .map_err(|_| {
-            AppError::Database(sea_orm::DbErr::Custom("Failed to query person".to_string()))
-        })?
-        .map(|p| p.id))
+    Ok(
+        crate::person_lookup::find_person_by_email_ci(db, email)
+            .await?
+            .map(|p| p.id),
+    )
 }
 
 async fn is_registered_on_sortie(

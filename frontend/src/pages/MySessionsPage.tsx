@@ -215,6 +215,7 @@ export default function MySessionsPage() {
   const [myRegistrations, setMyRegistrations] = useState<Map<string, MyRegistration>>(new Map())
   const [sessionsWithPalanquees, setSessionsWithPalanquees] = useState<Set<string>>(new Set())
   const [sessionsWhereDP, setSessionsWhereDP] = useState<Set<string>>(new Set())
+  const [pastSessionsWhereDP, setPastSessionsWhereDP] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const [showPastSessions, setShowPastSessions] = useState(false)
@@ -403,7 +404,8 @@ export default function MySessionsPage() {
         .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
       
       const pastWithStudents: PastSessionWithStudents[] = []
-      
+      const pastDp = new Set<string>()
+
       for (const session of allPastSessions) {
         try {
           let myQuest: QuestionnaireDetail | undefined
@@ -419,6 +421,19 @@ export default function MySessionsPage() {
           
           if (!myQuest) {
             continue
+          }
+
+          let isDpForPast = !!myQuest.is_directeur_plongee
+          try {
+            const dpRes = await sessionsApi.getDiveDirectors(session.id)
+            if (dpRes.data.some(dp => dp.questionnaire_id === myQuest.id)) {
+              isDpForPast = true
+            }
+          } catch {
+            // Ignorer
+          }
+          if (isDpForPast) {
+            pastDp.add(session.id)
           }
 
           const myStudents: PalanqueeMember[] = []
@@ -471,6 +486,7 @@ export default function MySessionsPage() {
       }
       
       setPastSessionsWithStudents(pastWithStudents)
+      setPastSessionsWhereDP(pastDp)
     } catch (error) {
       console.error('Error loading data:', error)
       setToast({ message: 'Erreur lors du chargement', type: 'error' })
@@ -602,6 +618,7 @@ export default function MySessionsPage() {
           {showPastSessions && (
             <div className="space-y-4">
               {pastSessionsWithStudents.map(({ session, myStudents, myPalanquees }) => {
+                const isDpPast = pastSessionsWhereDP.has(session.id)
                 const sessionDate = new Date(session.start_date)
                 const formattedDate = sessionDate.toLocaleDateString('fr-FR', {
                   weekday: 'short',
@@ -628,10 +645,19 @@ export default function MySessionsPage() {
                           <h3 className="text-lg font-semibold theme-text">{session.name}</h3>
                           <p className="text-sm theme-text-muted">📆 {formattedDate} • 📍 {session.location}</p>
                         </div>
-                        <div className="flex gap-2 self-start sm:self-auto">
+                        <div className="flex flex-wrap gap-2 self-start sm:self-auto items-center">
                           <span className="text-sm theme-text-muted theme-badge px-3 py-1 rounded-full">
                             {myPalanquees.length} palanquée{myPalanquees.length > 1 ? 's' : ''}
                           </span>
+                          {(isDpPast || myPalanquees.length > 0) && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => navigate(`/dashboard/palanquees/${session.id}`)}
+                            >
+                              🤿 Palanquées
+                            </Button>
+                          )}
                           {isInstructor && studentsInTraining > 0 && (
                             <span className="text-sm text-amber-400 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30">
                               🎯 {studentsInTraining} en formation
@@ -644,7 +670,9 @@ export default function MySessionsPage() {
                     <div className="space-y-3">
                       {myPalanquees.length === 0 && (
                         <p className="text-sm theme-text-secondary py-2">
-                          Aucune palanquée enregistrée avec votre nom sur cette session (ou accès aux palanquées indisponible).
+                          {isDpPast
+                            ? 'Vous êtes directeur·rice de plongée : utilisez le bouton « Palanquées » pour consulter ou modifier les groupes.'
+                            : 'Aucune palanquée enregistrée avec votre nom sur cette session (ou accès aux palanquées indisponible).'}
                         </p>
                       )}
                       {myPalanquees.map((pal, idx) => {

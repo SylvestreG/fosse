@@ -1,4 +1,4 @@
-use crate::entities::{prelude::*, people, questionnaires, sessions};
+use crate::entities::{prelude::*, questionnaires, sessions};
 use crate::errors::AppError;
 use crate::middleware::acl::AuthUser;
 use crate::models::{CreateSessionRequest, SessionResponse, SessionSummary, StabSize, ParticipantInfo, UpdateSessionRequest, Permission};
@@ -107,10 +107,7 @@ pub async fn get_session(
             .unwrap_or(&auth.claims.email);
         
         // Vérifier si l'utilisateur est inscrit à cette session
-        let person = People::find()
-            .filter(people::Column::Email.eq(user_email))
-            .one(db.as_ref())
-            .await?;
+        let person = crate::person_lookup::find_person_by_email_ci(db.as_ref(), user_email).await?;
         
         let is_registered = if let Some(ref person) = person {
             if let Some(sortie_id) = session.sortie_id {

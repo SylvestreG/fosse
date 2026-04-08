@@ -153,7 +153,8 @@ export default function PalanqueesPage() {
   const myQuestionnaire = questionnaires.find(q => emailsMatch(q.email, currentEmail))
   const isCurrentUserDP = !!(myQuestionnaire?.is_directeur_plongee) ||
     !!(myQuestionnaire && diveDirectors.some(dp => dp.questionnaire_id === myQuestionnaire.id))
-  const canEdit = (isAdmin && !impersonating) || isCurrentUserDP
+  // Admin : édition même en impersonation (sinon le DP impersonné ne peut pas gérer les palanquées).
+  const canEdit = isAdmin || isCurrentUserDP
   
   // Modal states
   const [showFicheModal, setShowFicheModal] = useState(false)

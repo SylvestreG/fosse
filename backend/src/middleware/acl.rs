@@ -1,5 +1,5 @@
 use crate::entities::prelude::*;
-use crate::entities::{group_permissions, people};
+use crate::entities::group_permissions;
 use crate::errors::AppError;
 use crate::models::{Claims, Permission};
 use crate::services::AuthService;
@@ -76,15 +76,8 @@ async fn get_permissions_for_email(
     db: &DatabaseConnection,
     email: &str,
 ) -> Result<Vec<Permission>, AppError> {
-    // Trouver l'utilisateur par email
-    let person = People::find()
-        .filter(people::Column::Email.eq(email))
-        .one(db)
-        .await
-        .map_err(|e| {
-            tracing::error!("Failed to query person: {:?}", e);
-            AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query person: {}", e)))
-        })?;
+    // Trouver l'utilisateur par email (JWT / impersonation : casse peut différer du stockage)
+    let person = crate::person_lookup::find_person_by_email_ci(db, email).await?;
 
     let Some(person) = person else {
         // Si utilisateur pas trouvé mais authentifié via Google OAuth admin,
