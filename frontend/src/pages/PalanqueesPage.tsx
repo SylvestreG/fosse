@@ -79,6 +79,38 @@ function getHighestLevel(divingLevel?: string): string | undefined {
   }, levels[0])
 }
 
+/**
+ * Plus haut niveau dans `diving_level` en ignorant les tokens E1–E4 (évite qu’« N2,E1 » ne remonte E1).
+ * Utilisé uniquement pour le badge des **E1** ; E2–E4 gardent toujours leur grade affiché tel quel.
+ */
+function getHighestLevelExcludingInstructors(divingLevel?: string): string | undefined {
+  if (!divingLevel) return undefined
+  const levels = divingLevel
+    .split(',')
+    .map(l => l.trim())
+    .filter(l => !l.startsWith('preparing_'))
+    .filter(l => !/^E[1-4]$/i.test(l))
+  if (levels.length === 0) return undefined
+  return levels.reduce((highest, current) => {
+    const highestRank = LEVEL_HIERARCHY[highest] || 0
+    const currentRank = LEVEL_HIERARCHY[current] || 0
+    return currentRank > highestRank ? current : highest
+  }, levels[0])
+}
+
+/** Uniquement pour le grade E1 : badge N2/N3/… depuis la fiche plongeur ; E2–E4 inchangés. */
+function displayEncadrantLevelBadge(
+  instructorLevel: string | undefined | null,
+  divingLevel: string | undefined
+): string | undefined {
+  const il = instructorLevel?.trim()
+  if (il && /^E1$/i.test(il)) {
+    return getHighestLevelExcludingInstructors(divingLevel) ?? il
+  }
+  if (il) return il
+  return getHighestLevelExcludingInstructors(divingLevel) ?? getHighestLevel(divingLevel)
+}
+
 type PalanqueesDisplaySection = {
   key: string
   sectionTitle: string | null
@@ -985,9 +1017,8 @@ function DraggableParticipant({
     }
   }
 
-  // Extraire le niveau d'affichage (instructor_level pour encadrants, sinon le plus haut niveau validé)
-  const displayLevel = participant.is_encadrant 
-    ? participant.instructor_level 
+  const displayLevel = participant.is_encadrant
+    ? displayEncadrantLevelBadge(participant.instructor_level, participant.diving_level)
     : getHighestLevel(participant.diving_level)
 
   return (
@@ -1440,10 +1471,10 @@ function MemberRow({
   canEdit: boolean
   onRemove: (memberId: string) => void
 }) {
-  // Niveau d'affichage : instructor_level pour GP/E, sinon le plus haut niveau validé
-  const displayLevel = isGP || member.is_encadrant
-    ? member.instructor_level
-    : getHighestLevel(member.diving_level)
+  const displayLevel =
+    isGP || member.is_encadrant
+      ? displayEncadrantLevelBadge(member.instructor_level, member.diving_level)
+      : getHighestLevel(member.diving_level)
   
   return (
     <div className={`flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 rounded text-[11px] sm:text-xs ${
