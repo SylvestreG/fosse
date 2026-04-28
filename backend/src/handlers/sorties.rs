@@ -666,6 +666,7 @@ pub async fn get_sortie_questionnaires(
                 nitrox_base_formation: q.nitrox_base_formation,
                 nitrox_confirmed_formation: q.nitrox_confirmed_formation,
                 is_directeur_plongee: q.is_directeur_plongee,
+                allow_dual_rotation: q.allow_dual_rotation,
                 comes_from_issoire: q.comes_from_issoire,
                 has_car: q.has_car,
                 car_seats: q.car_seats,

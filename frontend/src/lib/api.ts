@@ -116,6 +116,7 @@ export interface Questionnaire {
   nitrox_base_formation: boolean
   nitrox_confirmed_formation: boolean
   is_directeur_plongee: boolean
+  allow_dual_rotation?: boolean
   comes_from_issoire: boolean
   has_car: boolean
   car_seats?: number
@@ -143,6 +144,7 @@ export interface QuestionnaireDetail {
   nitrox_base_formation: boolean
   nitrox_confirmed_formation: boolean
   is_directeur_plongee: boolean
+  allow_dual_rotation?: boolean
   comes_from_issoire: boolean
   has_car: boolean
   car_seats?: number
@@ -381,6 +383,8 @@ export const questionnairesApi = {
     comments?: string
     mark_as_submitted?: boolean
   }) => api.put<Questionnaire>(`/questionnaires/${id}`, data),
+  setAllowDualRotation: (id: string, allow_dual_rotation: boolean) =>
+    api.patch<Questionnaire>(`/questionnaires/${id}`, { allow_dual_rotation }),
   delete: (id: string) => api.delete(`/questionnaires/${id}`),
 }
 
@@ -765,6 +769,8 @@ export interface UnassignedParticipant {
   nitrox_training: boolean
   nitrox_confirmed_formation: boolean
   instructor_level?: string
+  /** Fosse Coubertin : peut être sur 2 rotations (élèves). */
+  allow_dual_rotation?: boolean
 }
 
 export interface SessionPalanquees {

@@ -206,6 +206,7 @@ impl ImportService {
             nitrox_base_formation: Set(false),
             nitrox_confirmed_formation: Set(false),
             is_directeur_plongee: Set(false), // Must be set explicitly
+            allow_dual_rotation: Set(false),
             comes_from_issoire: Set(false), // Session-specific, no default
             has_car: Set(false), // Session-specific, no default
             car_seats: Set(None), // Session-specific, no default

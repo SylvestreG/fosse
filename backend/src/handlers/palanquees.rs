@@ -27,6 +27,66 @@ fn student_stays_in_pool_until_both_plongees(session_location: &Option<String>) 
     )
 }
 
+/// Fosse club Coubertin (aligné sur `isCoubertinClubFosseLocation` côté frontend).
+fn is_coubertin_club_fosse(session_location: &Option<String>) -> bool {
+    match session_location.as_deref().map(str::trim) {
+        None | Some("") => true,
+        Some("Coubertin") => true,
+        _ => false,
+    }
+}
+
+fn count_distinct_rotations_for_questionnaire(
+    rotations: &[RotationResponse],
+    questionnaire_id: Uuid,
+) -> usize {
+    rotations
+        .iter()
+        .filter(|r| {
+            r.palanquees.iter().any(|p| {
+                p.members
+                    .iter()
+                    .any(|m| m.questionnaire_id == questionnaire_id)
+            })
+        })
+        .count()
+}
+
+/// Rotations de la session où ce questionnaire est déjà membre d’une palanquée.
+async fn questionnaire_rotation_ids_in_session(
+    db: &DatabaseConnection,
+    session_id: Uuid,
+    questionnaire_id: Uuid,
+) -> Result<HashSet<Uuid>, AppError> {
+    let rots = Rotations::find()
+        .filter(rotations::Column::SessionId.eq(session_id))
+        .all(db)
+        .await?;
+    let mut out = HashSet::new();
+    for rot in rots {
+        let pal_ids: Vec<Uuid> = Palanquees::find()
+            .filter(palanquees::Column::RotationId.eq(rot.id))
+            .all(db)
+            .await?
+            .into_iter()
+            .map(|p| p.id)
+            .collect();
+        if pal_ids.is_empty() {
+            continue;
+        }
+        let exists = PalanqueeMembers::find()
+            .filter(palanquee_members::Column::PalanqueeId.is_in(pal_ids))
+            .filter(palanquee_members::Column::QuestionnaireId.eq(questionnaire_id))
+            .one(db)
+            .await?
+            .is_some();
+        if exists {
+            out.insert(rot.id);
+        }
+    }
+    Ok(out)
+}
+
 // ============ ROTATIONS ============
 
 /// Crée une nouvelle rotation pour une session
@@ -259,6 +319,11 @@ pub async fn add_member(
         .await?
         .ok_or_else(|| AppError::NotFound("Palanquée not found".to_string()))?;
 
+    let questionnaire = Questionnaires::find_by_id(payload.questionnaire_id)
+        .one(db.as_ref())
+        .await?
+        .ok_or_else(|| AppError::NotFound("Questionnaire not found".to_string()))?;
+
     let sibling_ids: Vec<Uuid> = Palanquees::find()
         .filter(palanquees::Column::RotationId.eq(palanquee.rotation_id))
         .all(db.as_ref())
@@ -281,11 +346,37 @@ pub async fn add_member(
         ));
     }
 
-    // Vérifier que le questionnaire existe et récupérer les infos
-    let questionnaire = Questionnaires::find_by_id(payload.questionnaire_id)
+    let rotation = Rotations::find_by_id(palanquee.rotation_id)
         .one(db.as_ref())
         .await?
-        .ok_or_else(|| AppError::NotFound("Questionnaire not found".to_string()))?;
+        .ok_or_else(|| AppError::NotFound("Rotation not found".to_string()))?;
+    let session_row = Sessions::find_by_id(rotation.session_id)
+        .one(db.as_ref())
+        .await?
+        .ok_or_else(|| AppError::NotFound("Session not found".to_string()))?;
+
+    if !questionnaire.is_encadrant {
+        let partner = student_stays_in_pool_until_both_plongees(&session_row.location);
+        if !partner {
+            let rotations_with = questionnaire_rotation_ids_in_session(
+                db.as_ref(),
+                rotation.session_id,
+                payload.questionnaire_id,
+            )
+            .await?;
+            let n = rotations_with.len();
+            if n >= 1 {
+                let coubertin = is_coubertin_club_fosse(&session_row.location);
+                let dual_ok = coubertin && questionnaire.allow_dual_rotation && n < 2;
+                if !dual_ok {
+                    return Err(AppError::Validation(
+                        "Ce participant est déjà affecté à une autre rotation. À Coubertin, activez « 2ᵉ rotation » sur l’élève pour une double affectation."
+                            .to_string(),
+                    ));
+                }
+            }
+        }
+    }
 
     // Récupérer les infos de la personne
     let person = People::find_by_id(questionnaire.person_id)
@@ -501,6 +592,7 @@ pub async fn get_session_palanquees(
     }
 
     let partner_dual_plongee = student_stays_in_pool_until_both_plongees(&session.location);
+    let coubertin_dual_pool = is_coubertin_club_fosse(&session.location);
 
     // Récupérer tous les questionnaires (de la session ou de la sortie parente)
     let all_questionnaires = if let Some(sortie_id) = session.sortie_id {
@@ -521,6 +613,7 @@ pub async fn get_session_palanquees(
     for q in all_questionnaires {
         // Encadrants : toujours dans le vivier (plusieurs rotations / palanquées).
         // Élèves : fosse club = retirés dès la première assignation ;
+        // Coubertin + option : rester jusqu’à 2 rotations ;
         // Montluçon / Puy = restent tant qu’ils ne sont pas sur plongée 1 et plongée 2.
         let keep_student_in_pool = if q.is_encadrant {
             true
@@ -529,6 +622,8 @@ pub async fn get_session_palanquees(
             let has_p1 = covered.map(|s| s.contains(&1)).unwrap_or(false);
             let has_p2 = covered.map(|s| s.contains(&2)).unwrap_or(false);
             !(has_p1 && has_p2)
+        } else if coubertin_dual_pool && q.allow_dual_rotation {
+            count_distinct_rotations_for_questionnaire(&rotations_responses, q.id) < 2
         } else {
             !assigned_questionnaire_ids.contains(&q.id)
         };
@@ -553,6 +648,7 @@ pub async fn get_session_palanquees(
                 diving_level: person.diving_level,
                 preparing_level,
                 is_encadrant: q.is_encadrant,
+                allow_dual_rotation: q.allow_dual_rotation,
                 wants_nitrox: q.wants_nitrox,
                 nitrox_training: q.nitrox_training,
                 nitrox_confirmed_formation: q.nitrox_confirmed_formation,

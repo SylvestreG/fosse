@@ -20,6 +20,8 @@ pub struct Model {
     pub nitrox_base_formation: bool,
     pub nitrox_confirmed_formation: bool,
     pub is_directeur_plongee: bool,
+    /// Fosse Coubertin : élève autorisé à être placé sur deux rotations distinctes.
+    pub allow_dual_rotation: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
     pub car_seats: Option<i32>,

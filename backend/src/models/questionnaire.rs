@@ -36,6 +36,7 @@ pub struct QuestionnaireResponse {
     pub nitrox_base_formation: bool,
     pub nitrox_confirmed_formation: bool,
     pub is_directeur_plongee: bool,
+    pub allow_dual_rotation: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
     pub car_seats: Option<i32>,
@@ -73,6 +74,7 @@ pub struct QuestionnaireDetailResponse {
     pub nitrox_base_formation: bool,
     pub nitrox_confirmed_formation: bool,
     pub is_directeur_plongee: bool,
+    pub allow_dual_rotation: bool,
     pub comes_from_issoire: bool,
     pub has_car: bool,
     pub car_seats: Option<i32>,
@@ -107,6 +109,12 @@ pub struct UpdateQuestionnaireRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SetDirecteurPlongeeRequest {
     pub questionnaire_id: Option<Uuid>, // None pour retirer le DP
+}
+
+/// Autoriser un élève (fosse Coubertin) à être placé sur deux rotations.
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SetAllowDualRotationRequest {
+    pub allow_dual_rotation: bool,
 }
 
 /// Requête pour créer un questionnaire directement (auto-inscription)

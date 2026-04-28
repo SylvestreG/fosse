@@ -141,6 +141,7 @@ impl QuestionnaireService {
                 nitrox_base_formation: q.nitrox_base_formation,
                 nitrox_confirmed_formation: q.nitrox_confirmed_formation,
                 is_directeur_plongee: q.is_directeur_plongee,
+                allow_dual_rotation: q.allow_dual_rotation,
                 comes_from_issoire: q.comes_from_issoire,
                 has_car: q.has_car,
                 car_seats: q.car_seats,
@@ -235,6 +236,7 @@ impl QuestionnaireService {
             nitrox_base_formation: questionnaire.nitrox_base_formation,
             nitrox_confirmed_formation: questionnaire.nitrox_confirmed_formation,
             is_directeur_plongee: questionnaire.is_directeur_plongee,
+            allow_dual_rotation: questionnaire.allow_dual_rotation,
             comes_from_issoire: questionnaire.comes_from_issoire,
             has_car: questionnaire.has_car,
             car_seats: questionnaire.car_seats,
@@ -275,6 +277,7 @@ impl QuestionnaireService {
                 nitrox_base_formation: q.nitrox_base_formation,
                 nitrox_confirmed_formation: q.nitrox_confirmed_formation,
                 is_directeur_plongee: q.is_directeur_plongee,
+                allow_dual_rotation: q.allow_dual_rotation,
                 comes_from_issoire: q.comes_from_issoire,
                 has_car: q.has_car,
                 car_seats: q.car_seats,
@@ -339,6 +342,7 @@ impl QuestionnaireService {
                 nitrox_base_formation: questionnaire.nitrox_base_formation,
                 nitrox_confirmed_formation: questionnaire.nitrox_confirmed_formation,
                 is_directeur_plongee: questionnaire.is_directeur_plongee,
+                allow_dual_rotation: questionnaire.allow_dual_rotation,
                 comes_from_issoire: questionnaire.comes_from_issoire,
                 has_car: questionnaire.has_car,
                 car_seats: questionnaire.car_seats,
@@ -412,6 +416,7 @@ impl QuestionnaireService {
             nitrox_base_formation: updated.nitrox_base_formation,
             nitrox_confirmed_formation: updated.nitrox_confirmed_formation,
             is_directeur_plongee: updated.is_directeur_plongee,
+            allow_dual_rotation: updated.allow_dual_rotation,
             comes_from_issoire: updated.comes_from_issoire,
             has_car: updated.has_car,
             car_seats: updated.car_seats,
@@ -602,6 +607,7 @@ impl QuestionnaireService {
             nitrox_base_formation: Set(request.nitrox_base_formation),
             nitrox_confirmed_formation: Set(request.nitrox_confirmed_formation),
             is_directeur_plongee: Set(false),
+            allow_dual_rotation: Set(false),
             comes_from_issoire: Set(request.comes_from_issoire),
             has_car: Set(request.has_car),
             car_seats: Set(request.car_seats),
@@ -631,6 +637,7 @@ impl QuestionnaireService {
             nitrox_base_formation: created.nitrox_base_formation,
             nitrox_confirmed_formation: created.nitrox_confirmed_formation,
             is_directeur_plongee: created.is_directeur_plongee,
+            allow_dual_rotation: created.allow_dual_rotation,
             comes_from_issoire: created.comes_from_issoire,
             has_car: created.has_car,
             car_seats: created.car_seats,
@@ -692,6 +699,62 @@ impl QuestionnaireService {
         }
 
         Ok(())
+    }
+
+    pub async fn set_allow_dual_rotation(
+        db: &DatabaseConnection,
+        questionnaire_id: Uuid,
+        allow_dual_rotation: bool,
+    ) -> AppResult<QuestionnaireResponse> {
+        let questionnaire = Questionnaires::find_by_id(questionnaire_id)
+            .one(db)
+            .await
+            .map_err(|e| {
+                AppError::Database(sea_orm::DbErr::Custom(format!("Failed to query questionnaire: {}", e)))
+            })?
+            .ok_or_else(|| AppError::NotFound("Questionnaire not found".to_string()))?;
+
+        if questionnaire.is_encadrant {
+            return Err(AppError::Validation(
+                "L’option « 2ᵉ rotation » ne s’applique qu’aux élèves.".to_string(),
+            ));
+        }
+
+        let now = Utc::now().naive_utc();
+        let mut active: questionnaires::ActiveModel = questionnaire.into();
+        active.allow_dual_rotation = Set(allow_dual_rotation);
+        active.updated_at = Set(now);
+        let updated = active
+            .update(db)
+            .await
+            .map_err(|e| {
+                AppError::Database(sea_orm::DbErr::Custom(format!("Failed to update questionnaire: {}", e)))
+            })?;
+
+        Ok(QuestionnaireResponse {
+            id: updated.id,
+            session_id: updated.session_id,
+            sortie_id: updated.sortie_id,
+            person_id: updated.person_id,
+            is_encadrant: updated.is_encadrant,
+            wants_regulator: updated.wants_regulator,
+            wants_nitrox: updated.wants_nitrox,
+            wants_2nd_reg: updated.wants_2nd_reg,
+            wants_stab: updated.wants_stab,
+            stab_size: updated.stab_size,
+            nitrox_training: updated.nitrox_training,
+            nitrox_base_formation: updated.nitrox_base_formation,
+            nitrox_confirmed_formation: updated.nitrox_confirmed_formation,
+            is_directeur_plongee: updated.is_directeur_plongee,
+            allow_dual_rotation: updated.allow_dual_rotation,
+            comes_from_issoire: updated.comes_from_issoire,
+            has_car: updated.has_car,
+            car_seats: updated.car_seats,
+            comments: updated.comments,
+            submitted_at: updated.submitted_at.map(|dt| dt.to_string()),
+            created_at: updated.created_at.to_string(),
+            updated_at: updated.updated_at.to_string(),
+        })
     }
 }
 

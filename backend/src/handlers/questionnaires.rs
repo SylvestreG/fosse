@@ -2,7 +2,10 @@ use crate::config::Config;
 use crate::entities::prelude::*;
 use crate::errors::AppError;
 use crate::middleware::acl::AuthUser;
-use crate::models::{CreateQuestionnaireRequest, QuestionnaireDetailResponse, QuestionnaireResponse, QuestionnaireTokenData, SubmitQuestionnaireRequest, UpdateQuestionnaireRequest, SetDirecteurPlongeeRequest};
+use crate::models::{
+    CreateQuestionnaireRequest, QuestionnaireDetailResponse, QuestionnaireResponse, QuestionnaireTokenData,
+    SetAllowDualRotationRequest, SubmitQuestionnaireRequest, UpdateQuestionnaireRequest, SetDirecteurPlongeeRequest,
+};
 use crate::services::QuestionnaireService;
 use crate::sortie_access::{
     auth_effective_email, ensure_can_manage_fosse_session_participants,
@@ -93,6 +96,28 @@ pub async fn list_questionnaires_detail(
         &config.magic_link.base_url,
     ).await?;
     Ok(Json(responses))
+}
+
+/// Fosse Coubertin : autoriser un élève à être placé sur deux rotations dans la même soirée.
+pub async fn set_allow_dual_rotation(
+    State(db): State<Arc<DatabaseConnection>>,
+    Extension(auth): Extension<AuthUser>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<SetAllowDualRotationRequest>,
+) -> Result<Json<QuestionnaireResponse>, AppError> {
+    let questionnaire = Questionnaires::find_by_id(id)
+        .one(db.as_ref())
+        .await
+        .map_err(|_| {
+            AppError::Database(sea_orm::DbErr::Custom("Failed to query questionnaire".to_string()))
+        })?
+        .ok_or_else(|| AppError::NotFound("Questionnaire not found".to_string()))?;
+
+    ensure_questionnaire_mutation_access(db.as_ref(), &auth, &questionnaire).await?;
+
+    let response =
+        QuestionnaireService::set_allow_dual_rotation(db.as_ref(), id, payload.allow_dual_rotation).await?;
+    Ok(Json(response))
 }
 
 pub async fn update_questionnaire(

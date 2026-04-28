@@ -17,7 +17,7 @@ import {
   DiveDirector
 } from '../lib/api'
 import { useAuthStore } from '../lib/auth'
-import { isExternalClubGearLocation } from '../lib/fosseLocations'
+import { isCoubertinClubFosseLocation, isExternalClubGearLocation } from '../lib/fosseLocations'
 
 function emailsMatch(a: string | undefined | null, b: string | undefined | null): boolean {
   if (!a || !b) return false
@@ -364,6 +364,15 @@ export default function PalanqueesPage() {
     }
   }
 
+  const handleToggleAllowDualRotation = async (questionnaireId: string, next: boolean) => {
+    try {
+      await questionnairesApi.setAllowDualRotation(questionnaireId, next)
+      await loadData()
+    } catch (err: unknown) {
+      alert(axiosErrorMessage(err, 'Impossible de mettre à jour l’option « 2ᵉ rotation »'))
+    }
+  }
+
   // Mobile: sélectionner un participant
   const handleSelectParticipant = (participant: UnassignedParticipant) => {
     if (selectedParticipant?.questionnaire_id === participant.questionnaire_id) {
@@ -510,6 +519,7 @@ export default function PalanqueesPage() {
 
   const grouped = groupParticipants(data.unassigned_participants)
   const externalGear = isExternalClubGearLocation(session?.location)
+  const coubertinPalanqueeOptions = isCoubertinClubFosseLocation(session?.location) && !externalGear
   const displaySections = buildPalanqueesDisplaySections(data.rotations, externalGear)
 
   return (
@@ -590,7 +600,11 @@ export default function PalanqueesPage() {
                 {data.unassigned_participants.length}
               </span>
             </h2>
-            
+            {coubertinPalanqueeOptions && canEdit && (
+              <p className="text-amber-400/90 text-xs mb-2 leading-snug">
+                Coubertin : pour un élève sur deux rotations, activez « 2ᵉ rot. » sur sa ligne ; il reste ici jusqu’à la 2ᵉ affectation.
+              </p>
+            )}
             {data.unassigned_participants.length === 0 ? (
               <p className="theme-text-muted text-sm text-center py-4">✅ Tous assignés !</p>
             ) : (
@@ -606,6 +620,8 @@ export default function PalanqueesPage() {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                     onSelect={handleSelectParticipant}
+                    coubertinDualMode={coubertinPalanqueeOptions}
+                    onToggleDualRotation={handleToggleAllowDualRotation}
                   />
                 )}
                 
@@ -620,6 +636,8 @@ export default function PalanqueesPage() {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                     onSelect={handleSelectParticipant}
+                    coubertinDualMode={coubertinPalanqueeOptions}
+                    onToggleDualRotation={handleToggleAllowDualRotation}
                   />
                 )}
                 
@@ -634,6 +652,8 @@ export default function PalanqueesPage() {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                     onSelect={handleSelectParticipant}
+                    coubertinDualMode={coubertinPalanqueeOptions}
+                    onToggleDualRotation={handleToggleAllowDualRotation}
                   />
                 )}
                 
@@ -652,6 +672,8 @@ export default function PalanqueesPage() {
                       onDragStart={handleDragStart}
                       onDragEnd={handleDragEnd}
                       onSelect={handleSelectParticipant}
+                      coubertinDualMode={coubertinPalanqueeOptions}
+                      onToggleDualRotation={handleToggleAllowDualRotation}
                     />
                   )
                 })}
@@ -667,6 +689,8 @@ export default function PalanqueesPage() {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                     onSelect={handleSelectParticipant}
+                    coubertinDualMode={coubertinPalanqueeOptions}
+                    onToggleDualRotation={handleToggleAllowDualRotation}
                   />
                 )}
               </div>
@@ -947,6 +971,8 @@ function ParticipantGroup({
   onDragStart,
   onDragEnd,
   onSelect,
+  coubertinDualMode,
+  onToggleDualRotation,
 }: {
   title: string
   participants: UnassignedParticipant[]
@@ -956,6 +982,8 @@ function ParticipantGroup({
   onDragStart: (p: UnassignedParticipant) => void
   onDragEnd: () => void
   onSelect: (p: UnassignedParticipant) => void
+  coubertinDualMode: boolean
+  onToggleDualRotation: (questionnaireId: string, next: boolean) => void
 }) {
   const colorClasses = {
     purple: 'border-purple-600/50 bg-purple-900/20 dark:bg-purple-900/20 light:bg-purple-100/50',
@@ -980,6 +1008,8 @@ function ParticipantGroup({
             onDragStart={onDragStart}
             onDragEnd={onDragEnd}
             onSelect={onSelect}
+            coubertinDualMode={coubertinDualMode}
+            onToggleDualRotation={onToggleDualRotation}
           />
         ))}
       </div>
@@ -994,6 +1024,8 @@ function DraggableParticipant({
   onDragStart,
   onDragEnd,
   onSelect,
+  coubertinDualMode,
+  onToggleDualRotation,
 }: {
   participant: UnassignedParticipant
   canEdit: boolean
@@ -1001,6 +1033,8 @@ function DraggableParticipant({
   onDragStart: (p: UnassignedParticipant) => void
   onDragEnd: () => void
   onSelect: (p: UnassignedParticipant) => void
+  coubertinDualMode: boolean
+  onToggleDualRotation: (questionnaireId: string, next: boolean) => void
 }) {
   const handleDragStart = (e: DragEvent<HTMLDivElement>) => {
     if (!canEdit) {
@@ -1051,6 +1085,27 @@ function DraggableParticipant({
           </span>
         </div>
         <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
+          {coubertinDualMode && canEdit && !participant.is_encadrant && (
+            <button
+              type="button"
+              title={
+                participant.allow_dual_rotation
+                  ? 'Autorisé sur 2 rotations — cliquer pour désactiver'
+                  : 'Autoriser une 2ᵉ rotation (Coubertin)'
+              }
+              onClick={e => {
+                e.stopPropagation()
+                onToggleDualRotation(participant.questionnaire_id, !participant.allow_dual_rotation)
+              }}
+              className={`text-[9px] sm:text-[10px] px-1 py-0.5 rounded font-medium border transition-colors ${
+                participant.allow_dual_rotation
+                  ? 'bg-amber-500/35 border-amber-400/80 text-amber-100'
+                  : 'border-theme-border theme-text-dimmed hover:border-amber-500/60 hover:text-amber-200/90'
+              }`}
+            >
+              2ᵉ&nbsp;rot.
+            </button>
+          )}
           {participant.is_encadrant && (
             <span className="bg-purple-600 text-white text-[10px] sm:text-xs px-0.5 sm:px-1 rounded">E</span>
           )}

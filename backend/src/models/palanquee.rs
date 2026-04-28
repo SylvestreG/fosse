@@ -116,6 +116,8 @@ pub struct UnassignedParticipant {
     pub nitrox_training: bool,
     pub nitrox_confirmed_formation: bool,
     pub instructor_level: Option<String>,
+    /// Fosse Coubertin : peut être placé sur une 2ᵉ rotation (élèves).
+    pub allow_dual_rotation: bool,
 }
 
 // Helper pour parser les heures
