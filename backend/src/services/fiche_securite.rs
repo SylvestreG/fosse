@@ -4,7 +4,7 @@ use uuid::Uuid;
 use std::fmt::Write;
 use std::collections::HashSet;
 
-use crate::entities::{sessions, rotations, palanquees, palanquee_members, questionnaires, people};
+use crate::entities::{sessions, rotations, palanquees, palanquee_members, questionnaires, people, dive_directors};
 use crate::errors::AppError;
 use crate::models::DiverLevel;
 
@@ -34,6 +34,8 @@ pub struct PalanqueeData {
     pub numero: i32,
     pub planned_time: Option<i32>,
     pub planned_depth: Option<i32>,
+    pub actual_time: Option<i32>,
+    pub actual_depth: Option<i32>,
     pub members: Vec<MemberData>,
 }
 
@@ -149,6 +151,8 @@ pub async fn generate_fiche_securite(
                 numero: palanquee.number,
                 planned_time: palanquee.planned_time,
                 planned_depth: palanquee.planned_depth,
+                actual_time: palanquee.actual_time,
+                actual_depth: palanquee.actual_depth,
                 members: members_data,
             });
         }
@@ -159,23 +163,7 @@ pub async fn generate_fiche_securite(
         });
     }
 
-    // Récupérer le DP automatiquement depuis les questionnaires
-    let dp_questionnaire = questionnaires::Entity::find()
-        .filter(questionnaires::Column::SessionId.eq(session_id))
-        .filter(questionnaires::Column::IsDirecteurPlongee.eq(true))
-        .one(db)
-        .await?;
-    
-    let dp_name = if let Some(q) = dp_questionnaire {
-        // Récupérer le nom de la personne associée
-        let person = people::Entity::find_by_id(q.person_id)
-            .one(db)
-            .await?;
-        person.map(|p| format!("{} {}", p.first_name, p.last_name))
-            .unwrap_or_default()
-    } else {
-        String::new()
-    };
+    let dp_name = resolve_directeurs_plongee(db, session_id).await?;
 
     let data = FicheSecuriteData {
         date: options.date.unwrap_or_else(|| session.start_date.format("%d/%m/%Y").to_string()),
@@ -202,6 +190,54 @@ pub struct FicheSecuriteOptions {
     pub observations: Option<String>,
     /// Si `Some(1)` ou `Some(2)`, n’inclut que les rotations de cette plongée (sites partenaires).
     pub plongee_number: Option<i32>,
+}
+
+async fn person_display_name(
+    db: &DatabaseConnection,
+    person_id: Uuid,
+) -> Result<String, AppError> {
+    let person = people::Entity::find_by_id(person_id)
+        .one(db)
+        .await?;
+    Ok(person
+        .map(|p| format!("{} {}", p.first_name, p.last_name))
+        .unwrap_or_default())
+}
+
+/// Fosse : `is_directeur_plongee` sur questionnaire session. Sortie : `dive_directors` de la plongée.
+async fn resolve_directeurs_plongee(
+    db: &DatabaseConnection,
+    session_id: Uuid,
+) -> Result<String, AppError> {
+    let dp_questionnaire = questionnaires::Entity::find()
+        .filter(questionnaires::Column::SessionId.eq(session_id))
+        .filter(questionnaires::Column::IsDirecteurPlongee.eq(true))
+        .one(db)
+        .await?;
+
+    if let Some(q) = dp_questionnaire {
+        return person_display_name(db, q.person_id).await;
+    }
+
+    let directors = dive_directors::Entity::find()
+        .filter(dive_directors::Column::SessionId.eq(session_id))
+        .all(db)
+        .await?;
+
+    let mut names = Vec::new();
+    for d in directors {
+        let questionnaire = questionnaires::Entity::find_by_id(d.questionnaire_id)
+            .one(db)
+            .await?;
+        if let Some(q) = questionnaire {
+            let name = person_display_name(db, q.person_id).await?;
+            if !name.is_empty() {
+                names.push(name);
+            }
+        }
+    }
+
+    Ok(names.join(", "))
 }
 
 // Constantes de mise en page
@@ -331,6 +367,8 @@ fn generate_all_pages(data: &FicheSecuriteData) -> Vec<String> {
                 numero: 0,
                 planned_time: None,
                 planned_depth: None,
+                actual_time: None,
+                actual_depth: None,
                 members: vec![],
             }, y);
             draw_chunk_outer_border(&mut current_page, y_top, y, PAGE_WIDTH - 2.0 * MARGIN);
@@ -736,7 +774,15 @@ fn draw_palanquee_block(
     )
     .unwrap();
     col_x += TABLE_COLS[5];
-    let actual = "______' / ______m".to_string();
+    let actual = format!(
+        "{}' / {}m",
+        palanquee
+            .actual_time
+            .map_or("______".to_string(), |t| t.to_string()),
+        palanquee
+            .actual_depth
+            .map_or("______".to_string(), |d| d.to_string()),
+    );
     writeln!(
         content,
         "BT /F1 9 Tf {} {} Td ({}) Tj ET",

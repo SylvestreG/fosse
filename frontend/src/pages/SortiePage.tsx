@@ -201,7 +201,7 @@ export default function SortiePage() {
       key: 'actions',
       label: 'Actions',
       render: (_: any, dive: Session) => (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
             onClick={() => navigate(`/dashboard/palanquees/${dive.id}`)}
@@ -298,7 +298,12 @@ export default function SortiePage() {
             )}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {canUseSortieDirectorTools && (
+            <Button size="sm" onClick={() => navigate(`/dashboard/sorties/${id}/fiches`)}>
+              📄 Fiches de sécurité
+            </Button>
+          )}
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${
             sortie.sortie_type === 'technique'
               ? 'bg-purple-500/20 text-purple-300'

@@ -7,6 +7,7 @@ import MySessionsPage from './MySessionsPage'
 import FosseSessionParticipantsPage from './FosseSessionParticipantsPage'
 import SortiesPage from './SortiesPage'
 import SortiePage from './SortiePage'
+import SortieFichesPage from './SortieFichesPage'
 import ImportPage from './ImportPage'
 import EmailsPage from './EmailsPage'
 import SessionEmailsPage from './SessionEmailsPage'
@@ -52,6 +53,7 @@ export default function Dashboard() {
             {/* Sorties : admin (liste complète) ou DP / encadrant (liste API restreinte) */}
             <Route path="/sorties" element={<SortiesPage />} />
             <Route path="/sorties/:id" element={<SortiePage />} />
+            <Route path="/sorties/:id/fiches" element={<SortieFichesPage />} />
             
             {/* Summary - admin seulement */}
             {isAdmin && <Route path="/summary/:id" element={<SummaryPage />} />}
